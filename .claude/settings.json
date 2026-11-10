@@ -1,0 +1,21 @@
+{
+  "extraKnownMarketplaces": {
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/anthropics/claude-plugins-official.git"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "superpowers@superpowers-marketplace": true,
+    "mattpocock-skills@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
+  }
+}

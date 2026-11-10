@@ -52,6 +52,25 @@ Documentation sobre et factuelle, comme écrite par les élèves : phrases simpl
 texte brut sans emoji, sections séparées uniquement par des titres. Dans les
 tableaux comparatifs, l'option choisie est marquée « (retenu) ».
 
+## Outils Claude
+
+Sous-agents dans `.claude/agents/`, plugins déclarés dans
+`.claude/settings.json`.
+
+| Tâche | Outil |
+|---|---|
+| Rédiger ou relire un document | Sous-agent Technical Writer, avec la section « Style des documents » ci-dessus dans sa consigne |
+| Préparer une étape de travail | Skill `superpowers:writing-plans` |
+| Provider, mapper, logique du domaine | Skill `superpowers:test-driven-development` |
+| Interface (parcours, mise en page) | Sous-agent UX Architect, puis skill `frontend-design` |
+| Identité visuelle (couleurs, cartes, jauge) | Sous-agent UI Designer |
+| Composants React en parallèle | Sous-agent Frontend Developer, seulement sur demande des élèves |
+| Docker, CI | Sous-agent DevOps Automator |
+| Nouvelle décision ou terme du domaine | Skill `mattpocock-skills:domain-modeling` |
+| Bug qui résiste | Skill `superpowers:systematic-debugging` |
+| Relecture avant pull request | Skills `code-review` et `security-review` |
+| Fin de tâche | Skill `superpowers:verification-before-completion` (tests et build passent) |
+
 ## Organisation
 
 - `main` est la branche de référence. Chaque fonctionnalité ou correction a sa
@@ -59,5 +78,9 @@ tableaux comparatifs, l'option choisie est marquée « (retenu) ».
   intégrée par une pull request relue par l'autre membre du binôme.
 - La branche `research` sert uniquement au démarrage du projet ; elle n'est plus
   utilisée une fois fusionnée dans `main`.
+- Les élèves font eux-mêmes les commits et les push. À la fin d'une tâche,
+  Claude donne les commandes `git add`, `git commit` et `git push` avec une
+  suggestion de message (style Conventional Commits, en anglais), sans mention
+  de Claude ni d'IA.
 - Tâches suivies dans les GitHub Issues, avec un responsable assigné.
 - Préférences personnelles dans `CLAUDE.local.md` (non versionné).
