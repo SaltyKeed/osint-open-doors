@@ -11,10 +11,12 @@ phrases.
 ## Architecture
 
 Lire `docs/ARCHITECTURE.md` avant de créer un fichier, d'ajouter une dépendance
-ou de toucher à un provider. Il contient la structure ports & adapters, les
-choix de stack et leurs justifications.
+ou de toucher à un provider. Il décrit l'architecture en place : structure
+ports & adapters, stack, exécution. Il est mis à jour quand le code change.
 
-Décisions ponctuelles : `docs/decisions/NNN-titre.md` (une décision par fichier).
+`docs/DECISIONS.md` garde les options comparées et la raison de chaque choix.
+Une nouvelle décision (dépendance, changement de structure, nouveau provider)
+y est ajoutée à la fin, numérotée et datée.
 
 ## Invariants de confidentialité
 
@@ -52,6 +54,10 @@ tableaux comparatifs, l'option choisie est marquée « (retenu) ».
 
 ## Organisation
 
-- Branche de travail : `research`.
+- `main` est la branche de référence. Chaque fonctionnalité ou correction a sa
+  propre branche créée depuis `main` (`feat/…`, `fix/…`, `docs/…`, `chore/…`),
+  intégrée par une pull request relue par l'autre membre du binôme.
+- La branche `research` sert uniquement au démarrage du projet ; elle n'est plus
+  utilisée une fois fusionnée dans `main`.
 - Tâches suivies dans les GitHub Issues, avec un responsable assigné.
 - Préférences personnelles dans `CLAUDE.local.md` (non versionné).
