@@ -18,6 +18,12 @@ ports & adapters, stack, exécution. Il est mis à jour quand le code change.
 Une nouvelle décision (dépendance, changement de structure, nouveau provider)
 y est ajoutée à la fin, numérotée et datée.
 
+Toute modification (code, configuration, Docker, agents, variables
+d'environnement, organisation) met à jour la documentation concernée dans la
+même pull request : `README.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`,
+`CLAUDE.md`, `.env.example`. La documentation décrit toujours l'état actuel du
+projet.
+
 ## Invariants de confidentialité
 
 Ils s'appliquent à tout le code, sans exception. Détail et justification :
@@ -59,13 +65,13 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
 
 | Tâche | Outil |
 |---|---|
-| Rédiger ou relire un document | Sous-agent Technical Writer, avec la section « Style des documents » ci-dessus dans sa consigne |
+| Rédiger ou relire un document | Sous-agent `technical-writer` |
 | Préparer une étape de travail | Skill `superpowers:writing-plans` |
 | Provider, mapper, logique du domaine | Skill `superpowers:test-driven-development` |
-| Interface (parcours, mise en page) | Sous-agent UX Architect, puis skill `frontend-design` |
-| Identité visuelle (couleurs, cartes, jauge) | Sous-agent UI Designer |
-| Composants React en parallèle | Sous-agent Frontend Developer, seulement sur demande des élèves |
-| Docker, CI | Sous-agent DevOps Automator |
+| Interface (parcours, mise en page) | Sous-agent `ux-architect`, puis skill `frontend-design` |
+| Identité visuelle (couleurs, cartes, jauge) | Sous-agent `ui-designer` |
+| Composants React en parallèle | Sous-agent `frontend-developer`, seulement sur demande des élèves |
+| Docker, CI | Sous-agent `devops-automator` |
 | Nouvelle décision ou terme du domaine | Skill `mattpocock-skills:domain-modeling` |
 | Bug qui résiste | Skill `superpowers:systematic-debugging` |
 | Relecture avant pull request | Skills `code-review` et `security-review` |
