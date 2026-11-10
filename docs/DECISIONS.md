@@ -145,6 +145,69 @@ mise en place). Une fois fusionnée dans `main`, chaque fonctionnalité ou
 correction est développée sur sa propre branche, puis intégrée dans `main` par
 une pull request relue par l'autre membre du binôme.
 
+## D10. Modes surface et deep
+
+Date : 2026-11-10
+
+L'application a deux usages :
+
+- `surface` : sources légales et publiques (fuites connues par email,
+  annuaires, recherche web, presse). C'est le mode des portes ouvertes.
+- `deep` : en plus des sources de `surface`, consultation de bases de données
+  volées par une API payante (Snusbase, Dehashed ou équivalent, voir D8).
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **Une image, mode choisi à l'exécution par `APP_MODE` (retenu)** | Une seule image à construire et à tester ; le code est commun, seuls les providers actifs changent ; correspond à l'architecture ports & adapters (`registry.ts`). | L'image `surface` contient aussi le code des providers deep (inutilisable sans clé). |
+| Deux images, mode fixé au build | L'image `surface` ne contient pas le code deep. | Deux builds et deux séries de tests ; les images peuvent diverger ; Next.js lit les variables serveur à l'exécution, pas au build. |
+| Deux branches Git permanentes | Séparation visible dans le dépôt. | Chaque correction doit être fusionnée deux fois ; les branches divergent ; `main` n'est plus la référence (contraire à D9). |
+
+Une seule image est retenue. Le mode est choisi au lancement du conteneur :
+
+```
+docker compose --env-file .env.surface up
+docker compose --env-file .env.deep up
+```
+
+Règles qui font du mode `surface` une garantie :
+
+1. Les variables d'environnement sont validées par zod au démarrage.
+   `APP_MODE` vaut `surface` ou `deep`. En `deep`, une clé deep manquante
+   empêche le démarrage.
+2. En `surface`, `registry.ts` n'enregistre aucun provider deep, même si une
+   clé deep est présente. Le mode décide, pas la présence d'une clé.
+3. Un test Vitest vérifie qu'en `surface` aucun provider deep n'est actif.
+
+Le mode `deep` reste soumis à la validation de l'enseignant (D8). Les
+invariants de `ARCHITECTURE.md` (section 2) s'appliquent aux deux modes sans
+exception.
+
+## D11. CI/CD et stockage de l'image
+
+Date : 2026-11-10
+
+Statut : ouverte, pas encore tranchée.
+
+Nous prévoyons d'utiliser GitHub Actions pour la CI/CD et de stocker l'image
+Docker sur GitHub (GitHub Container Registry, `ghcr.io`). Une fois tranchée,
+cette décision complétera D7, qui prévoit aujourd'hui un build local.
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| GitHub Actions + GitHub Container Registry (envisagé) | Tout reste sur GitHub, à côté du code et des pull requests ; gratuit pour notre usage ; standard en entreprise. | Le PC de l'école doit pouvoir télécharger l'image (connexion, authentification si le package est privé). |
+| Build local uniquement (situation actuelle, D7) | Rien à configurer. | Pas de tests automatiques sur les pull requests ; l'image dépend du PC qui la construit. |
+| Docker Hub | Registre le plus connu. | Un compte et un service de plus ; limites de téléchargement. |
+
+Questions à trancher :
+
+- Ce que la CI exécute à chaque pull request (lint, typage, Vitest dans les
+  deux modes, build de l'image).
+- Quand l'image est publiée (fusion dans `main`, tag de version) et comment
+  elle est taguée.
+- Package privé ou public, et comment le PC de l'école s'authentifie pour la
+  télécharger.
+- Aucune clé API dans la CI : les tests utilisent uniquement des fixtures.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -157,3 +220,5 @@ une pull request relue par l'autre membre du binôme.
 | Tests | Vitest (+ Playwright plus tard) | Jest |
 | Exécution | Docker compose (local) | `npm run start` |
 | Premier provider | XposedOrNot | Have I Been Pwned |
+| Modes | Une image, `APP_MODE` à l'exécution | Deux images |
+| CI/CD | Ouverte (D11) | |
