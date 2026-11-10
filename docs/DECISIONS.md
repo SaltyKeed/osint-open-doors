@@ -7,6 +7,9 @@ décrite dans `ARCHITECTURE.md`.
 Une nouvelle décision s'ajoute à la fin, avec un numéro et une date. Une
 décision remplacée n'est pas supprimée : elle est marquée « remplacée par Dn ».
 
+Statuts possibles : ouverte (en discussion, aucune option retenue), retenue,
+remplacée par Dn. Sans mention de statut, une décision est retenue.
+
 ## Critères généraux
 
 Les choix de stack ont été faits selon trois critères :
@@ -151,23 +154,33 @@ Date : 2026-11-10
 
 L'application a deux usages :
 
-- `surface` : sources légales et publiques (fuites connues par email,
-  annuaires, recherche web, presse). C'est le mode des portes ouvertes.
+- `surface` : sources légales et publiques (fuites connues par email, voir
+  D8). C'est le mode des portes ouvertes. Les autres sources de ce mode
+  (annuaires, recherche web, presse) feront l'objet d'une décision séparée.
 - `deep` : en plus des sources de `surface`, consultation de bases de données
   volées par une API payante (Snusbase, Dehashed ou équivalent, voir D8).
 
 | Option | Avantages | Inconvénients |
 |---|---|---|
-| **Une image, mode choisi à l'exécution par `APP_MODE` (retenu)** | Une seule image à construire et à tester ; le code est commun, seuls les providers actifs changent ; correspond à l'architecture ports & adapters (`registry.ts`). | L'image `surface` contient aussi le code des providers deep (inutilisable sans clé). |
-| Deux images, mode fixé au build | L'image `surface` ne contient pas le code deep. | Deux builds et deux séries de tests ; les images peuvent diverger ; Next.js lit les variables serveur à l'exécution, pas au build. |
+| **Une image, mode choisi à l'exécution par `APP_MODE` (retenu)** | Une seule image à construire et à tester ; le code est commun, seuls les providers actifs changent ; correspond à l'architecture ports & adapters (`registry.ts`) ; Next.js lit les variables serveur à l'exécution, un seul build suffit. | L'image `surface` contient aussi le code des providers deep (inutilisable sans clé). |
+| Deux images, mode fixé au build | L'image `surface` ne contient pas le code deep. | Deux builds et deux séries de tests ; les images peuvent diverger. |
 | Deux branches Git permanentes | Séparation visible dans le dépôt. | Chaque correction doit être fusionnée deux fois ; les branches divergent ; `main` n'est plus la référence (contraire à D9). |
 
-Une seule image est retenue. Le mode est choisi au lancement du conteneur :
+Une seule image est retenue. Le mode est choisi au lancement du conteneur.
+
+`docker compose --env-file` sert seulement à remplacer les `${...}` dans
+`compose.yaml` : il ne transmet pas les variables au conteneur. C'est donc
+`compose.yaml` qui les transmet, avec `env_file: ${ENV_FILE:-.env.surface}`.
+Sans précision, le conteneur démarre en `surface` :
 
 ```
-docker compose --env-file .env.surface up
-docker compose --env-file .env.deep up
+docker compose up                              # surface (par défaut)
+$env:ENV_FILE=".env.deep"; docker compose up   # deep (PowerShell)
 ```
+
+Les fichiers `.env.surface` et `.env.deep` contiennent les clés et ne sont pas
+versionnés (`.gitignore` ignore `.env.*`). Le seul fichier versionné est
+`.env.example`, qui liste toutes les variables sans valeur.
 
 Règles qui font du mode `surface` une garantie :
 
@@ -177,6 +190,8 @@ Règles qui font du mode `surface` une garantie :
 2. En `surface`, `registry.ts` n'enregistre aucun provider deep, même si une
    clé deep est présente. Le mode décide, pas la présence d'une clé.
 3. Un test Vitest vérifie qu'en `surface` aucun provider deep n'est actif.
+4. Le mode actif est affiché discrètement dans l'interface, pour vérifier le
+   jour des portes ouvertes que le poste tourne en `surface`.
 
 Le mode `deep` reste soumis à la validation de l'enseignant (D8). Les
 invariants de `ARCHITECTURE.md` (section 2) s'appliquent aux deux modes sans
@@ -194,7 +209,7 @@ cette décision complétera D7, qui prévoit aujourd'hui un build local.
 
 | Option | Avantages | Inconvénients |
 |---|---|---|
-| GitHub Actions + GitHub Container Registry (envisagé) | Tout reste sur GitHub, à côté du code et des pull requests ; gratuit pour notre usage ; standard en entreprise. | Le PC de l'école doit pouvoir télécharger l'image (connexion, authentification si le package est privé). |
+| GitHub Actions + GitHub Container Registry (envisagé) | Tout reste sur GitHub, à côté du code et des pull requests ; gratuit pour un package public, quota gratuit limité en privé ; standard en entreprise. | Le PC de l'école doit pouvoir télécharger l'image (connexion, authentification si le package est privé). |
 | Build local uniquement (situation actuelle, D7) | Rien à configurer. | Pas de tests automatiques sur les pull requests ; l'image dépend du PC qui la construit. |
 | Docker Hub | Registre le plus connu. | Un compte et un service de plus ; limites de téléchargement. |
 
