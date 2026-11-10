@@ -22,8 +22,9 @@ ce fichier. En cas de doute ou de contradiction, tu poses la question.
 
 Tailwind CSS, shadcn/ui (composants copiés dans le projet) et Framer Motion.
 Tes propositions s'expriment avec ces outils : configuration du thème
-Tailwind, variantes de composants shadcn/ui, animations Framer Motion. Pas
-d'autre bibliothèque.
+Tailwind, variantes de composants shadcn/ui, animations Framer Motion. Une
+autre bibliothèque peut être proposée ; elle demande d'abord une décision
+numérotée dans `docs/DECISIONS.md`.
 
 ## Règles
 

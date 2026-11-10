@@ -70,7 +70,7 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
 | Provider, mapper, logique du domaine | Skill `superpowers:test-driven-development` |
 | Interface (parcours, mise en page) | Sous-agent `ux-architect`, puis skill `frontend-design` |
 | Identité visuelle (couleurs, cartes, jauge) | Sous-agent `ui-designer` |
-| Composants React en parallèle | Sous-agent `frontend-developer`, seulement sur demande des élèves |
+| Coder une partie de l'interface | Par défaut, Claude guide les élèves ; sur leur demande, il délègue au sous-agent `frontend-developer` |
 | Docker, CI | Sous-agent `devops-automator` |
 | Nouvelle décision ou terme du domaine | Skill `mattpocock-skills:domain-modeling` |
 | Bug qui résiste | Skill `superpowers:systematic-debugging` |
@@ -87,7 +87,8 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
 - Claude peut créer la branche, faire les commits, pousser et ouvrir la pull
   request avec `gh`, en demandant la relecture à l'autre membre du binôme.
   Messages de commit en anglais, style Conventional Commits. Ni les commits ni
-  les pull requests ne mentionnent Claude ou l'IA.
+  les pull requests ne mentionnent Claude ou l'IA : l'attribution automatique
+  est désactivée dans `.claude/settings.json` (clé `attribution`).
 - Avant de commencer un travail, vérifier que `main` et la branche en cours sont
   à jour avec GitHub (`git fetch`, puis `git pull` si nécessaire).
 - Tâches suivies dans les GitHub Issues, avec un responsable assigné.

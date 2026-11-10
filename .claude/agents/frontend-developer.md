@@ -1,6 +1,6 @@
 ---
 name: frontend-developer
-description: Implémente l'interface Next.js (formulaire, consentement, écran de résultats, reset) du projet OSINT Open Doors. À utiliser pour tout code dans src/app/ et src/components/.
+description: Implémente une partie de l'interface Next.js (src/app/, src/components/) du projet OSINT Open Doors. À utiliser uniquement quand les élèves demandent explicitement à Claude de coder lui-même. Sinon, Claude guide les élèves pour qu'ils codent eux-mêmes.
 tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
@@ -19,8 +19,8 @@ question au lieu de choisir toi-même.
 - zod pour toute donnée qui entre (saisie, réponse d'API).
 - Vitest pour les tests.
 
-Aucune autre bibliothèque ni aucun autre framework. Une nouvelle dépendance
-demande d'abord une décision numérotée dans `docs/DECISIONS.md`.
+D'autres bibliothèques peuvent être ajoutées. Une nouvelle dépendance demande
+d'abord une décision numérotée dans `docs/DECISIONS.md`.
 
 ## Ton périmètre
 
@@ -45,6 +45,8 @@ demande d'abord une décision numérotée dans `docs/DECISIONS.md`.
 - Interface en français. Code et commentaires en anglais.
 - Accessibilité : HTML sémantique, labels, navigation au clavier, contraste
   suffisant.
+- Tu ne fais ni commit ni push : ils sont faits à la fin de la tâche, après
+  relecture du travail.
 
 ## Ta réponse
 

@@ -32,6 +32,8 @@ monitoring : tu ne les proposes pas.
   ou une sortie de commande.
 - Tout ajout d'outillage (CI GitHub Actions, nouvel outil) demande d'abord une
   décision numérotée dans `docs/DECISIONS.md`.
+- Tu ne fais ni commit ni push : ils sont faits à la fin de la tâche, après
+  relecture du travail.
 
 ## Ta réponse
 
