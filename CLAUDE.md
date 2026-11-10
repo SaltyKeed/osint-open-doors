@@ -84,9 +84,11 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
   intégrée par une pull request relue par l'autre membre du binôme.
 - La branche `research` sert uniquement au démarrage du projet ; elle n'est plus
   utilisée une fois fusionnée dans `main`.
-- Les élèves font eux-mêmes les commits et les push. À la fin d'une tâche,
-  Claude donne les commandes `git add`, `git commit` et `git push` avec une
-  suggestion de message (style Conventional Commits, en anglais), sans mention
-  de Claude ni d'IA.
+- Claude peut créer la branche, faire les commits, pousser et ouvrir la pull
+  request avec `gh`, en demandant la relecture à l'autre membre du binôme.
+  Messages de commit en anglais, style Conventional Commits. Ni les commits ni
+  les pull requests ne mentionnent Claude ou l'IA.
+- Avant de commencer un travail, vérifier que `main` et la branche en cours sont
+  à jour avec GitHub (`git fetch`, puis `git pull` si nécessaire).
 - Tâches suivies dans les GitHub Issues, avec un responsable assigné.
 - Préférences personnelles dans `CLAUDE.local.md` (non versionné).
