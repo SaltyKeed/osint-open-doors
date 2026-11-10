@@ -114,20 +114,24 @@ export interface BreachProvider {
 ## 5. Stack technique
 
 Les raisons de chaque choix et les alternatives comparées sont dans
-`DECISIONS.md`.
+[DECISIONS.md](DECISIONS.md). La colonne « Décision » renvoie à l'entrée
+correspondante.
 
-| Couche | Technologie |
-|---|---|
-| Framework | Next.js (App Router) |
-| Langage | TypeScript (mode strict) |
-| UI | Tailwind CSS, shadcn/ui |
-| Animations | Framer Motion |
-| Validation | zod |
-| Tests | Vitest |
-| Exécution | Docker compose, en local |
-| Provider | XposedOrNot (email) ; Snusbase et Dehashed prévus (nom, téléphone) |
+| Couche | Technologie | Décision |
+|---|---|---|
+| Framework | Next.js (App Router) | [D1](DECISIONS.md#d1-framework-front-et-serveur) |
+| Langage | TypeScript (mode strict) | [D2](DECISIONS.md#d2-langage) |
+| UI | Tailwind CSS, shadcn/ui | [D3](DECISIONS.md#d3-ui-et-style) |
+| Animations | Framer Motion | [D4](DECISIONS.md#d4-animations) |
+| Validation | zod | [D5](DECISIONS.md#d5-validation-des-données) |
+| Tests | Vitest | [D6](DECISIONS.md#d6-tests) |
+| Exécution | Docker compose, en local | [D7](DECISIONS.md#d7-exécution-et-déploiement) |
+| Provider | XposedOrNot (email) ; Snusbase et Dehashed prévus (nom, téléphone) | [D8](DECISIONS.md#d8-sources-de-données-providers) |
 
 ## 6. Exécution
+
+Le choix de Docker compose en local est expliqué dans
+[DECISIONS.md, D7](DECISIONS.md#d7-exécution-et-déploiement).
 
 - Build Docker multi-stage, Next.js en `output: "standalone"`, image
   `node:24-alpine`.
