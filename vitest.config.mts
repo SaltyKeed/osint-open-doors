@@ -1,11 +1,10 @@
 import { fileURLToPath } from "node:url";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  // Resolves the "@/..." imports declared in tsconfig.json.
-  plugins: [tsconfigPaths()],
   resolve: {
+    // Resolves the "@/..." imports declared in tsconfig.json.
+    tsconfigPaths: true,
     alias: {
       // "server-only" throws when imported outside a Next.js server build.
       // Tests run in plain Node, so it is replaced by an empty module.

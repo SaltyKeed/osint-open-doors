@@ -281,6 +281,12 @@ Autres choix :
   par un module vide (`src/tests/stubs/server-only.ts`).
 - `npm run typecheck` lance `next typegen` avant `tsc`, car Next.js génère
   certains types (par exemple `LayoutProps`) dans `.next/types`.
+- En développement, `next.config.ts` charge `.env.surface` (ou le fichier
+  désigné par `ENV_FILE`) avec `process.loadEnvFile`, fonction intégrée à
+  Node.js. L'option `--env-file` de Node n'est pas utilisable : Next.js la
+  transmet à ses processus internes, qui la refusent.
+- Vitest lit les chemins `@/` avec son option `resolve.tsconfigPaths`, sans
+  plugin supplémentaire.
 - Framer Motion n'est pas encore installé : il sera ajouté avec la première
   animation.
 

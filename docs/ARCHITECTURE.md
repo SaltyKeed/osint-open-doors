@@ -81,6 +81,7 @@ src/
 │   │   ├── severity.ts           ← score d'exposition
 │   │   └── actions.ts            ← catégories exposées → plan d'action
 │   │
+│   ├── env.ts                    ← variables d'environnement validées par zod (APP_MODE, clés)
 │   └── search-service.ts         ← orchestration (Promise.allSettled + timeout)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
@@ -108,8 +109,11 @@ L'interface commune à tous les providers est la suivante :
 // src/server/providers/types.ts
 export type QueryKind = "email" | "phone" | "name";
 
+export type ProviderTier = "surface" | "deep";
+
 export interface BreachProvider {
   id: string;
+  tier: ProviderTier;              // registry.ts n'active "deep" qu'en mode deep (D10)
   supports: readonly QueryKind[];
   search(query: SearchQuery, signal: AbortSignal): Promise<Exposure[]>;
 }
@@ -162,6 +166,9 @@ Le choix de Docker compose en local est expliqué dans
   `surface`.
 - `compose.yaml` transmet les variables au conteneur avec
   `env_file: ${ENV_FILE:-.env.surface}`.
+- En développement (`npm run dev`), `next.config.ts` charge le fichier
+  désigné par `ENV_FILE` (par défaut `.env.surface`) avec `process.loadEnvFile`,
+  car Next.js ne lit lui-même que `.env` et `.env.local`.
 - Les clés API sont dans `.env.surface` et `.env.deep`, non versionnés. Le
   fichier `.env.example` est versionné et liste toutes les variables attendues,
   sans valeur.

@@ -1,9 +1,12 @@
-// Placeholder page: replaced by the form and the consent step in a later feature branch.
+import { SearchApp } from "@/components/search-app";
+
 export default function Home() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-      <h1 className="text-3xl font-semibold">OSINT Open Doors</h1>
-      <p className="text-muted-foreground">Application en construction.</p>
+    <main className="flex flex-1 flex-col items-center justify-center gap-8 p-8">
+      <h1 className="text-sm font-medium tracking-widest text-muted-foreground uppercase">
+        OSINT Open Doors
+      </h1>
+      <SearchApp />
     </main>
   );
 }

@@ -18,8 +18,10 @@ et les choix du projet dans [docs/DECISIONS.md](docs/DECISIONS.md).
 npm ci
 ```
 
-Copier `.env.example` en `.env`, puis renseigner les clés API. Le fichier
-`.env` n'est jamais versionné : le dépôt est public, aucune clé ne doit y
+Copier `.env.example` en `.env.surface`, puis renseigner les clés API
+(XposedOrNot n'en demande pas). Pour le mode deep, créer de la même façon
+`.env.deep` et lancer avec `$env:ENV_FILE=".env.deep"; npm run dev`
+(PowerShell). Ces fichiers ne sont jamais versionnés : le dépôt est public, aucune clé ne doit y
 apparaître.
 
 ## Commandes

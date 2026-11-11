@@ -1,0 +1,41 @@
+{
+  "BreachMetrics": { "risk": [{ "risk_label": "Medium", "risk_score": 40 }] },
+  "BreachesSummary": { "site": "ExampleShop;FakeForum" },
+  "ExposedBreaches": {
+    "breaches_details": [
+      {
+        "breach": "ExampleShop",
+        "details": "Invented breach used for tests only.",
+        "domain": "exampleshop.invalid",
+        "industry": "Retail",
+        "logo": "https://example.invalid/logo.png",
+        "password_risk": "plaintext",
+        "references": "",
+        "searchable": "Yes",
+        "verified": "Yes",
+        "xposed_data": "Email addresses;Passwords;Names;Phone numbers",
+        "xposed_date": "2021",
+        "xposed_records": 12345,
+        "added": "2022-01-01T00:00:00+00:00"
+      },
+      {
+        "breach": "FakeForum",
+        "details": "Another invented breach.",
+        "domain": "fakeforum.invalid",
+        "industry": "Forum",
+        "logo": "",
+        "password_risk": "unknown",
+        "references": "",
+        "searchable": "Yes",
+        "verified": "No",
+        "xposed_data": "Email addresses;Usernames;IP addresses;Holograms",
+        "xposed_date": "2019",
+        "xposed_records": 678,
+        "added": "2020-01-01T00:00:00+00:00"
+      }
+    ]
+  },
+  "ExposedPastes": null,
+  "PasteMetrics": null,
+  "PastesSummary": { "cnt": 0, "domain": "", "tmpstmp": "" }
+}
