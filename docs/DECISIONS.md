@@ -223,6 +223,31 @@ Questions à trancher :
   télécharger.
 - Aucune clé API dans la CI : les tests utilisent uniquement des fixtures.
 
+## D12. Cadre validé par l'enseignant
+
+Date : 2026-11-11
+
+L'enseignant responsable a précisé le cadre du projet (information orale, à
+confirmer par écrit) :
+
+- Le projet peut utiliser toutes les informations publiques, y compris les
+  bases de données volées qui ont été rendues publiques. La validation
+  demandée dans D8 pour Snusbase et Dehashed est donc donnée sur le principe.
+- Toute API ou tout service payant doit faire l'objet d'un budget, préparé et
+  défendu par les élèves avant l'achat. Le budget est dans `BUDGET.md`.
+
+Conséquences :
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **Interroger les fuites publiques par des services qui les indexent (retenu)** | Aucune donnée de tiers stockée chez nous ; les invariants (zéro stockage, liste blanche) restent respectés ; une requête ne renvoie que les fiches liées à la saisie du visiteur. | Payant pour la recherche par téléphone ou pseudo ; dépend de services externes. |
+| Télécharger les fuites publiques et les interroger en local | Aucun coût, aucune dépendance. | Stocke sur le poste les données de millions de personnes : contraire à l'invariant « zéro stockage » et à la nLPD (minimisation). |
+
+Le mode `deep` (D10) peut être développé. Les invariants de `ARCHITECTURE.md`
+(section 2) s'appliquent sans exception : aucun mot de passe ni hash affiché,
+valeurs masquées, règle anti-homonymes. Aucun service payant n'est souscrit
+avant l'acceptation du budget.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -237,3 +262,4 @@ Questions à trancher :
 | Premier provider | XposedOrNot | Have I Been Pwned |
 | Modes | Une image, `APP_MODE` à l'exécution | Deux images |
 | CI/CD | Ouverte (D11) | |
+| Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
