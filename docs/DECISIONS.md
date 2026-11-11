@@ -148,6 +148,8 @@ mise en place). Une fois fusionnée dans `main`, chaque fonctionnalité ou
 correction est développée sur sa propre branche, puis intégrée dans `main` par
 une pull request relue par l'autre membre du binôme.
 
+La règle de relecture est remplacée par D14.
+
 ## D10. Modes surface et deep
 
 Date : 2026-11-10
@@ -201,7 +203,8 @@ exception.
 
 Date : 2026-11-10
 
-Statut : ouverte, pas encore tranchée.
+Statut : ouverte, pas encore tranchée. La CI de vérification (secrets et
+documentation) est en place depuis D13.
 
 Nous prévoyons d'utiliser GitHub Actions pour la CI/CD et de stocker l'image
 Docker sur GitHub (GitHub Container Registry, `ghcr.io`). Une fois tranchée,
@@ -248,6 +251,57 @@ Le mode `deep` (D10) peut être développé. Les invariants de `ARCHITECTURE.md`
 valeurs masquées, règle anti-homonymes. Aucun service payant n'est souscrit
 avant l'acceptation du budget.
 
+## D13. CI de vérification
+
+Date : 2026-11-11
+
+Tant que le projet ne contient pas de code à builder, la CI vérifie les
+secrets et la documentation. Elle répond en partie à la première question de
+D11. Le build, les tests et la publication de l'image restent ouverts dans D11.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **gitleaks (retenu)** | Analyse tout l'historique Git, pas seulement le dernier commit ; action GitHub gratuite pour un compte personnel ; règles connues pour les clés API courantes. | Peut signaler des faux positifs, à exclure dans un fichier de configuration. |
+| TruffleHog | Peut vérifier si une clé trouvée est encore valide. | Plus lourd à configurer ; la vérification envoie la clé au service concerné. |
+| Secret scanning de GitHub seul | Déjà activé, bloque le push avant l'arrivée du secret. | Couvre seulement les formats de clés connus de GitHub ; pas de contrôle visible dans la pull request. |
+
+Gitleaks est retenu en complément du secret scanning de GitHub : le secret
+scanning bloque le push, gitleaks contrôle chaque pull request et tout
+l'historique.
+
+Pour la documentation :
+
+- markdownlint vérifie la structure des fichiers Markdown (titres, listes,
+  tableaux, blocs de code). La longueur des lignes n'est pas vérifiée, car les
+  tableaux et les schémas ne peuvent pas être coupés.
+- lychee vérifie les liens et les ancres entre les documents, par exemple les
+  renvois de `ARCHITECTURE.md` vers les décisions.
+
+Ces deux contrôles ne tournent que si `docs/` change. Les actions sont
+épinglées par SHA de commit : une version publiée ne peut pas être remplacée
+par du code différent sans que le workflow change. Les outils prévus pour plus
+tard (Dependabot, CodeQL, Trivy) sont dans `IDEES.md`, I2.
+
+## D14. Protection de main et relecture
+
+Date : 2026-11-11
+
+Remplace la règle de relecture de D9.
+
+Tiago est responsable du dépôt et relit le travail d'Enzo. Les pull requests
+d'Enzo doivent être approuvées par Tiago avant la fusion. Tiago peut pousser
+sur `main` et fusionner ses propres pull requests sans approbation.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Ruleset avec contournement pour le rôle admin (retenu)** | Les règles s'appliquent à Enzo ; Tiago garde tous les droits ; chaque contournement est enregistré par GitHub. | Le contournement s'applique à toutes les règles, y compris le force push. |
+| Relecture croisée sans contournement | Chaque changement est relu par une deuxième personne. | Ne correspond pas à la répartition des rôles dans le binôme. |
+| Protection de branche classique | Interface plus ancienne et connue. | GitHub recommande les rulesets, qui permettent une liste de contournement par rôle. |
+
+Le réglage détaillé du ruleset est dans `ARCHITECTURE.md`, section 8. Le check
+`gitleaks-scan` est obligatoire. Les push directs de Tiago sur `main` sont
+quand même analysés, car `ci.yml` tourne à chaque push sur `main`.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -261,5 +315,7 @@ avant l'acceptation du budget.
 | Exécution | Docker compose (local) | `npm run start` |
 | Premier provider | XposedOrNot | Have I Been Pwned |
 | Modes | Une image, `APP_MODE` à l'exécution | Deux images |
-| CI/CD | Ouverte (D11) | |
+| CI | GitHub Actions : gitleaks, markdownlint, lychee (D13) | |
+| CD et image | Ouverte (D11) | |
+| Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |

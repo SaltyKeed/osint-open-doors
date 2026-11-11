@@ -58,6 +58,10 @@ Documentation sobre et factuelle, comme écrite par les élèves : phrases simpl
 texte brut sans emoji, sections séparées uniquement par des titres. Dans les
 tableaux comparatifs, l'option choisie est marquée « (retenu) ».
 
+La CI vérifie les fichiers de `docs/` avec markdownlint et lychee : tableaux au
+format `| --- | --- |` (un espace autour de chaque `|`), langage indiqué sur
+chaque bloc de code (`text` pour un schéma), liens et ancres valides.
+
 ## Outils Claude
 
 Sous-agents dans `.claude/agents/`, plugins déclarés dans
@@ -81,7 +85,11 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
 
 - `main` est la branche de référence. Chaque fonctionnalité ou correction a sa
   propre branche créée depuis `main` (`feat/…`, `fix/…`, `docs/…`, `chore/…`),
-  intégrée par une pull request relue par l'autre membre du binôme.
+  intégrée par une pull request.
+- Tiago est responsable du dépôt : il relit et approuve les pull requests
+  d'Enzo, et peut fusionner les siennes sans approbation. Le check
+  `gitleaks-scan` doit passer. Détail : `docs/ARCHITECTURE.md`, section 8, et
+  `docs/DECISIONS.md`, D14.
 - La branche `research` sert uniquement au démarrage du projet ; elle n'est plus
   utilisée une fois fusionnée dans `main`.
 - Les élèves font eux-mêmes les commits et les push. À la fin d'une tâche,
