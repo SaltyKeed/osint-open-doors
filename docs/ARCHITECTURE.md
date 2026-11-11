@@ -160,3 +160,9 @@ complémentaire. Les mesures prises sont le consentement explicite, la
 minimisation des données (métadonnées uniquement, liste blanche) et l'absence
 de conservation (pas de stockage, conteneur en lecture seule, pas de logs de
 données personnelles).
+
+L'enseignant responsable autorise l'utilisation de toutes les informations
+publiques, y compris les bases de données volées rendues publiques. Elles sont
+interrogées par des services qui les indexent, jamais téléchargées sur le
+poste ([DECISIONS.md, D12](DECISIONS.md#d12-cadre-validé-par-lenseignant)).
+Les services payants suivent le budget de [BUDGET.md](BUDGET.md).
