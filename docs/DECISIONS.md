@@ -148,6 +148,10 @@ mise en place). Une fois fusionnée dans `main`, chaque fonctionnalité ou
 correction est développée sur sa propre branche, puis intégrée dans `main` par
 une pull request relue par l'autre membre du binôme.
 
+Les commits, push et pull requests sont faits par les élèves. Par défaut,
+Claude propose les commandes et le message ; chaque élève peut l'autoriser à
+les exécuter lui-même dans son `CLAUDE.local.md`. Les commits et pull requests
+ne mentionnent pas Claude ni l'IA.
 La règle de relecture est remplacée par D14.
 
 ## D10. Modes surface et deep
