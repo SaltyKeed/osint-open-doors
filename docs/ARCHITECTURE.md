@@ -225,3 +225,48 @@ poste ([DECISIONS.md, D12](DECISIONS.md#d12-cadre-validé-par-lenseignant)).
 Les services payants suivent le budget de [BUDGET.md](BUDGET.md).
 
 ## 8. Intégration continue et réglages GitHub
+
+Les choix sont expliqués dans
+[DECISIONS.md, D13](DECISIONS.md#d13-ci-de-vérification) et
+[D14](DECISIONS.md#d14-protection-de-main-et-relecture).
+
+### Workflows GitHub Actions
+
+| Workflow | Job | Contrôle | Déclenchement |
+| --- | --- | --- | --- |
+| `ci.yml` | `gitleaks-scan` | Secrets dans tout l'historique Git (gitleaks) | Chaque pull request, chaque push sur `main` |
+| `docs.yml` | `markdownlint` | Structure des fichiers Markdown de `docs/` | Pull request ou push sur `main` qui modifie `docs/` |
+| `docs.yml` | `link check` | Liens et ancres des fichiers de `docs/` (lychee) | Idem |
+
+- Les actions sont épinglées par SHA de commit, avec la version en commentaire
+  (`# v7.0.1`).
+- Chaque workflow déclare ses permissions : lecture seule, plus l'écriture de
+  commentaires de pull request pour gitleaks.
+- Les règles de markdownlint sont dans `docs/.markdownlint.jsonc`. Les
+  tableaux utilisent le style `| --- |` et chaque bloc de code indique un
+  langage.
+
+### Ruleset de la branche `main`
+
+Le ruleset `main-branch` (Settings, Rules) s'applique à la branche par défaut.
+
+| Règle | Réglage |
+| --- | --- |
+| Suppression de la branche | Interdite |
+| Force push | Interdit |
+| Pull request obligatoire | 1 approbation ; approbation annulée par un nouveau commit ; conversations résolues avant la fusion |
+| Méthodes de fusion | Merge et squash |
+| Checks obligatoires | `gitleaks-scan`, branche à jour avec `main` |
+| Contournement | Rôle Repository admin (responsable du dépôt), toujours autorisé |
+
+`markdownlint` et `link check` ne sont pas obligatoires : `docs.yml` ne tourne
+que si `docs/` change, et un check obligatoire qui ne tourne pas bloquerait
+les autres pull requests.
+
+### Autres réglages du dépôt
+
+| Menu | Réglage |
+| --- | --- |
+| General, Pull Requests | Suppression automatique de la branche après la fusion |
+| Advanced Security | Secret scanning et push protection activés ; Dependabot alerts activé |
+| Actions, General | Jeton des workflows en lecture seule ; les workflows ne peuvent pas approuver de pull request ; actions épinglées par SHA obligatoires ; approbation requise pour les workflows des contributeurs externes |
