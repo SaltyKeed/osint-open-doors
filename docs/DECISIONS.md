@@ -248,6 +248,42 @@ Le mode `deep` (D10) peut être développé. Les invariants de `ARCHITECTURE.md`
 valeurs masquées, règle anti-homonymes. Aucun service payant n'est souscrit
 avant l'acceptation du budget.
 
+## D13. Mise en place du projet
+
+Date : 2026-11-11
+
+Le projet a été créé avec `create-next-app` (TypeScript, Tailwind, ESLint, App
+Router, dossier `src/`), puis shadcn/ui a été initialisé avec `shadcn init`.
+Les choix faits pendant la mise en place sont les suivants.
+
+Base des composants shadcn/ui :
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **Radix (retenu)** | Composants accessibles, très utilisés ; c'est la base citée dans D3. | Aucun pour notre usage. |
+| Base UI | Proposée par défaut par la nouvelle version de shadcn. | Plus récente, moins d'exemples ; D3 avait été décidé sur Radix. |
+| React Aria | Très complète sur l'accessibilité. | Moins répandue avec shadcn. |
+
+Autres choix :
+
+- Preset shadcn « Nova » (icônes Lucide, police Geist). Il pourra être adapté
+  quand l'identité visuelle sera définie.
+- ESLint, installé par `create-next-app` avec la configuration de Next.js,
+  pour détecter les erreurs courantes (`npm run lint`).
+- Le paquet `cn`, publié par l'auteur de shadcn, remplace `clsx` et
+  `tailwind-merge` pour combiner les classes Tailwind.
+- `@types/node` en version 24, pour correspondre à Node.js 24 (poste de
+  développement et image `node:24-alpine`). La version 20 installée par défaut
+  bloquait l'installation de Vitest.
+- Vitest tourne dans un environnement Node (pas de navigateur simulé), car le
+  domaine et les mappers sont du TypeScript pur. Le paquet `server-only`
+  provoque une erreur hors d'un build Next.js : dans les tests, il est remplacé
+  par un module vide (`src/tests/stubs/server-only.ts`).
+- `npm run typecheck` lance `next typegen` avant `tsc`, car Next.js génère
+  certains types (par exemple `LayoutProps`) dans `.next/types`.
+- Framer Motion n'est pas encore installé : il sera ajouté avec la première
+  animation.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -258,6 +294,7 @@ avant l'acceptation du budget.
 | Animations | Framer Motion | CSS pur |
 | Validation | zod | Valibot |
 | Tests | Vitest (+ Playwright plus tard) | Jest |
+| Qualité du code | ESLint (configuration Next.js) | Aucun |
 | Exécution | Docker compose (local) | `npm run start` |
 | Premier provider | XposedOrNot | Have I Been Pwned |
 | Modes | Une image, `APP_MODE` à l'exécution | Deux images |

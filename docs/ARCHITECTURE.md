@@ -84,8 +84,23 @@ src/
 │   └── search-service.ts         ← orchestration (Promise.allSettled + timeout)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
-└── tests/fixtures/               ← réponses d'API fictives (jamais de vraies données)
+│   └── ui/                       ← composants shadcn/ui copiés dans le projet
+├── lib/utils.ts                  ← fonction cn() pour combiner les classes Tailwind
+└── tests/
+    ├── fixtures/                 ← réponses d'API fictives (jamais de vraies données)
+    └── stubs/server-only.ts      ← remplace server-only dans Vitest (voir D13)
 ```
+
+À la racine du dépôt :
+
+- `next.config.ts` : configuration Next.js (`output: "standalone"`).
+- `vitest.config.mts` : configuration des tests (environnement Node, alias
+  `@/`, remplacement de `server-only`).
+- `components.json` : configuration de shadcn/ui (base Radix, preset Nova).
+- `.env.example` : liste des variables d'environnement attendues, sans valeur.
+- `AGENTS.md` : fichier généré par Next.js 16, qui demande de lire la
+  documentation livrée dans `node_modules/next/dist/docs/` avant d'écrire du
+  code Next.js. `next dev` le recrée s'il est supprimé.
 
 L'interface commune à tous les providers est la suivante :
 
@@ -119,12 +134,13 @@ correspondante.
 
 | Couche | Technologie | Décision |
 |---|---|---|
-| Framework | Next.js (App Router) | [D1](DECISIONS.md#d1-framework-front-et-serveur) |
-| Langage | TypeScript (mode strict) | [D2](DECISIONS.md#d2-langage) |
-| UI | Tailwind CSS, shadcn/ui | [D3](DECISIONS.md#d3-ui-et-style) |
-| Animations | Framer Motion | [D4](DECISIONS.md#d4-animations) |
-| Validation | zod | [D5](DECISIONS.md#d5-validation-des-données) |
-| Tests | Vitest | [D6](DECISIONS.md#d6-tests) |
+| Framework | Next.js 16 (App Router), React 19 | [D1](DECISIONS.md#d1-framework-front-et-serveur) |
+| Langage | TypeScript 5 (mode strict), Node.js 24 | [D2](DECISIONS.md#d2-langage) |
+| UI | Tailwind CSS 4, shadcn/ui (base Radix) | [D3](DECISIONS.md#d3-ui-et-style), [D13](DECISIONS.md#d13-mise-en-place-du-projet) |
+| Animations | Framer Motion (pas encore installé) | [D4](DECISIONS.md#d4-animations) |
+| Validation | zod 4 | [D5](DECISIONS.md#d5-validation-des-données) |
+| Tests | Vitest 5 | [D6](DECISIONS.md#d6-tests) |
+| Qualité du code | ESLint (configuration Next.js) | [D13](DECISIONS.md#d13-mise-en-place-du-projet) |
 | Exécution | Docker compose, en local | [D7](DECISIONS.md#d7-exécution-et-déploiement) |
 | Provider | XposedOrNot (email) ; Snusbase et Dehashed prévus (nom, téléphone) | [D8](DECISIONS.md#d8-sources-de-données-providers) |
 | Modes | `surface` et `deep`, une image, `APP_MODE` à l'exécution | [D10](DECISIONS.md#d10-modes-surface-et-deep) |

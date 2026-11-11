@@ -51,6 +51,11 @@ Ils s'appliquent à tout le code, sans exception. Détail et justification :
   schéma zod.
 - Logique métier dans `src/server/domain/`, sans appel réseau, testée avec
   Vitest. Tests écrits avant le code pour les mappers et le domaine.
+- Next.js 16 diffère des versions plus anciennes : avant d'écrire du code
+  Next.js, lire la documentation livrée dans `node_modules/next/dist/docs/`
+  (voir `AGENTS.md`).
+- Avant une pull request : `npm run lint`, `npm run typecheck`, `npm test` et
+  `npm run build` passent.
 
 ## Style des documents
 

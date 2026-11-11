@@ -6,3 +6,18 @@
 # Claude Code (fichiers personnels)
 CLAUDE.local.md
 .claude/settings.local.json
+
+# Dependances
+/node_modules
+
+# Next.js (build et cache)
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Tests
+/coverage
+
+# Logs npm
+npm-debug.log*
