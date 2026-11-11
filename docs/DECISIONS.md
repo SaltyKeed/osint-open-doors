@@ -659,6 +659,60 @@ reducedMotion="user"` respecte le réglage « réduire les animations ».
 | **Onglets et plan d'action fixe (retenu)** | Tout est visible sans long défilement ; le plan d'action reste à l'écran ; preuves et pistes séparées. | Un clic pour passer d'une catégorie à l'autre. |
 | Une colonne avec sections repliées et barre fixe en haut (proposition UX) | Lecture linéaire. | Page très longue avec plus de 200 fuites. |
 
+## D23. Globe 3D pendant la recherche
+
+Date : 2026-11-11
+
+Pendant la recherche, la barre de progression est remplacée par un globe 3D
+qui tourne. Des arcs partent du poste (Neuchâtel, latitude 46.99, longitude
+6.93) vers les lieux où partent réellement les données du visiteur. Le message
+est pédagogique : pour te chercher, tes données ont quitté la Suisse.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Composant « GitHub Globe » d'Aceternity UI (retenu, demande du binôme)** | Rendu soigné, arcs animés, atmosphère ; s'installe par le registre shadcn. | Lourd (three.js, three-globe, React Three Fiber, drei, environ 600 Ko à 1 Mo de JavaScript, plus 417 Ko de contours de pays). |
+| cobe | Environ 5 Ko, globe en points, très fluide. | Pas d'arcs animés : il faudrait les simuler. |
+| Garder la barre de progression | Aucune dépendance. | Moins parlant pour les visiteurs. |
+
+Installation :
+
+- Le registre `@aceternity` est ajouté dans `components.json`. La commande
+  `npx shadcn add @aceternity/globe` demande `@react-three/fiber@alpha`
+  (version 10 de test), incompatible avec `@react-three/drei`, qui exige la
+  version 9. Les dépendances sont donc installées avec la version stable :
+  `three`, `three-globe`, `@react-three/fiber` 9, `@react-three/drei`,
+  `@types/three`. Le fichier du composant est repris tel que le registre le
+  fournit (`shadcn add --view`), dans `src/components/ui/globe.tsx`, puis
+  corrigé pour le lint et le typage strict sans changer son comportement.
+- Les contours des pays (`globe.json`, GeoJSON de 176 pays, vérifié : aucun
+  script) sont dans `src/data/globe.json`, car l'alias `@/` du projet pointe
+  vers `src/`.
+
+Fonctionnement :
+
+- Le composant three.js est chargé seulement dans le navigateur
+  (`next/dynamic` avec `ssr: false`) et préchargé dès que le visiteur tape
+  dans la barre, pour éviter un délai au lancement.
+- Le serveur répond en une seule fois : il n'y a pas de progression réelle
+  source par source. Les étapes et les arcs suivent donc le temps écoulé, et
+  le pourcentage affiché est une estimation, présentée comme telle.
+- Couleurs de la charte : globe encre `#1b2a4a`, pays en points blancs, arcs
+  et atmosphère jaune surligneur `#ffe45c`.
+- Si l'utilisateur a demandé moins d'animations, ou si WebGL n'est pas
+  disponible, l'ancienne liste avec la barre de progression s'affiche. La
+  barre reste dans la page pour les lecteurs d'écran.
+
+Destinations des arcs (lieu du siège du service qui reçoit les données) :
+
+| Étape | Service | Lieu |
+| --- | --- | --- |
+| Web, presse, réseaux sociaux, sites de signalement d'appels | Tavily | New York |
+| Annuaire téléphonique | search.ch | Zurich |
+| GitHub et Gravatar, archives d'Internet, Wikidata | GitHub, Automattic, Internet Archive, Wikimedia | San Francisco |
+| ORCID | ORCID | Bethesda |
+| Fuites de données | XposedOrNot | Aucun arc : pays non trouvé |
+| Environ 650 sites pour les pseudos | Sites du monde entier | Aucun arc : pas de lieu unique |
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |

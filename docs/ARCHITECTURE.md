@@ -103,11 +103,14 @@ src/
 │   ├── search-screen.tsx         ← écran de recherche (barre, aide, consentement)
 │   ├── search-bar.tsx            ← barre unique : saisie, ajout et retrait d'étiquettes
 │   ├── search-tag.tsx            ← une étiquette (type, valeur masquée, boutons)
-│   ├── loading-screen.tsx        ← écran d'attente (sources interrogées, temps)
+│   ├── loading-screen.tsx        ← écran d'attente (étapes, globe ou barre de repli)
+│   ├── search-globe-loader.tsx   ← globe 3D : arcs vers les pays des sources (D23)
+│   ├── globe-scene.tsx           ← scène three.js, chargée seulement dans le navigateur
 │   ├── results-screen.tsx        ← résultats : onglets, plan d'action, effacement
 │   ├── inactivity-dialog.tsx     ← avertissement avant l'effacement automatique
 │   ├── labels.ts                 ← libellés affichés (catégories, sources)
-│   └── ui/                       ← composants shadcn/ui copiés dans le projet
+│   └── ui/                       ← composants shadcn/ui copiés dans le projet (globe.tsx : Aceternity UI)
+├── data/globe.json               ← contours des pays pour le globe (GeoJSON)
 ├── lib/
 │   ├── utils.ts                  ← fonction cn() pour combiner les classes Tailwind
 │   └── detect.ts                 ← reconnaissance automatique de la saisie (navigateur)
@@ -174,6 +177,7 @@ correspondante.
 | Langage | TypeScript 5 (mode strict), Node.js 24 | [D2](DECISIONS.md#d2-langage) |
 | UI | Tailwind CSS 4, shadcn/ui (base Radix) | [D3](DECISIONS.md#d3-ui-et-style), [D15](DECISIONS.md#d15-mise-en-place-du-projet) |
 | Animations | Framer Motion (paquet `motion`, import `motion/react`) | [D4](DECISIONS.md#d4-animations), [D22](DECISIONS.md#d22-révision-de-linterface-par-les-agents-ux-et-ui) |
+| Globe 3D | three.js, three-globe, React Three Fiber 9, drei (composant Aceternity UI) | [D23](DECISIONS.md#d23-globe-3d-pendant-la-recherche) |
 | Validation | zod 4 | [D5](DECISIONS.md#d5-validation-des-données) |
 | Tests | Vitest 5 | [D6](DECISIONS.md#d6-tests) |
 | Qualité du code | ESLint (configuration Next.js) | [D15](DECISIONS.md#d15-mise-en-place-du-projet) |

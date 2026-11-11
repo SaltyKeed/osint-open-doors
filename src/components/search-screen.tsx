@@ -3,6 +3,7 @@
 import { ChevronDown, Search } from "lucide-react";
 import { useState } from "react";
 import { addEntries, type Entry, entriesToPayload, SearchBar } from "@/components/search-bar";
+import { preloadGlobe } from "@/components/search-globe-loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -105,6 +106,8 @@ export function SearchScreen({
           text={text}
           onTextChange={(value) => {
             onTextChange(value);
+            // Load the 3D globe while the visitor types, so it is ready when the search starts.
+            preloadGlobe();
             if (unknown.length > 0) setUnknown([]);
           }}
           onUnknown={setUnknown}
