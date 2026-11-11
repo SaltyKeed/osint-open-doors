@@ -1,0 +1,10 @@
+// markdownlint rules for docs/. Every other rule keeps its default.
+// List of rules: https://github.com/DavidAnson/markdownlint#rules--aliases
+{
+  // Prose is wrapped by hand around 80 characters, but tables and
+  // diagrams are wider and cannot be wrapped.
+  "MD013": false,
+
+  // The same heading (e.g. "Principe") may repeat under different parents.
+  "MD024": { "siblings_only": true }
+}

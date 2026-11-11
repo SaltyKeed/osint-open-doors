@@ -173,7 +173,7 @@ Une seule image est retenue. Le mode est choisi au lancement du conteneur.
 `compose.yaml` qui les transmet, avec `env_file: ${ENV_FILE:-.env.surface}`.
 Sans précision, le conteneur démarre en `surface` :
 
-```
+```powershell
 docker compose up                              # surface (par défaut)
 $env:ENV_FILE=".env.deep"; docker compose up   # deep (PowerShell)
 ```

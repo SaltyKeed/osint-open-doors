@@ -29,7 +29,7 @@ ensuite un plan d'action concret.
 
 ## 3. Vue d'ensemble
 
-```
+```text
  ┌──────────── Navigateur (PC école, mode kiosque) ─────────────┐
  │  Formulaire + consentement → écran de résultats             │
  │  • POST uniquement, autocomplete="off", pas de localStorage  │
@@ -57,7 +57,7 @@ port). Le reste de l'application ne connaît que cette interface. Pour changer
 ou ajouter une API, il suffit d'ajouter un dossier dans `providers/` et une
 ligne dans `registry.ts`.
 
-```
+```text
 src/
 ├── app/                          ← Next.js : UI + routes, aussi léger que possible
 │   ├── page.tsx                  ← formulaire + consentement
