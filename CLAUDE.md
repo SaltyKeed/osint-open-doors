@@ -24,6 +24,13 @@ même pull request : `README.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`,
 `CLAUDE.md`, `.env.example`. La documentation décrit toujours l'état actuel du
 projet.
 
+`docs/BUDGET.md` liste les services payants et leur coût. Aucun service payant
+n'est souscrit ni intégré avant l'acceptation du budget par l'enseignant.
+
+`docs/IDEES.md` garde les idées d'amélioration pas encore décidées. Une idée
+retenue devient une décision dans `docs/DECISIONS.md` et est retirée de ce
+fichier.
+
 ## Invariants de confidentialité
 
 Ils s'appliquent à tout le code, sans exception. Détail et justification :
@@ -84,9 +91,12 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
   intégrée par une pull request relue par l'autre membre du binôme.
 - La branche `research` sert uniquement au démarrage du projet ; elle n'est plus
   utilisée une fois fusionnée dans `main`.
-- Claude peut créer la branche, faire les commits, pousser et ouvrir la pull
-  request avec `gh`, en demandant la relecture à l'autre membre du binôme.
-  Messages de commit en anglais, style Conventional Commits. Ni les commits ni
+- Commits, push et pull requests : par défaut, Claude donne les commandes
+  `git add`, `git commit` et `git push` avec une suggestion de message, et
+  l'élève les lance. Un élève peut autoriser Claude à créer la branche,
+  commiter, pousser et ouvrir la pull request avec `gh` en l'indiquant dans son
+  `CLAUDE.local.md`. La relecture est demandée à l'autre membre du binôme.
+- Messages de commit en anglais, style Conventional Commits. Ni les commits ni
   les pull requests ne mentionnent Claude ou l'IA : l'attribution automatique
   est désactivée dans `.claude/settings.json` (clé `attribution`).
 - Avant de commencer un travail, vérifier que `main` et la branche en cours sont

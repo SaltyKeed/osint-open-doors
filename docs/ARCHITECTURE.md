@@ -66,7 +66,7 @@ src/
 ├── server/                       ← code serveur uniquement (import "server-only")
 │   ├── providers/
 │   │   ├── types.ts              ← le port : interface BreachProvider
-│   │   ├── registry.ts           ← providers actifs (selon les clés présentes en .env)
+│   │   ├── registry.ts           ← providers actifs selon `APP_MODE` (D10)
 │   │   ├── xposedornot/
 │   │   │   ├── client.ts         ← appel HTTP (fetch, timeout, clé)
 │   │   │   ├── schema.ts         ← zod : forme de la réponse brute
@@ -127,6 +127,7 @@ correspondante.
 | Tests | Vitest | [D6](DECISIONS.md#d6-tests) |
 | Exécution | Docker compose, en local | [D7](DECISIONS.md#d7-exécution-et-déploiement) |
 | Provider | XposedOrNot (email) ; Snusbase et Dehashed prévus (nom, téléphone) | [D8](DECISIONS.md#d8-sources-de-données-providers) |
+| Modes | `surface` et `deep`, une image, `APP_MODE` à l'exécution | [D10](DECISIONS.md#d10-modes-surface-et-deep) |
 
 ## 6. Exécution
 
@@ -138,8 +139,16 @@ Le choix de Docker compose en local est expliqué dans
 - Le conteneur tourne avec un utilisateur non-root.
 - `read_only: true` et `tmpfs` sur `/tmp` : le conteneur ne peut pas écrire sur
   le disque.
-- Les clés API sont dans un fichier `.env` non versionné. Le fichier
-  `.env.example` est versionné et liste les variables attendues.
+- Une seule image pour les deux modes. La variable `APP_MODE` (`surface` ou
+  `deep`) choisit au lancement les providers actifs
+  ([DECISIONS.md, D10](DECISIONS.md#d10-modes-surface-et-deep)). Elle est
+  validée par zod au démarrage. Sans précision, le conteneur démarre en
+  `surface`.
+- `compose.yaml` transmet les variables au conteneur avec
+  `env_file: ${ENV_FILE:-.env.surface}`.
+- Les clés API sont dans `.env.surface` et `.env.deep`, non versionnés. Le
+  fichier `.env.example` est versionné et liste toutes les variables attendues,
+  sans valeur.
 - Le navigateur du poste est lancé avec
   `--kiosk --incognito http://localhost:3000`.
 
@@ -151,3 +160,9 @@ complémentaire. Les mesures prises sont le consentement explicite, la
 minimisation des données (métadonnées uniquement, liste blanche) et l'absence
 de conservation (pas de stockage, conteneur en lecture seule, pas de logs de
 données personnelles).
+
+L'enseignant responsable autorise l'utilisation de toutes les informations
+publiques, y compris les bases de données volées rendues publiques. Elles sont
+interrogées par des services qui les indexent, jamais téléchargées sur le
+poste ([DECISIONS.md, D12](DECISIONS.md#d12-cadre-validé-par-lenseignant)).
+Les services payants suivent le budget de [BUDGET.md](BUDGET.md).

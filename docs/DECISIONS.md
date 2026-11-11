@@ -7,6 +7,9 @@ décrite dans `ARCHITECTURE.md`.
 Une nouvelle décision s'ajoute à la fin, avec un numéro et une date. Une
 décision remplacée n'est pas supprimée : elle est marquée « remplacée par Dn ».
 
+Statuts possibles : ouverte (en discussion, aucune option retenue), retenue,
+remplacée par Dn. Sans mention de statut, une décision est retenue.
+
 ## Critères généraux
 
 Les choix de stack ont été faits selon trois critères :
@@ -145,6 +148,111 @@ mise en place). Une fois fusionnée dans `main`, chaque fonctionnalité ou
 correction est développée sur sa propre branche, puis intégrée dans `main` par
 une pull request relue par l'autre membre du binôme.
 
+Les commits, push et pull requests sont faits par les élèves. Par défaut,
+Claude propose les commandes et le message ; chaque élève peut l'autoriser à
+les exécuter lui-même dans son `CLAUDE.local.md`. Les commits et pull requests
+ne mentionnent pas Claude ni l'IA.
+
+## D10. Modes surface et deep
+
+Date : 2026-11-10
+
+L'application a deux usages :
+
+- `surface` : sources légales et publiques (fuites connues par email, voir
+  D8). C'est le mode des portes ouvertes. Les autres sources de ce mode
+  (annuaires, recherche web, presse) feront l'objet d'une décision séparée.
+- `deep` : en plus des sources de `surface`, consultation de bases de données
+  volées par une API payante (Snusbase, Dehashed ou équivalent, voir D8).
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **Une image, mode choisi à l'exécution par `APP_MODE` (retenu)** | Une seule image à construire et à tester ; le code est commun, seuls les providers actifs changent ; correspond à l'architecture ports & adapters (`registry.ts`) ; Next.js lit les variables serveur à l'exécution, un seul build suffit. | L'image `surface` contient aussi le code des providers deep (inutilisable sans clé). |
+| Deux images, mode fixé au build | L'image `surface` ne contient pas le code deep. | Deux builds et deux séries de tests ; les images peuvent diverger. |
+| Deux branches Git permanentes | Séparation visible dans le dépôt. | Chaque correction doit être fusionnée deux fois ; les branches divergent ; `main` n'est plus la référence (contraire à D9). |
+
+Une seule image est retenue. Le mode est choisi au lancement du conteneur.
+
+`docker compose --env-file` sert seulement à remplacer les `${...}` dans
+`compose.yaml` : il ne transmet pas les variables au conteneur. C'est donc
+`compose.yaml` qui les transmet, avec `env_file: ${ENV_FILE:-.env.surface}`.
+Sans précision, le conteneur démarre en `surface` :
+
+```
+docker compose up                              # surface (par défaut)
+$env:ENV_FILE=".env.deep"; docker compose up   # deep (PowerShell)
+```
+
+Les fichiers `.env.surface` et `.env.deep` contiennent les clés et ne sont pas
+versionnés (`.gitignore` ignore `.env.*`). Le seul fichier versionné est
+`.env.example`, qui liste toutes les variables sans valeur.
+
+Règles qui font du mode `surface` une garantie :
+
+1. Les variables d'environnement sont validées par zod au démarrage.
+   `APP_MODE` vaut `surface` ou `deep`. En `deep`, une clé deep manquante
+   empêche le démarrage.
+2. En `surface`, `registry.ts` n'enregistre aucun provider deep, même si une
+   clé deep est présente. Le mode décide, pas la présence d'une clé.
+3. Un test Vitest vérifie qu'en `surface` aucun provider deep n'est actif.
+4. Le mode actif est affiché discrètement dans l'interface, pour vérifier le
+   jour des portes ouvertes que le poste tourne en `surface`.
+
+Le mode `deep` reste soumis à la validation de l'enseignant (D8). Les
+invariants de `ARCHITECTURE.md` (section 2) s'appliquent aux deux modes sans
+exception.
+
+## D11. CI/CD et stockage de l'image
+
+Date : 2026-11-10
+
+Statut : ouverte, pas encore tranchée.
+
+Nous prévoyons d'utiliser GitHub Actions pour la CI/CD et de stocker l'image
+Docker sur GitHub (GitHub Container Registry, `ghcr.io`). Une fois tranchée,
+cette décision complétera D7, qui prévoit aujourd'hui un build local.
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| GitHub Actions + GitHub Container Registry (envisagé) | Tout reste sur GitHub, à côté du code et des pull requests ; gratuit pour un package public, quota gratuit limité en privé ; standard en entreprise. | Le PC de l'école doit pouvoir télécharger l'image (connexion, authentification si le package est privé). |
+| Build local uniquement (situation actuelle, D7) | Rien à configurer. | Pas de tests automatiques sur les pull requests ; l'image dépend du PC qui la construit. |
+| Docker Hub | Registre le plus connu. | Un compte et un service de plus ; limites de téléchargement. |
+
+Questions à trancher :
+
+- Ce que la CI exécute à chaque pull request (lint, typage, Vitest dans les
+  deux modes, build de l'image).
+- Quand l'image est publiée (fusion dans `main`, tag de version) et comment
+  elle est taguée.
+- Package privé ou public, et comment le PC de l'école s'authentifie pour la
+  télécharger.
+- Aucune clé API dans la CI : les tests utilisent uniquement des fixtures.
+
+## D12. Cadre validé par l'enseignant
+
+Date : 2026-11-11
+
+L'enseignant responsable a précisé le cadre du projet (information orale, à
+confirmer par écrit) :
+
+- Le projet peut utiliser toutes les informations publiques, y compris les
+  bases de données volées qui ont été rendues publiques. La validation
+  demandée dans D8 pour Snusbase et Dehashed est donc donnée sur le principe.
+- Toute API ou tout service payant doit faire l'objet d'un budget, préparé et
+  défendu par les élèves avant l'achat. Le budget est dans `BUDGET.md`.
+
+Conséquences :
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **Interroger les fuites publiques par des services qui les indexent (retenu)** | Aucune donnée de tiers stockée chez nous ; les invariants (zéro stockage, liste blanche) restent respectés ; une requête ne renvoie que les fiches liées à la saisie du visiteur. | Payant pour la recherche par téléphone ou pseudo ; dépend de services externes. |
+| Télécharger les fuites publiques et les interroger en local | Aucun coût, aucune dépendance. | Stocke sur le poste les données de millions de personnes : contraire à l'invariant « zéro stockage » et à la nLPD (minimisation). |
+
+Le mode `deep` (D10) peut être développé. Les invariants de `ARCHITECTURE.md`
+(section 2) s'appliquent sans exception : aucun mot de passe ni hash affiché,
+valeurs masquées, règle anti-homonymes. Aucun service payant n'est souscrit
+avant l'acceptation du budget.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -157,3 +265,6 @@ une pull request relue par l'autre membre du binôme.
 | Tests | Vitest (+ Playwright plus tard) | Jest |
 | Exécution | Docker compose (local) | `npm run start` |
 | Premier provider | XposedOrNot | Have I Been Pwned |
+| Modes | Une image, `APP_MODE` à l'exécution | Deux images |
+| CI/CD | Ouverte (D11) | |
+| Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
