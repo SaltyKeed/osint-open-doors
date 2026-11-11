@@ -46,11 +46,16 @@ export type BreachFinding = FindingBase & {
   categories: DataCategory[];
 };
 
-// A public web page contains the visitor's email or phone number.
+// A public web page found with the visitor's data.
+// verified = the page text contains the visitor's email or phone.
+// Not verified = found by name only, maybe a homonym (D15).
 export type WebFinding = FindingBase & {
   kind: "web";
+  verified: boolean;
   site: string;
-  title: string; // personal values already masked
+  url: string;
+  title: string; // emails and phone numbers already masked
+  snippet: string; // emails and phone numbers already masked
 };
 
 // The visitor is listed in a public directory.

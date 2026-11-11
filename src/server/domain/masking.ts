@@ -1,4 +1,4 @@
-import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { findPhoneNumbersInText, parsePhoneNumberFromString } from "libphonenumber-js";
 import { phoneSearchVariants } from "./phone";
 import type { SearchQuery } from "./types";
 
@@ -43,6 +43,20 @@ export function maskName(...parts: string[]): string {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const EMAIL_IN_TEXT = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+
+// Masks every email and phone number inside a text, whoever they belong to:
+// page titles and snippets may contain the contact details of homonyms.
+export function maskContacts(text: string): string {
+  let masked = text.replace(EMAIL_IN_TEXT, (email) => maskEmail(email));
+  const phones = findPhoneNumbersInText(masked, "CH");
+  // Replace from the end so the earlier positions stay valid.
+  for (const found of [...phones].reverse()) {
+    masked = masked.slice(0, found.startsAt) + maskPhone(found.number.number) + masked.slice(found.endsAt);
+  }
+  return masked;
 }
 
 // Masks the visitor's own email and phone inside a text (page title, summary...).

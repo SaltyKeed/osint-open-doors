@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { maskEmail, maskInText, maskName, maskPhone } from "./masking";
+import { maskContacts, maskEmail, maskInText, maskName, maskPhone } from "./masking";
 
 describe("maskEmail", () => {
   it("keeps the first and last character of the local part and the domain", () => {
@@ -25,6 +25,18 @@ describe("maskPhone", () => {
 describe("maskName", () => {
   it("keeps only the first letter of each part", () => {
     expect(maskName("Jean", "Dupont")).toBe("J••• D•••••");
+  });
+});
+
+describe("maskContacts", () => {
+  it("masks any email and phone number found in a text", () => {
+    expect(maskContacts("Écrire à anne.martin@example.org ou au 032 000 12 34")).toBe(
+      "Écrire à a•••••••••n@example.org ou au +41 32 ••• •• 34",
+    );
+  });
+
+  it("leaves a text without contact details unchanged", () => {
+    expect(maskContacts("Jean Dupont gagne la course de 2019")).toBe("Jean Dupont gagne la course de 2019");
   });
 });
 

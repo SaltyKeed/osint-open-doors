@@ -48,7 +48,10 @@ const RULES: Rule[] = [
     },
   },
   {
-    applies: (findings) => hasKind("breach")(findings) || hasKind("web")(findings) || hasKind("directory")(findings),
+    applies: (findings) =>
+      hasKind("breach")(findings) ||
+      hasKind("directory")(findings) ||
+      findings.some((f) => f.kind === "web" && f.verified),
     action: {
       id: "phishing",
       title: "Se méfier des messages ciblés",
@@ -66,7 +69,7 @@ const RULES: Rule[] = [
     },
   },
   {
-    applies: hasKind("web"),
+    applies: (findings) => findings.some((f) => f.kind === "web" && f.verified),
     action: {
       id: "web-removal",
       title: "Faire retirer les pages qui te concernent",

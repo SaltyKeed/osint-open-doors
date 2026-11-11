@@ -20,8 +20,7 @@ const phoneBatch = {
 const nameBatch = {
   searchedOn: "name" as const,
   results: [
-    { url: "https://news.example/a", title: "Jean Dupont gagne la course", content: "Un homonyme sans email ni téléphone" },
-    { url: "https://news.example/b", title: "Jean Dupont, boulanger", content: "Encore un homonyme" },
+    { url: "https://news.example/a", title: "Jean Dupont gagne la course", content: "Contact : autre.personne@example.org" },
     { url: "https://www.forum.example/u/42", title: "Doublon", content: "jean.dupont@example.com" },
   ],
 };
@@ -29,21 +28,34 @@ const nameBatch = {
 describe("tavily mapper", () => {
   const findings = toFindings([emailBatch, phoneBatch, nameBatch], query);
 
-  it("details only the pages containing the email or the phone, once each", () => {
-    const web = findings.filter((f) => f.kind === "web");
-    expect(web).toEqual([
-      { kind: "web", providerId: "tavily", site: "forum.example", title: "Profil de j•••••••••t@example.com", matchedOn: "email" },
-      { kind: "web", providerId: "tavily", site: "club.example", title: "Contact du club", matchedOn: "phone" },
+  it("marks the pages containing the email or the phone as verified", () => {
+    const verified = findings.filter((f) => f.verified);
+    expect(verified.map((f) => [f.site, f.matchedOn])).toEqual([
+      ["forum.example", "email"],
+      ["club.example", "phone"],
+    ]);
+    expect(verified[0]?.title).toBe("Profil de j•••••••••t@example.com");
+    expect(verified[1]?.snippet).toBe("Responsable : +41 79 ••• •• 67");
+  });
+
+  it("shows the pages of the name search as not verified, with contacts masked", () => {
+    const unverified = findings.filter((f) => !f.verified);
+    expect(unverified).toEqual([
+      {
+        kind: "web",
+        providerId: "tavily",
+        verified: false,
+        site: "news.example",
+        url: "https://news.example/a",
+        title: "Jean Dupont gagne la course",
+        snippet: "Contact : a••••••••••••e@example.org",
+        matchedOn: "name",
+      },
     ]);
   });
 
-  it("counts only the unlinked pages of the name search", () => {
-    const count = findings.find((f) => f.kind === "count");
-    expect(count).toMatchObject({ kind: "count", count: 2, matchedOn: "name" });
-  });
-
-  it("drops unlinked pages of the email search", () => {
-    const onlyEmail = toFindings([emailBatch], { email: query.email });
-    expect(onlyEmail).toHaveLength(1);
+  it("drops unlinked pages of the email search and keeps each page once", () => {
+    expect(findings.map((f) => f.url)).not.toContain("https://spam.example/x");
+    expect(findings.filter((f) => f.url === "https://www.forum.example/u/42")).toHaveLength(1);
   });
 });

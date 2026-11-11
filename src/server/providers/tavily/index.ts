@@ -29,7 +29,8 @@ export function createTavilyProvider(apiKey: string | undefined): BreachProvider
       if (!apiKey) throw new ProviderError(PROVIDER_ID, "missing-key");
       const batches: TavilyBatch[] = await Promise.all(
         searches(query).map(async ({ searchedOn, text }) => {
-          const parsed = tavilyResponseSchema.safeParse(await tavilySearch(apiKey, text, signal));
+          const max = searchedOn === "name" ? 20 : 10;
+          const parsed = tavilyResponseSchema.safeParse(await tavilySearch(apiKey, text, signal, max));
           if (!parsed.success) throw new ProviderError(PROVIDER_ID, "invalid-response");
           return { searchedOn, results: parsed.data.results };
         }),

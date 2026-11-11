@@ -19,7 +19,7 @@ ensuite un plan d'action concret.
 | Invariant | Mise en œuvre |
 |---|---|
 | Jamais de mot de passe ni de hash affiché | Les mappers des providers appliquent une liste blanche de champs. Le type brut ne sort jamais de l'adaptateur. |
-| Pas d'exposition de tiers (homonymes) | Une fiche trouvée par nom n'est détaillée que si elle contient aussi un autre identifiant saisi par le visiteur (téléphone ou email). Sinon, seul un agrégat est affiché (« N fiches portent ce nom »). |
+| Pas d'exposition de tiers (homonymes) | Une fiche trouvée par nom n'est détaillée que si elle contient aussi un autre identifiant saisi par le visiteur (téléphone ou email). Sinon, seul un agrégat est affiché (« N fiches portent ce nom »). Exception en mode `surface` (D15, en validation) : les pages web trouvées par nom sont affichées comme « non vérifiées », emails et numéros masqués. |
 | Valeurs masquées | Les fiches correspondantes sont aussi masquées : `+41 79 ••• •• 42`, « Adresse : présente ». |
 | Zéro stockage | Pas de base de données, pas de fichier, pas de `localStorage` ni de cookie contenant des données personnelles. Le conteneur est en `read_only`. |
 | Aucun log de données personnelles | Aucun `console.log` d'un input ou d'une réponse d'API. Les messages d'erreur n'incluent pas le corps des réponses. |
@@ -129,7 +129,9 @@ export interface BreachProvider {
 Un provider renvoie des `Finding` de cinq types : `breach` (fuite), `web`
 (page qui contient l'email ou le téléphone), `directory` (inscription dans
 l'annuaire), `account` (trace publique liée à l'email) et `count` (total de
-résultats trouvés par le nom seul, sans détail : règle anti-homonymes).
+résultats trouvés par le nom seul, sans détail : règle anti-homonymes). Une
+page `web` porte `verified: true` si elle contient l'email ou le téléphone du
+visiteur, `false` si elle a été trouvée par le nom seul (D15).
 
 ### Bonnes pratiques appliquées
 

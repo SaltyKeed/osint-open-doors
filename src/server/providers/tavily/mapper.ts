@@ -1,10 +1,11 @@
 import "server-only";
-import { maskInText } from "@/server/domain/masking";
+import { maskContacts } from "@/server/domain/masking";
 import { strongMatch } from "@/server/domain/matching";
-import type { CountFinding, Finding, QueryKind, SearchQuery, WebFinding } from "@/server/domain/types";
+import type { QueryKind, SearchQuery, WebFinding } from "@/server/domain/types";
 import type { TavilyResult } from "./schema";
 
 export const PROVIDER_ID = "tavily";
+const SNIPPET_LENGTH = 300;
 
 // Results of one search, with the visitor data that was searched.
 export type TavilyBatch = { searchedOn: QueryKind; results: TavilyResult[] };
@@ -17,42 +18,40 @@ function siteOf(url: string): string {
   }
 }
 
-// Each page is checked: it is detailed only if it really contains the visitor's
-// email or phone (anti-homonym rule). Pages of the name search without such a
-// link are only counted; other unlinked pages are dropped.
-export function toFindings(batches: TavilyBatch[], query: SearchQuery): Finding[] {
-  const seen = new Set<string>();
-  const nameOnlyUrls = new Set<string>();
-  const findings: WebFinding[] = [];
+function snippetOf(content: string): string {
+  const text = content.replace(/\s+/g, " ").trim();
+  return text.length > SNIPPET_LENGTH ? `${text.slice(0, SNIPPET_LENGTH)}…` : text;
+}
+
+// Every page is checked against the visitor's email and phone:
+// - it contains one of them: verified, it is about the visitor;
+// - name search without such a link: shown as "not verified" (D15), maybe a homonym;
+// - email or phone search without such a link: dropped (the engine matched something else).
+// Emails and phone numbers inside titles and snippets are always masked.
+export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFinding[] {
+  const byUrl = new Map<string, WebFinding>();
 
   for (const { searchedOn, results } of batches) {
     for (const result of results) {
       const match = strongMatch(`${result.title} ${result.content}`, query);
-      if (match) {
-        if (seen.has(result.url)) continue;
-        seen.add(result.url);
-        nameOnlyUrls.delete(result.url);
-        findings.push({
-          kind: "web",
-          providerId: PROVIDER_ID,
-          site: siteOf(result.url),
-          title: maskInText(result.title || siteOf(result.url), query),
-          matchedOn: match,
-        });
-      } else if (searchedOn === "name" && !seen.has(result.url)) {
-        nameOnlyUrls.add(result.url);
-      }
+      if (!match && searchedOn !== "name") continue;
+
+      const existing = byUrl.get(result.url);
+      if (existing?.verified) continue;
+
+      byUrl.set(result.url, {
+        kind: "web",
+        providerId: PROVIDER_ID,
+        verified: match !== null,
+        site: siteOf(result.url),
+        url: result.url,
+        title: maskContacts(result.title || siteOf(result.url)),
+        snippet: maskContacts(snippetOf(result.content)),
+        matchedOn: match ?? "name",
+      });
     }
   }
 
-  if (nameOnlyUrls.size === 0) return findings;
-  const count: CountFinding = {
-    kind: "count",
-    providerId: PROVIDER_ID,
-    source: "Recherche web",
-    count: nameOnlyUrls.size,
-    label: "pages trouvées avec ton nom, sans lien sûr avec toi (peut-être des homonymes)",
-    matchedOn: "name",
-  };
-  return [...findings, count];
+  // Verified pages first.
+  return [...byUrl.values()].sort((a, b) => Number(b.verified) - Number(a.verified));
 }

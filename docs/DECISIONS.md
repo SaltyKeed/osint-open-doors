@@ -301,7 +301,7 @@ rebond reste une idée (`IDEES.md`, I1).
 | Source | Saisie utilisée | Ce qui est affiché | Clé |
 |---|---|---|---|
 | XposedOrNot (retenu) | Email | Fuites : service, année, types de données exposées | Aucune |
-| Tavily (retenu) | Email, téléphone (tous les formats), nom | Pages qui contiennent vraiment l'email ou le téléphone ; total pour le nom seul | `TAVILY_API_KEY` |
+| Tavily (retenu) | Email, téléphone (tous les formats), nom | Pages qui contiennent vraiment l'email ou le téléphone ; pages trouvées par le nom seul (voir D15) | `TAVILY_API_KEY` |
 | search.ch (retenu) | Téléphone, nom | Inscription trouvée par le numéro (types de données publiées, astérisque) ; total pour le nom (`count_only`) | `SEARCH_CH_API_KEY` |
 | GitHub (retenu) | Email | Nombre de commits publics signés avec l'email exact | Optionnelle (`GITHUB_TOKEN`) |
 | Gravatar (retenu) | Email (empreinte SHA-256) | Photo de profil publique liée à l'email | Aucune |
@@ -328,6 +328,35 @@ Nouvelles dépendances :
 
 Remarque : search.ch recopie la clé API dans sa réponse. La réponse brute
 n'est donc jamais journalisée ni renvoyée au navigateur.
+
+## D15. Pages trouvées par le nom en mode surface
+
+Date : 2026-11-11
+
+Statut : ouverte. Appliquée sur la branche `sandbox`, à valider avec l'autre
+membre du binôme avant d'arriver sur `main`, car elle modifie un invariant.
+
+Jusqu'ici, un résultat trouvé par le nom seul n'était jamais détaillé : seul
+un total était affiché. Le visiteur ne voyait donc pas ce qu'on trouve en
+cherchant son nom, alors que c'est le premier réflexe de n'importe qui.
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| Total uniquement (règle d'origine) | Aucune information sur un homonyme n'est affichée. | Le visiteur ne voit pas ce que tout le monde trouve en cherchant son nom. |
+| **Pages web affichées comme « non vérifiées » (appliqué sur `sandbox`)** | Montre exactement ce qu'un moteur de recherche montre à n'importe qui ; en mode `surface`, ce sont des pages publiques. | Certaines pages parlent d'un homonyme ; n'importe qui peut taper n'importe quel nom sur le poste. |
+| Liste des sites seulement | Indique où chercher sans aucun contenu. | Moins parlant pour le visiteur. |
+
+Règles de l'option appliquée :
+
+- Seulement en mode `surface` et seulement pour la recherche web (Tavily).
+- Les pages sont séparées des pages vérifiées et marquées « non vérifiées,
+  peut-être un homonyme ».
+- Tous les emails et numéros présents dans les titres et extraits sont
+  masqués (`maskContacts`), qu'ils appartiennent au visiteur ou à un tiers.
+- L'annuaire search.ch reste un total pour la recherche par nom : c'est
+  l'usage déclaré lors de la demande de clé (`count_only`), une condition du
+  contrat d'utilisation.
+- Les pages non vérifiées ne déclenchent pas d'action dans le plan d'action.
 
 ## Récapitulatif
 

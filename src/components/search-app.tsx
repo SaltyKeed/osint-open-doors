@@ -191,7 +191,8 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
     result.findings.filter((f): f is Extract<Finding, { kind: K }> => f.kind === kind);
 
   const breaches = byKind("breach");
-  const web = byKind("web");
+  const web = byKind("web").filter((f) => f.verified);
+  const nameOnlyPages = byKind("web").filter((f) => !f.verified);
   const directory = byKind("directory");
   const accounts = byKind("account");
   const counts = byKind("count");
@@ -237,6 +238,7 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
       {accounts.length > 0 && <AccountsSection items={accounts} />}
       {web.length > 0 && <WebSection items={web} />}
       {breaches.length > 0 && <BreachSection items={breaches} />}
+      {nameOnlyPages.length > 0 && <NameSection items={nameOnlyPages} />}
       {counts.length > 0 && <CountSection items={counts} />}
 
       <div className="flex items-center justify-between">
@@ -318,24 +320,45 @@ function AccountsSection({ items }: { items: AccountFinding[] }) {
   );
 }
 
+function WebPageList({ items }: { items: WebFinding[] }) {
+  return (
+    <ul className="flex flex-col gap-4">
+      {items.map((item) => (
+        <li key={item.url} className="flex flex-col gap-0.5">
+          <span className="font-medium">{item.title}</span>
+          <span className="text-xs break-all text-muted-foreground">{item.url}</span>
+          {item.snippet && <span className="text-sm">{item.snippet}</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function WebSection({ items }: { items: WebFinding[] }) {
   return (
     <Section
-      title="Sur le web"
-      description="Pages publiques qui contiennent vraiment ton email ou ton numéro (vérifié dans le texte de la page)."
+      title={`Sur le web : pages vérifiées (${items.length})`}
+      description="Ces pages contiennent vraiment ton email ou ton numéro : elles parlent de toi."
     >
       <Card size="sm">
         <CardContent>
-          <ul className="flex flex-col gap-2">
-            {items.map((item, index) => (
-              <li key={index} className="flex flex-col">
-                <span className="font-medium">{item.title}</span>
-                <span className="text-sm text-muted-foreground">
-                  {item.site} · trouvé grâce à ton {item.matchedOn === "email" ? "email" : "numéro"}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <WebPageList items={items} />
+        </CardContent>
+      </Card>
+    </Section>
+  );
+}
+
+function NameSection({ items }: { items: WebFinding[] }) {
+  const sites = [...new Set(items.map((i) => i.site))];
+  return (
+    <Section
+      title={`Avec ton nom et prénom (${items.length} pages, non vérifiées)`}
+      description={`Ce que n'importe qui trouve en cherchant ton nom. Ces pages ne contiennent ni ton email ni ton numéro : certaines parlent peut-être d'un homonyme. Les emails et numéros qu'elles contiennent sont masqués. Sites : ${sites.join(", ")}.`}
+    >
+      <Card size="sm">
+        <CardContent>
+          <WebPageList items={items} />
         </CardContent>
       </Card>
     </Section>
@@ -370,8 +393,8 @@ function BreachSection({ items }: { items: BreachFinding[] }) {
 function CountSection({ items }: { items: CountFinding[] }) {
   return (
     <Section
-      title="Avec ton nom seulement"
-      description="Ces résultats portent ton nom mais ne contiennent ni ton email ni ton numéro : ce sont peut-être d'autres personnes. Pour les protéger, on affiche seulement le nombre."
+      title="Annuaire : recherche par nom"
+      description="Pour la recherche par nom, l'annuaire search.ch ne donne que le nombre d'inscriptions (condition de notre clé API)."
     >
       <Card size="sm">
         <CardContent>

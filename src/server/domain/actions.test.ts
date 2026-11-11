@@ -29,7 +29,7 @@ describe("buildActionPlan", () => {
   it("adds the directory and web actions for those findings", () => {
     const plan = buildActionPlan([
       { kind: "directory", providerId: "searchch", source: "search.ch", categories: ["name", "address", "phone"], noPromo: false, matchedOn: "phone" },
-      { kind: "web", providerId: "tavily", site: "forum.example", title: "Profil", matchedOn: "email" },
+      { kind: "web", providerId: "tavily", verified: true, site: "forum.example", url: "https://forum.example", title: "Profil", snippet: "", matchedOn: "email" },
     ]);
     const ids = plan.map((a) => a.id);
     expect(ids).toContain("directory");
