@@ -365,6 +365,42 @@ Règles de l'option appliquée :
   contrat d'utilisation.
 - Les pages non vérifiées ne déclenchent pas d'action dans le plan d'action.
 
+## D16. Recherche approfondie et archives du web
+
+Date : 2026-11-11
+
+Les premières recherches ne trouvaient qu'une partie de ce qu'un enquêteur
+trouve à la main. Trois ajouts, tous gratuits et sur des données publiques :
+
+- Recherches ciblées sur le nom complet (toujours « Prénom Nom » ensemble,
+  voir D15) : une recherche approfondie, puis une recherche par thème avec une
+  liste de sites (réseaux sociaux, presse suisse, sport et clubs) et une
+  recherche de documents (CV, PDF, listes de membres). Les listes de sites
+  sont dans `providers/tavily/searches.ts`.
+- Archives du web : pour les 20 premières pages trouvées (pages vérifiées
+  d'abord), l'API CDX de la Wayback Machine indique les années d'archivage et
+  un lien vers la dernière copie. Une requête `HEAD` vérifie si la page existe
+  encore : une réponse 404 ou 410 signale une page supprimée, souvent toujours
+  lisible dans l'archive. Cette étape a son propre délai (10 secondes) ; si
+  elle échoue, les résultats s'affichent sans information d'archive. Les
+  archives ne reçoivent que l'adresse des pages trouvées, jamais la saisie du
+  visiteur.
+- Pastes : XposedOrNot indique combien de textes publiés (Pastebin…)
+  contiennent l'email. Seul ce nombre est affiché.
+
+Coût : jusqu'à 8 crédits Tavily par visiteur qui remplit tous les champs
+(nom : 6, email : 1, téléphone : 1). Le quota gratuit (1000 crédits par mois)
+couvre environ 125 visiteurs complets ; le budget (`BUDGET.md`) prévoit une
+réserve.
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **Plusieurs recherches ciblées (retenu)** | Trouve les réseaux sociaux, la presse locale et les résultats sportifs qu'une recherche générale manque. | 8 crédits au lieu de 3 ; recherche plus longue (environ 15 à 20 secondes). |
+| Une recherche générale par donnée | 3 crédits, plus rapide. | Beaucoup moins de résultats. |
+
+Limite : certains sites (LinkedIn, Facebook, Instagram) refusent l'archivage,
+la Wayback Machine n'a donc pas de copie de leurs pages.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |

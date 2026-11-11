@@ -1,24 +1,9 @@
 import "server-only";
-import { phoneSearchVariants } from "@/server/domain/phone";
-import type { QueryKind, SearchQuery } from "@/server/domain/types";
 import { type BreachProvider, ProviderError } from "../types";
 import { tavilySearch } from "./client";
 import { PROVIDER_ID, type TavilyBatch, toFindings } from "./mapper";
 import { tavilyResponseSchema } from "./schema";
-
-// Search strings: exact email, every common phone format, full name (1 credit each).
-function searches(query: SearchQuery): { searchedOn: QueryKind; text: string }[] {
-  const list: { searchedOn: QueryKind; text: string }[] = [];
-  if (query.email) list.push({ searchedOn: "email", text: `"${query.email}"` });
-  if (query.phone) {
-    const variants = phoneSearchVariants(query.phone).map((v) => `"${v}"`);
-    list.push({ searchedOn: "phone", text: variants.join(" OR ") });
-  }
-  if (query.firstName && query.lastName) {
-    list.push({ searchedOn: "name", text: `"${query.firstName} ${query.lastName}"` });
-  }
-  return list;
-}
+import { plannedSearches } from "./searches";
 
 export function createTavilyProvider(apiKey: string | undefined): BreachProvider {
   return {
@@ -27,14 +12,21 @@ export function createTavilyProvider(apiKey: string | undefined): BreachProvider
     supports: ["email", "phone", "name"],
     async search(query, signal) {
       if (!apiKey) throw new ProviderError(PROVIDER_ID, "missing-key");
-      const batches: TavilyBatch[] = await Promise.all(
-        searches(query).map(async ({ searchedOn, text }) => {
-          const max = searchedOn === "name" ? 20 : 10;
-          const parsed = tavilyResponseSchema.safeParse(await tavilySearch(apiKey, text, signal, max));
+      // All searches run in parallel; one failing search does not lose the others.
+      const settled = await Promise.allSettled(
+        plannedSearches(query).map(async ({ searchedOn, text, options }): Promise<TavilyBatch> => {
+          const parsed = tavilyResponseSchema.safeParse(await tavilySearch(apiKey, text, options, signal));
           if (!parsed.success) throw new ProviderError(PROVIDER_ID, "invalid-response");
           return { searchedOn, results: parsed.data.results };
         }),
       );
+      const batches = settled.flatMap((s) => (s.status === "fulfilled" ? [s.value] : []));
+      if (batches.length === 0 && settled.length > 0) {
+        const first = settled[0];
+        throw first?.status === "rejected" && first.reason instanceof ProviderError
+          ? first.reason
+          : new ProviderError(PROVIDER_ID, "invalid-response");
+      }
       return toFindings(batches, query);
     },
   };

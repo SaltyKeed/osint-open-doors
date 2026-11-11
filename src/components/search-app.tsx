@@ -60,6 +60,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   gravatar: "Gravatar",
   pgp: "Serveur de clés PGP",
   rdap: "Registre des domaines",
+  wayback: "Archives du web",
 };
 
 // After this delay without interaction, everything is erased for the next visitor.
@@ -146,7 +147,8 @@ export function SearchApp() {
             <Label htmlFor="consent" className="leading-snug font-normal">
               Je confirme que ces informations sont les miennes. Elles sont envoyées pour la recherche à
               XposedOrNot, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org et au registre des
-              domaines, puis effacées. Rien n&apos;est enregistré.
+              domaines, puis effacées. Les pages trouvées sont vérifiées dans les archives du web
+              (Internet Archive). Rien n&apos;est enregistré.
             </Label>
           </div>
           {status.kind === "error" && (
@@ -155,7 +157,7 @@ export function SearchApp() {
             </p>
           )}
           <Button type="submit" disabled={!consent || !hasInput || status.kind === "loading"}>
-            {status.kind === "loading" ? "Recherche en cours… (jusqu'à 15 secondes)" : "Lancer la recherche"}
+            {status.kind === "loading" ? "Recherche en cours… (jusqu'à 20 secondes)" : "Lancer la recherche"}
           </Button>
         </form>
       </CardContent>
@@ -197,6 +199,7 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
   const accounts = byKind("account");
   const counts = byKind("count");
   const linked = breaches.length + web.length + directory.length + accounts.length;
+  const deletedButArchived = byKind("web").filter((f) => f.live === "gone" && f.archive).length;
   const searched = [result.searched.email, result.searched.phone, result.searched.name].filter(Boolean);
 
   return (
@@ -208,6 +211,12 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
             : `${linked} élément${linked > 1 ? "s" : ""} public${linked > 1 ? "s" : ""} relié${linked > 1 ? "s" : ""} à toi`}
         </h2>
         <p className="text-sm text-muted-foreground">Recherche pour : {searched.join(" · ")}</p>
+        {deletedButArchived > 0 && (
+          <p className="text-sm font-medium">
+            {deletedButArchived} page{deletedButArchived > 1 ? "s" : ""} supprimée{deletedButArchived > 1 ? "s" : ""} du web{" "}
+            {deletedButArchived > 1 ? "restent lisibles" : "reste lisible"} dans les archives d&apos;Internet.
+          </p>
+        )}
         {result.failedProviders.length > 0 && (
           <p className="text-sm text-muted-foreground">
             Sans réponse : {result.failedProviders.map((id) => PROVIDER_LABELS[id] ?? id).join(", ")}. Le
@@ -328,9 +337,27 @@ function WebPageList({ items }: { items: WebFinding[] }) {
           <span className="font-medium">{item.title}</span>
           <span className="text-xs break-all text-muted-foreground">{item.url}</span>
           {item.snippet && <span className="text-sm">{item.snippet}</span>}
+          <ArchiveLine item={item} />
         </li>
       ))}
     </ul>
+  );
+}
+
+function ArchiveLine({ item }: { item: WebFinding }) {
+  const deleted = item.live === "gone";
+  if (!item.archive && !deleted) return null;
+  return (
+    <span className="flex flex-wrap items-center gap-2 text-xs">
+      {deleted && <Badge variant="destructive">Supprimée du site</Badge>}
+      {item.archive && (
+        <span className="text-muted-foreground">
+          Archivée {item.archive.firstYear === item.archive.lastYear ? `en ${item.archive.firstYear}` : `de ${item.archive.firstYear} à ${item.archive.lastYear}`}
+          {deleted ? " : toujours lisible dans l'archive" : ""} ·{" "}
+          <span className="break-all">{item.archive.snapshotUrl}</span>
+        </span>
+      )}
+    </span>
   );
 }
 

@@ -39,8 +39,9 @@ permettent, une fois assemblées, d'en apprendre beaucoup sur une personne.
 
 ### Sources envisagées
 
-Les sources gratuites de ce tableau (sauf WhatsMyName, Wayback Machine, Zefix,
-ORCID et Wikidata) sont intégrées depuis D14, sans rebond.
+Les sources gratuites de ce tableau (sauf WhatsMyName, Zefix, ORCID et
+Wikidata) sont intégrées depuis D14 et D16. La Wayback Machine sert à vérifier
+les pages trouvées, ce qui est un premier rebond limité.
 
 | Catégorie | Sources | Accès |
 |---|---|---|

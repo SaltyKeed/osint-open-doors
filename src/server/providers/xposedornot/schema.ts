@@ -16,6 +16,8 @@ export const breachAnalyticsSchema = z.object({
   ExposedBreaches: z
     .object({ breaches_details: z.array(breachDetailSchema) })
     .nullable(),
+  // Pastes: texts published on Pastebin-like sites that contain the email.
+  PastesSummary: z.object({ cnt: z.coerce.number() }).nullish(),
 });
 
 export type BreachAnalyticsResponse = z.infer<typeof breachAnalyticsSchema>;

@@ -1,5 +1,5 @@
 import "server-only";
-import type { BreachFinding, DataCategory } from "@/server/domain/types";
+import type { AccountFinding, BreachFinding, DataCategory } from "@/server/domain/types";
 import type { BreachAnalyticsResponse } from "./schema";
 
 export const PROVIDER_ID = "xposedornot";
@@ -47,4 +47,20 @@ export function toFindings(response: BreachAnalyticsResponse): BreachFinding[] {
     categories: toCategories(breach.xposed_data),
     matchedOn: "email",
   }));
+}
+
+// Pastes are counted only: their content is never fetched.
+export function toPasteFindings(response: BreachAnalyticsResponse): AccountFinding[] {
+  const count = response.PastesSummary?.cnt ?? 0;
+  if (count === 0) return [];
+  return [
+    {
+      kind: "account",
+      providerId: PROVIDER_ID,
+      service: "Pastes (textes publiés)",
+      summary: `Ton adresse apparaît dans ${count} texte${count > 1 ? "s" : ""} publié${count > 1 ? "s" : ""} sur des sites comme Pastebin, souvent des listes de comptes piratés.`,
+      categories: ["email"],
+      matchedOn: "email",
+    },
+  ];
 }

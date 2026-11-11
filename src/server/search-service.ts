@@ -2,6 +2,9 @@ import "server-only";
 import type { Finding, QueryKind, SearchQuery } from "@/server/domain/types";
 import { type BreachProvider, ProviderError } from "@/server/providers/types";
 
+// Optional second step on the results (e.g. web archive), with its own time limit.
+export type Enricher = (findings: Finding[], signal: AbortSignal) => Promise<Finding[]>;
+
 export type SearchResult = {
   findings: Finding[];
   failedProviders: string[];
@@ -21,6 +24,8 @@ export async function runSearch(
   query: SearchQuery,
   providers: readonly BreachProvider[],
   timeoutMs = 12000,
+  enrich?: Enricher,
+  enrichTimeoutMs = 8000,
 ): Promise<SearchResult> {
   const kinds = queryKinds(query);
   const relevant = providers.filter((p) => p.supports.some((k) => kinds.includes(k)));
@@ -44,5 +49,11 @@ export async function runSearch(
     }
   });
 
-  return { findings, failedProviders };
+  if (!enrich) return { findings, failedProviders };
+  try {
+    return { findings: await enrich(findings, AbortSignal.timeout(enrichTimeoutMs)), failedProviders };
+  } catch {
+    console.error("[search] enrichment failed");
+    return { findings, failedProviders };
+  }
 }

@@ -4,6 +4,7 @@ import { maskEmail, maskName, maskPhone } from "@/server/domain/masking";
 import { normalizePhone } from "@/server/domain/phone";
 import { getEnv } from "@/server/env";
 import { getActiveProviders } from "@/server/providers/registry";
+import { enrichWithArchive } from "@/server/providers/wayback";
 import { runSearch } from "@/server/search-service";
 
 const optionalText = (max: number) =>
@@ -58,7 +59,13 @@ export async function POST(request: Request) {
 
   const query = input.data;
   const { APP_MODE } = getEnv();
-  const { findings, failedProviders } = await runSearch(query, getActiveProviders(APP_MODE));
+  const { findings, failedProviders } = await runSearch(
+    query,
+    getActiveProviders(APP_MODE),
+    12000,
+    enrichWithArchive,
+    10000,
+  );
 
   return Response.json(
     {

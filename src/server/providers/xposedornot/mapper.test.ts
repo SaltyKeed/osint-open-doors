@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import fixture from "@/tests/fixtures/xposedornot/breach-analytics.json";
-import { toFindings } from "./mapper";
+import { toFindings, toPasteFindings } from "./mapper";
 import { breachAnalyticsSchema } from "./schema";
 
 describe("xposedornot mapper", () => {
@@ -28,6 +28,13 @@ describe("xposedornot mapper", () => {
 
   it("returns no exposure when the email is in no breach", () => {
     expect(toFindings(breachAnalyticsSchema.parse({ ExposedBreaches: null }))).toEqual([]);
+  });
+
+  it("counts the pastes without fetching their content", () => {
+    expect(toPasteFindings(breachAnalyticsSchema.parse({ ExposedBreaches: null, PastesSummary: { cnt: 3 } }))).toEqual([
+      expect.objectContaining({ kind: "account", service: "Pastes (textes publiés)", matchedOn: "email" }),
+    ]);
+    expect(toPasteFindings(parsed)).toEqual([]);
   });
 
   it("never copies fields outside the whitelist", () => {

@@ -1,7 +1,7 @@
 import "server-only";
 import { type BreachProvider, ProviderError } from "../types";
 import { fetchBreachAnalytics } from "./client";
-import { PROVIDER_ID, toFindings } from "./mapper";
+import { PROVIDER_ID, toFindings, toPasteFindings } from "./mapper";
 import { breachAnalyticsSchema } from "./schema";
 
 // Adapter: client (HTTP) -> schema (zod) -> mapper (whitelist).
@@ -14,6 +14,6 @@ export const xposedOrNot: BreachProvider = {
     const raw = await fetchBreachAnalytics(query.email, signal);
     const parsed = breachAnalyticsSchema.safeParse(raw);
     if (!parsed.success) throw new ProviderError(PROVIDER_ID, "invalid-response");
-    return toFindings(parsed.data);
+    return [...toFindings(parsed.data), ...toPasteFindings(parsed.data)];
   },
 };

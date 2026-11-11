@@ -73,12 +73,13 @@ src/
 │   │   │   ├── schema.ts         ← zod : forme de la réponse brute
 │   │   │   ├── mapper.ts         ← brut → modèle du domaine (liste blanche)
 │   │   │   └── index.ts          ← le provider (client → schema → mapper)
-│   │   ├── tavily/               ← recherche web (email, téléphone, nom)
+│   │   ├── tavily/               ← recherche web (email, téléphone, nom ; searches.ts : thèmes)
 │   │   ├── searchch/             ← annuaire (téléphone, total par nom)
 │   │   ├── github/               ← commits publics signés avec l'email
 │   │   ├── gravatar/             ← photo de profil publique liée à l'email
 │   │   ├── pgp/                  ← clé publique sur keys.openpgp.org
-│   │   └── rdap/                 ← registre du domaine de l'email (domaines perso)
+│   │   ├── rdap/                 ← registre du domaine de l'email (domaines perso)
+│   │   └── wayback/              ← 2e étape : archives des pages trouvées, page supprimée ou non
 │   │
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
 │   │   ├── types.ts              ← Finding (5 types), DataCategory, SearchQuery…
@@ -88,7 +89,7 @@ src/
 │   │   └── actions.ts            ← résultats → plan d'action
 │   │
 │   ├── env.ts                    ← variables d'environnement validées par zod (APP_MODE, clés)
-│   └── search-service.ts         ← orchestration (Promise.allSettled + timeout)
+│   └── search-service.ts         ← orchestration (Promise.allSettled + timeout, puis archives)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
 │   ├── search-app.tsx            ← formulaire, consentement, résultats, reset

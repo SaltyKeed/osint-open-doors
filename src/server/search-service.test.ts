@@ -50,6 +50,18 @@ describe("runSearch", () => {
     expect(result.failedProviders).toEqual(["slow"]);
   });
 
+  it("applies the enrichment step and keeps the results if it fails", async () => {
+    const tagged = await runSearch({ email: "x@example.com" }, [okProvider], 1000, async (f) =>
+      f.map((x) => ({ ...x, source: "enriched" }) as Finding),
+    );
+    expect(tagged.findings[0]).toMatchObject({ source: "enriched" });
+
+    const failing = await runSearch({ email: "x@example.com" }, [okProvider], 1000, async () => {
+      throw new Error("down");
+    });
+    expect(failing.findings).toEqual([exposure]);
+  });
+
   it("skips providers that do not support the query", async () => {
     const result = await runSearch({}, [okProvider]);
     expect(result).toEqual({ findings: [], failedProviders: [] });

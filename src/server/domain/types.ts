@@ -56,6 +56,16 @@ export type WebFinding = FindingBase & {
   url: string;
   title: string; // emails and phone numbers already masked
   snippet: string; // emails and phone numbers already masked
+  // Filled by the web archive step (Wayback Machine), when available.
+  archive?: WebArchiveInfo;
+  // "gone": the site answers 404/410, the page was deleted.
+  live?: "online" | "gone" | "unknown";
+};
+
+export type WebArchiveInfo = {
+  firstYear: string;
+  lastYear: string;
+  snapshotUrl: string; // public link to the latest archived copy
 };
 
 // The visitor is listed in a public directory.
