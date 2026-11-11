@@ -18,6 +18,10 @@ ports & adapters, stack, exécution. Il est mis à jour quand le code change.
 Une nouvelle décision (dépendance, changement de structure, nouveau provider)
 y est ajoutée à la fin, numérotée et datée.
 
+`docs/IDEES.md` garde les idées d'amélioration pas encore décidées. Une idée
+retenue devient une décision dans `docs/DECISIONS.md` et est retirée de ce
+fichier.
+
 ## Invariants de confidentialité
 
 Ils s'appliquent à tout le code, sans exception. Détail et justification :
