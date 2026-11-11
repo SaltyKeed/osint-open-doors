@@ -1,5 +1,5 @@
 import "server-only";
-import type { Exposure, QueryKind, SearchQuery } from "@/server/domain/types";
+import type { Finding, QueryKind, SearchQuery } from "@/server/domain/types";
 
 // "surface": legal public sources. "deep": paid breach services (D10, D12).
 export type ProviderTier = "surface" | "deep";
@@ -10,14 +10,14 @@ export interface BreachProvider {
   id: string;
   tier: ProviderTier;
   supports: readonly QueryKind[];
-  search(query: SearchQuery, signal: AbortSignal): Promise<Exposure[]>;
+  search(query: SearchQuery, signal: AbortSignal): Promise<Finding[]>;
 }
 
 // Error with technical identifiers only: never a visitor input or a response body.
 export class ProviderError extends Error {
   constructor(
     readonly providerId: string,
-    readonly status: number | "timeout" | "invalid-response",
+    readonly status: number | "timeout" | "invalid-response" | "missing-key",
   ) {
     super(`Provider ${providerId} failed (${status})`);
     this.name = "ProviderError";

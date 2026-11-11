@@ -1,5 +1,5 @@
 import "server-only";
-import type { DataCategory, Exposure } from "@/server/domain/types";
+import type { BreachFinding, DataCategory } from "@/server/domain/types";
 import type { BreachAnalyticsResponse } from "./schema";
 
 export const PROVIDER_ID = "xposedornot";
@@ -35,9 +35,10 @@ function toCategories(xposedData: string): DataCategory[] {
 }
 
 // Whitelist: each domain field is built explicitly; the raw object never leaves this file.
-export function toExposures(response: BreachAnalyticsResponse): Exposure[] {
+export function toFindings(response: BreachAnalyticsResponse): BreachFinding[] {
   const details = response.ExposedBreaches?.breaches_details ?? [];
   return details.map((breach) => ({
+    kind: "breach",
     providerId: PROVIDER_ID,
     source: breach.breach,
     domain: breach.domain,

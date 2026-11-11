@@ -39,6 +39,9 @@ permettent, une fois assemblées, d'en apprendre beaucoup sur une personne.
 
 ### Sources envisagées
 
+Les sources gratuites de ce tableau (sauf WhatsMyName, Wayback Machine, Zefix,
+ORCID et Wikidata) sont intégrées depuis D14, sans rebond.
+
 | Catégorie | Sources | Accès |
 |---|---|---|
 | Moteurs de recherche | Tavily : donnée exacte, plusieurs formats de téléphone, filtres par site et par type de fichier | Clé gratuite |

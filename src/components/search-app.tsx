@@ -9,12 +9,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 // Type-only imports: erased at build time, no server code reaches the browser.
 import type { Action } from "@/server/domain/actions";
-import type { DataCategory, Exposure } from "@/server/domain/types";
+import type {
+  AccountFinding,
+  BreachFinding,
+  CountFinding,
+  DataCategory,
+  DirectoryFinding,
+  Finding,
+  WebFinding,
+} from "@/server/domain/types";
 
 type SearchResponse = {
   mode: "surface" | "deep";
-  maskedEmail: string;
-  exposures: Exposure[];
+  searched: { email?: string; phone?: string; name?: string };
+  findings: Finding[];
   actions: Action[];
   failedProviders: string[];
 };
@@ -25,6 +33,9 @@ type Status =
   | { kind: "error"; message: string }
   | { kind: "done"; result: SearchResponse };
 
+type FormState = { email: string; phone: string; firstName: string; lastName: string };
+const EMPTY_FORM: FormState = { email: "", phone: "", firstName: "", lastName: "" };
+
 const CATEGORY_LABELS: Record<DataCategory, string> = {
   email: "Email",
   password: "Mot de passe",
@@ -33,11 +44,22 @@ const CATEGORY_LABELS: Record<DataCategory, string> = {
   address: "Adresse",
   birthDate: "Date de naissance",
   username: "Pseudo",
+  photo: "Photo",
   ipAddress: "Adresse IP",
   financial: "Données bancaires",
   governmentId: "Pièce d'identité",
-  location: "Localisation",
+  location: "Localité",
   other: "Autre",
+};
+
+const PROVIDER_LABELS: Record<string, string> = {
+  xposedornot: "XposedOrNot",
+  tavily: "Recherche web",
+  searchch: "Annuaire search.ch",
+  github: "GitHub",
+  gravatar: "Gravatar",
+  pgp: "Serveur de clés PGP",
+  rdap: "Registre des domaines",
 };
 
 // After this delay without interaction, everything is erased for the next visitor.
@@ -45,12 +67,12 @@ const INACTIVITY_MS = 2 * 60 * 1000;
 
 export function SearchApp() {
   // State lives in memory only: no localStorage, no cookie (CLAUDE.md invariant).
-  const [email, setEmail] = useState("");
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const reset = useCallback(() => {
-    setEmail("");
+    setForm(EMPTY_FORM);
     setConsent(false);
     setStatus({ kind: "idle" });
   }, []);
@@ -69,6 +91,11 @@ export function SearchApp() {
     };
   }, [reset]);
 
+  const update = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const hasInput = Boolean(form.email || form.phone || (form.firstName && form.lastName));
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus({ kind: "loading" });
@@ -76,10 +103,16 @@ export function SearchApp() {
       const response = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, consent }),
+        body: JSON.stringify({ ...form, consent }),
       });
       if (!response.ok) {
-        setStatus({ kind: "error", message: "Saisie invalide. Vérifie l'adresse email." });
+        const body = (await response.json().catch(() => ({}))) as { fields?: string[] };
+        const message = body.fields?.includes("phone")
+          ? "Le numéro de téléphone n'est pas valide."
+          : body.fields?.includes("email")
+            ? "L'adresse email n'est pas valide."
+            : "Saisie invalide. Remplis au moins un champ (prénom et nom ensemble).";
+        setStatus({ kind: "error", message });
         return;
       }
       setStatus({ kind: "done", result: (await response.json()) as SearchResponse });
@@ -97,31 +130,23 @@ export function SearchApp() {
       <CardHeader>
         <CardTitle className="text-2xl">Qu&apos;est-ce qu&apos;on trouve sur toi ?</CardTitle>
         <CardDescription>
-          Entre ton adresse email pour savoir si elle apparaît dans des fuites de données connues.
+          Remplis ce que tu veux tester. Plus tu donnes d&apos;informations, plus la recherche va loin.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="flex flex-col gap-5" autoComplete="off">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Adresse email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              autoComplete="off"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+          <Field id="email" label="Adresse email" type="email" value={form.email} onChange={update("email")} />
+          <Field id="phone" label="Téléphone" type="tel" value={form.phone} onChange={update("phone")} placeholder="079 123 45 67" />
+          <div className="grid grid-cols-2 gap-3">
+            <Field id="firstName" label="Prénom" value={form.firstName} onChange={update("firstName")} />
+            <Field id="lastName" label="Nom" value={form.lastName} onChange={update("lastName")} />
           </div>
           <div className="flex items-start gap-3">
-            <Checkbox
-              id="consent"
-              checked={consent}
-              onCheckedChange={(checked) => setConsent(checked === true)}
-            />
+            <Checkbox id="consent" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
             <Label htmlFor="consent" className="leading-snug font-normal">
-              Je confirme que cette adresse est la mienne. Elle est envoyée au service
-              XposedOrNot pour la recherche, puis effacée. Rien n&apos;est enregistré.
+              Je confirme que ces informations sont les miennes. Elles sont envoyées pour la recherche à
+              XposedOrNot, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org et au registre des
+              domaines, puis effacées. Rien n&apos;est enregistré.
             </Label>
           </div>
           {status.kind === "error" && (
@@ -129,8 +154,8 @@ export function SearchApp() {
               {status.message}
             </p>
           )}
-          <Button type="submit" disabled={!consent || status.kind === "loading"}>
-            {status.kind === "loading" ? "Recherche en cours…" : "Lancer la recherche"}
+          <Button type="submit" disabled={!consent || !hasInput || status.kind === "loading"}>
+            {status.kind === "loading" ? "Recherche en cours… (jusqu'à 15 secondes)" : "Lancer la recherche"}
           </Button>
         </form>
       </CardContent>
@@ -138,19 +163,54 @@ export function SearchApp() {
   );
 }
 
-function Results({ result, onReset }: { result: SearchResponse; onReset: () => void }) {
-  const count = result.exposures.length;
+function Field(props: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  placeholder?: string;
+}) {
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-6">
+    <div className="flex flex-col gap-2">
+      <Label htmlFor={props.id}>{props.label}</Label>
+      <Input
+        id={props.id}
+        type={props.type ?? "text"}
+        autoComplete="off"
+        value={props.value}
+        onChange={props.onChange}
+        placeholder={props.placeholder}
+      />
+    </div>
+  );
+}
+
+function Results({ result, onReset }: { result: SearchResponse; onReset: () => void }) {
+  const byKind = <K extends Finding["kind"]>(kind: K) =>
+    result.findings.filter((f): f is Extract<Finding, { kind: K }> => f.kind === kind);
+
+  const breaches = byKind("breach");
+  const web = byKind("web");
+  const directory = byKind("directory");
+  const accounts = byKind("account");
+  const counts = byKind("count");
+  const linked = breaches.length + web.length + directory.length + accounts.length;
+  const searched = [result.searched.email, result.searched.phone, result.searched.name].filter(Boolean);
+
+  return (
+    <div className="flex w-full max-w-4xl flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-semibold">
-          {count === 0
-            ? "Aucune fuite connue pour cette adresse"
-            : `${result.maskedEmail} apparaît dans ${count} fuite${count > 1 ? "s" : ""}`}
+          {linked === 0
+            ? "Rien de public n'est relié à tes informations"
+            : `${linked} élément${linked > 1 ? "s" : ""} public${linked > 1 ? "s" : ""} relié${linked > 1 ? "s" : ""} à toi`}
         </h2>
+        <p className="text-sm text-muted-foreground">Recherche pour : {searched.join(" · ")}</p>
         {result.failedProviders.length > 0 && (
           <p className="text-sm text-muted-foreground">
-            Certaines sources n&apos;ont pas répondu : le résultat peut être incomplet.
+            Sans réponse : {result.failedProviders.map((id) => PROVIDER_LABELS[id] ?? id).join(", ")}. Le
+            résultat peut être incomplet.
           </p>
         )}
       </div>
@@ -173,29 +233,11 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
         </Card>
       )}
 
-      {count > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {result.exposures.map((exposure) => (
-            <Card key={`${exposure.providerId}-${exposure.source}`} size="sm">
-              <CardHeader>
-                <CardTitle>{exposure.source}</CardTitle>
-                <CardDescription>
-                  {[exposure.year, exposure.records && `${exposure.records.toLocaleString("fr-CH")} comptes`]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-1.5">
-                {exposure.categories.map((category) => (
-                  <Badge key={category} variant={category === "password" ? "destructive" : "secondary"}>
-                    {CATEGORY_LABELS[category]}
-                  </Badge>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {directory.length > 0 && <DirectorySection items={directory} />}
+      {accounts.length > 0 && <AccountsSection items={accounts} />}
+      {web.length > 0 && <WebSection items={web} />}
+      {breaches.length > 0 && <BreachSection items={breaches} />}
+      {counts.length > 0 && <CountSection items={counts} />}
 
       <div className="flex items-center justify-between">
         <Button onClick={onReset} size="lg">
@@ -205,5 +247,143 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
         <span className="text-xs text-muted-foreground">mode {result.mode}</span>
       </div>
     </div>
+  );
+}
+
+function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div>
+        <h3 className="text-lg font-semibold">{title}</h3>
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Categories({ categories }: { categories: DataCategory[] }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {categories.map((category) => (
+        <Badge key={category} variant={category === "password" ? "destructive" : "secondary"}>
+          {CATEGORY_LABELS[category]}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function DirectorySection({ items }: { items: DirectoryFinding[] }) {
+  return (
+    <Section title="Annuaire téléphonique" description="N'importe qui peut retrouver ces informations à partir de ton numéro.">
+      {items.map((item, index) => (
+        <Card key={index} size="sm">
+          <CardHeader>
+            <CardTitle>{item.source}</CardTitle>
+            <CardDescription>
+              {item.noPromo
+                ? "Ton inscription porte l'astérisque : pas de démarchage publicitaire."
+                : "Pas d'astérisque : ton numéro peut être utilisé pour du démarchage."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Categories categories={item.categories} />
+          </CardContent>
+        </Card>
+      ))}
+    </Section>
+  );
+}
+
+function AccountsSection({ items }: { items: AccountFinding[] }) {
+  return (
+    <Section title="Comptes et traces publiques" description="Services où ton adresse email laisse une trace visible.">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {items.map((item) => (
+          <Card key={item.service} size="sm">
+            <CardHeader>
+              <CardTitle>{item.service}</CardTitle>
+              <CardDescription>{item.summary}</CardDescription>
+            </CardHeader>
+            {item.categories.length > 0 && (
+              <CardContent>
+                <Categories categories={item.categories} />
+              </CardContent>
+            )}
+          </Card>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function WebSection({ items }: { items: WebFinding[] }) {
+  return (
+    <Section
+      title="Sur le web"
+      description="Pages publiques qui contiennent vraiment ton email ou ton numéro (vérifié dans le texte de la page)."
+    >
+      <Card size="sm">
+        <CardContent>
+          <ul className="flex flex-col gap-2">
+            {items.map((item, index) => (
+              <li key={index} className="flex flex-col">
+                <span className="font-medium">{item.title}</span>
+                <span className="text-sm text-muted-foreground">
+                  {item.site} · trouvé grâce à ton {item.matchedOn === "email" ? "email" : "numéro"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </Section>
+  );
+}
+
+function BreachSection({ items }: { items: BreachFinding[] }) {
+  return (
+    <Section
+      title={`Fuites de données (${items.length})`}
+      description="Services piratés dont les données ont été publiées. Seuls les types de données sont affichés."
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        {items.map((item) => (
+          <Card key={`${item.providerId}-${item.source}`} size="sm">
+            <CardHeader>
+              <CardTitle>{item.source}</CardTitle>
+              <CardDescription>
+                {[item.year, item.records && `${item.records.toLocaleString("fr-CH")} comptes`].filter(Boolean).join(" · ")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Categories categories={item.categories} />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function CountSection({ items }: { items: CountFinding[] }) {
+  return (
+    <Section
+      title="Avec ton nom seulement"
+      description="Ces résultats portent ton nom mais ne contiennent ni ton email ni ton numéro : ce sont peut-être d'autres personnes. Pour les protéger, on affiche seulement le nombre."
+    >
+      <Card size="sm">
+        <CardContent>
+          <ul className="flex flex-col gap-1">
+            {items.map((item) => (
+              <li key={item.providerId}>
+                <span className="font-semibold">{item.count}</span> {item.label} ({item.source})
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </Section>
   );
 }

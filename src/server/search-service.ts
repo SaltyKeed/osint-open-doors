@@ -1,14 +1,18 @@
 import "server-only";
-import type { Exposure, QueryKind, SearchQuery } from "@/server/domain/types";
+import type { Finding, QueryKind, SearchQuery } from "@/server/domain/types";
 import { type BreachProvider, ProviderError } from "@/server/providers/types";
 
 export type SearchResult = {
-  exposures: Exposure[];
+  findings: Finding[];
   failedProviders: string[];
 };
 
 function queryKinds(query: SearchQuery): QueryKind[] {
-  return query.email ? ["email"] : [];
+  const kinds: QueryKind[] = [];
+  if (query.email) kinds.push("email");
+  if (query.phone) kinds.push("phone");
+  if (query.firstName && query.lastName) kinds.push("name");
+  return kinds;
 }
 
 // Runs all providers in parallel. A failing or slow provider does not block the others
@@ -16,7 +20,7 @@ function queryKinds(query: SearchQuery): QueryKind[] {
 export async function runSearch(
   query: SearchQuery,
   providers: readonly BreachProvider[],
-  timeoutMs = 8000,
+  timeoutMs = 12000,
 ): Promise<SearchResult> {
   const kinds = queryKinds(query);
   const relevant = providers.filter((p) => p.supports.some((k) => kinds.includes(k)));
@@ -25,13 +29,13 @@ export async function runSearch(
     relevant.map((p) => p.search(query, AbortSignal.timeout(timeoutMs))),
   );
 
-  const exposures: Exposure[] = [];
+  const findings: Finding[] = [];
   const failedProviders: string[] = [];
   settled.forEach((outcome, index) => {
     const provider = relevant[index];
     if (!provider) return;
     if (outcome.status === "fulfilled") {
-      exposures.push(...outcome.value);
+      findings.push(...outcome.value);
     } else {
       failedProviders.push(provider.id);
       // Technical identifiers only (CLAUDE.md invariant): provider id and status.
@@ -40,5 +44,5 @@ export async function runSearch(
     }
   });
 
-  return { exposures, failedProviders };
+  return { findings, failedProviders };
 }

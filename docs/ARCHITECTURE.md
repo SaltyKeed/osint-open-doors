@@ -60,31 +60,38 @@ ligne dans `registry.ts`.
 ```
 src/
 ├── app/                          ← Next.js : UI + routes, aussi léger que possible
-│   ├── page.tsx                  ← formulaire + consentement
+│   ├── page.tsx                  ← page d'accueil (affiche SearchApp)
 │   └── api/search/route.ts       ← valide l'input, appelle le service, répond
 │
 ├── server/                       ← code serveur uniquement (import "server-only")
 │   ├── providers/
 │   │   ├── types.ts              ← le port : interface BreachProvider
 │   │   ├── registry.ts           ← providers actifs selon `APP_MODE` (D10)
-│   │   ├── xposedornot/
-│   │   │   ├── client.ts         ← appel HTTP (fetch, timeout, clé)
+│   │   ├── http.ts               ← appel HTTP commun (sans cache, erreurs techniques)
+│   │   ├── xposedornot/          ← fuites par email
+│   │   │   ├── client.ts         ← appel HTTP
 │   │   │   ├── schema.ts         ← zod : forme de la réponse brute
-│   │   │   └── mapper.ts         ← brut → modèle du domaine (liste blanche)
-│   │   ├── snusbase/             ← même structure
-│   │   └── dehashed/             ← même structure
+│   │   │   ├── mapper.ts         ← brut → modèle du domaine (liste blanche)
+│   │   │   └── index.ts          ← le provider (client → schema → mapper)
+│   │   ├── tavily/               ← recherche web (email, téléphone, nom)
+│   │   ├── searchch/             ← annuaire (téléphone, total par nom)
+│   │   ├── github/               ← commits publics signés avec l'email
+│   │   ├── gravatar/             ← photo de profil publique liée à l'email
+│   │   ├── pgp/                  ← clé publique sur keys.openpgp.org
+│   │   └── rdap/                 ← registre du domaine de l'email (domaines perso)
 │   │
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
-│   │   ├── types.ts              ← Exposure, DataCategory, SearchQuery…
-│   │   ├── matching.ts           ← règle anti-homonymes
-│   │   ├── masking.ts            ← masquage des valeurs
-│   │   ├── severity.ts           ← score d'exposition
-│   │   └── actions.ts            ← catégories exposées → plan d'action
+│   │   ├── types.ts              ← Finding (5 types), DataCategory, SearchQuery…
+│   │   ├── matching.ts           ← règle anti-homonymes (email ou téléphone dans le texte)
+│   │   ├── masking.ts            ← masquage des valeurs (email, téléphone, nom, texte)
+│   │   ├── phone.ts              ← normalisation et formats du téléphone
+│   │   └── actions.ts            ← résultats → plan d'action
 │   │
 │   ├── env.ts                    ← variables d'environnement validées par zod (APP_MODE, clés)
 │   └── search-service.ts         ← orchestration (Promise.allSettled + timeout)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
+│   ├── search-app.tsx            ← formulaire, consentement, résultats, reset
 │   └── ui/                       ← composants shadcn/ui copiés dans le projet
 ├── lib/utils.ts                  ← fonction cn() pour combiner les classes Tailwind
 └── tests/
@@ -115,9 +122,14 @@ export interface BreachProvider {
   id: string;
   tier: ProviderTier;              // registry.ts n'active "deep" qu'en mode deep (D10)
   supports: readonly QueryKind[];
-  search(query: SearchQuery, signal: AbortSignal): Promise<Exposure[]>;
+  search(query: SearchQuery, signal: AbortSignal): Promise<Finding[]>;
 }
 ```
+
+Un provider renvoie des `Finding` de cinq types : `breach` (fuite), `web`
+(page qui contient l'email ou le téléphone), `directory` (inscription dans
+l'annuaire), `account` (trace publique liée à l'email) et `count` (total de
+résultats trouvés par le nom seul, sans détail : règle anti-homonymes).
 
 ### Bonnes pratiques appliquées
 
@@ -146,7 +158,9 @@ correspondante.
 | Tests | Vitest 5 | [D6](DECISIONS.md#d6-tests) |
 | Qualité du code | ESLint (configuration Next.js) | [D13](DECISIONS.md#d13-mise-en-place-du-projet) |
 | Exécution | Docker compose, en local | [D7](DECISIONS.md#d7-exécution-et-déploiement) |
-| Provider | XposedOrNot (email) ; Snusbase et Dehashed prévus (nom, téléphone) | [D8](DECISIONS.md#d8-sources-de-données-providers) |
+| Sources `surface` | XposedOrNot, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org, RDAP | [D8](DECISIONS.md#d8-sources-de-données-providers), [D14](DECISIONS.md#d14-sources-du-mode-surface) |
+| Sources `deep` | Services payants, selon le budget | [D12](DECISIONS.md#d12-cadre-validé-par-lenseignant) |
+| Téléphone, XML | libphonenumber-js, fast-xml-parser | [D14](DECISIONS.md#d14-sources-du-mode-surface) |
 | Modes | `surface` et `deep`, une image, `APP_MODE` à l'exécution | [D10](DECISIONS.md#d10-modes-surface-et-deep) |
 
 ## 6. Exécution

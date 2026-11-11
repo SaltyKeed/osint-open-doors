@@ -1,4 +1,4 @@
-import type { DataCategory, Exposure } from "./types";
+import type { DataCategory, Finding } from "./types";
 
 export type Action = {
   id: string;
@@ -6,10 +6,31 @@ export type Action = {
   detail: string;
 };
 
-// Ordered by priority: the first matching actions are the most urgent.
-const ACTIONS: { action: Action; triggers: DataCategory[] }[] = [
+type Rule = { action: Action; applies: (findings: Finding[]) => boolean };
+
+function exposedCategories(findings: Finding[]): Set<DataCategory> {
+  return new Set(
+    findings.flatMap((f) => (f.kind === "breach" || f.kind === "directory" || f.kind === "account" ? f.categories : [])),
+  );
+}
+
+const hasCategory =
+  (...categories: DataCategory[]) =>
+  (findings: Finding[]) => {
+    const exposed = exposedCategories(findings);
+    return categories.some((c) => exposed.has(c));
+  };
+
+const hasKind = (kind: Finding["kind"]) => (findings: Finding[]) =>
+  findings.some((f) => f.kind === kind);
+
+const hasService = (service: string) => (findings: Finding[]) =>
+  findings.some((f) => f.kind === "account" && f.service === service);
+
+// Ordered by priority: the first actions are the most urgent.
+const RULES: Rule[] = [
   {
-    triggers: ["password"],
+    applies: (findings) => findings.some((f) => f.kind === "breach" && f.categories.includes("password")),
     action: {
       id: "change-passwords",
       title: "Changer les mots de passe concernés",
@@ -18,7 +39,7 @@ const ACTIONS: { action: Action; triggers: DataCategory[] }[] = [
     },
   },
   {
-    triggers: ["password", "email"],
+    applies: hasKind("breach"),
     action: {
       id: "enable-2fa",
       title: "Activer la double authentification",
@@ -27,7 +48,7 @@ const ACTIONS: { action: Action; triggers: DataCategory[] }[] = [
     },
   },
   {
-    triggers: ["email", "phone", "name"],
+    applies: (findings) => hasKind("breach")(findings) || hasKind("web")(findings) || hasKind("directory")(findings),
     action: {
       id: "phishing",
       title: "Se méfier des messages ciblés",
@@ -36,7 +57,34 @@ const ACTIONS: { action: Action; triggers: DataCategory[] }[] = [
     },
   },
   {
-    triggers: ["financial"],
+    applies: hasKind("directory"),
+    action: {
+      id: "directory",
+      title: "Limiter ton inscription dans l'annuaire",
+      detail:
+        "Demande à ton opérateur de masquer ton adresse, ou de ne plus publier ton numéro. Ajoute l'astérisque (*) pour refuser le démarchage publicitaire.",
+    },
+  },
+  {
+    applies: hasKind("web"),
+    action: {
+      id: "web-removal",
+      title: "Faire retirer les pages qui te concernent",
+      detail:
+        "Supprime ou modifie tes anciennes publications. Sinon, demande au site de retirer tes données, puis demande à Google de déréférencer la page.",
+    },
+  },
+  {
+    applies: hasService("GitHub"),
+    action: {
+      id: "github-noreply",
+      title: "Masquer ton email sur GitHub",
+      detail:
+        "Active « Keep my email addresses private » et utilise l'adresse noreply fournie par GitHub pour tes commits.",
+    },
+  },
+  {
+    applies: hasCategory("financial"),
     action: {
       id: "watch-bank",
       title: "Surveiller tes relevés bancaires",
@@ -44,7 +92,7 @@ const ACTIONS: { action: Action; triggers: DataCategory[] }[] = [
     },
   },
   {
-    triggers: ["address", "birthDate", "governmentId"],
+    applies: hasCategory("address", "birthDate", "governmentId"),
     action: {
       id: "identity",
       title: "Rester attentif à l'usurpation d'identité",
@@ -54,9 +102,6 @@ const ACTIONS: { action: Action; triggers: DataCategory[] }[] = [
   },
 ];
 
-export function buildActionPlan(exposures: Exposure[]): Action[] {
-  const exposed = new Set(exposures.flatMap((e) => e.categories));
-  return ACTIONS.filter(({ triggers }) => triggers.some((t) => exposed.has(t))).map(
-    ({ action }) => action,
-  );
+export function buildActionPlan(findings: Finding[]): Action[] {
+  return RULES.filter((rule) => rule.applies(findings)).map((rule) => rule.action);
 }

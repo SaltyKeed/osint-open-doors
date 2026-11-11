@@ -6,6 +6,8 @@ const envSchema = z.object({
   APP_MODE: z.enum(["surface", "deep"]).default("surface"),
   SEARCH_CH_API_KEY: z.string().min(1).optional(),
   TAVILY_API_KEY: z.string().min(1).optional(),
+  // Optional: raises the GitHub search limit from 10 to 30 requests per minute.
+  GITHUB_TOKEN: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

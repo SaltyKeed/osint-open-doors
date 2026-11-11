@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<feed xml:lang="fr" xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/" xmlns:tel="http://tel.search.ch/api/spec/result/1.0/">
+  <id>https://tel.search.ch/api/INVENTED</id>
+  <title type="text">tel.search.ch API Search Results</title>
+  <openSearch:totalResults>2</openSearch:totalResults>
+  <openSearch:startIndex>1</openSearch:startIndex>
+  <openSearch:itemsPerPage>10</openSearch:itemsPerPage>
+  <entry>
+    <id>urn:uuid:invented1</id>
+    <title type="text">Dupont, Jean</title>
+    <content type="text">Dupont, Jean
+    Rue Inventée 1
+    9999 Nulle-Part NE
+    *079 123 45 67</content>
+    <tel:nopromo>*</tel:nopromo>
+    <author><name>tel.search.ch</name></author>
+    <tel:type>Person</tel:type>
+    <tel:name>Dupont</tel:name>
+    <tel:firstname>Jean</tel:firstname>
+    <tel:street>Rue Inventée</tel:street>
+    <tel:streetno>1</tel:streetno>
+    <tel:zip>9999</tel:zip>
+    <tel:city>Nulle-Part</tel:city>
+    <tel:canton>NE</tel:canton>
+    <tel:phone>+41791234567</tel:phone>
+  </entry>
+  <entry>
+    <id>urn:uuid:invented2</id>
+    <title type="text">Autre, Personne</title>
+    <content type="text">Autre, Personne</content>
+    <author><name>tel.search.ch</name></author>
+    <tel:type>Person</tel:type>
+    <tel:name>Autre</tel:name>
+    <tel:phone>+41790000000</tel:phone>
+  </entry>
+</feed>

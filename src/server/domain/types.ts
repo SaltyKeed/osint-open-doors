@@ -1,13 +1,17 @@
 // Domain model: what the rest of the app knows about a search and its results.
-// No provider-specific field and no personal value ever appear here.
+// No provider-specific field and no unmasked personal value ever appear here.
 
 export type QueryKind = "email" | "phone" | "name";
 
+// Validated visitor input. The phone is normalized to E.164 (+41791234567).
 export type SearchQuery = {
   email?: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
 };
 
-// Kinds of data exposed in a breach. Only the category is kept, never the value.
+// Kinds of exposed data. Only the category is kept, never the value.
 export const DATA_CATEGORIES = [
   "email",
   "password",
@@ -16,6 +20,7 @@ export const DATA_CATEGORIES = [
   "address",
   "birthDate",
   "username",
+  "photo",
   "ipAddress",
   "financial",
   "governmentId",
@@ -25,13 +30,56 @@ export const DATA_CATEGORIES = [
 
 export type DataCategory = (typeof DATA_CATEGORIES)[number];
 
-// One breach in which the visitor's data appears (metadata only).
-export type Exposure = {
+type FindingBase = {
   providerId: string;
-  source: string; // name of the breached service, e.g. "ExampleShop"
+  // Visitor data that links this finding to the visitor (anti-homonym rule).
+  matchedOn: QueryKind;
+};
+
+// The visitor's data appears in a known data breach (metadata only).
+export type BreachFinding = FindingBase & {
+  kind: "breach";
+  source: string;
   domain?: string;
   year?: string;
   records?: number;
   categories: DataCategory[];
-  matchedOn: QueryKind;
 };
+
+// A public web page contains the visitor's email or phone number.
+export type WebFinding = FindingBase & {
+  kind: "web";
+  site: string;
+  title: string; // personal values already masked
+};
+
+// The visitor is listed in a public directory.
+export type DirectoryFinding = FindingBase & {
+  kind: "directory";
+  source: string;
+  categories: DataCategory[]; // which data the listing makes public
+  noPromo: boolean; // "*" in the directory: no advertising calls
+};
+
+// A public account or record is linked to the visitor's email.
+export type AccountFinding = FindingBase & {
+  kind: "account";
+  service: string;
+  summary: string; // shown to the visitor (French), no unmasked value
+  categories: DataCategory[];
+};
+
+// Results found by name only: probably homonyms, so only a total is shown.
+export type CountFinding = FindingBase & {
+  kind: "count";
+  source: string;
+  count: number;
+  label: string; // e.g. "inscriptions portent ce nom dans l'annuaire"
+};
+
+export type Finding =
+  | BreachFinding
+  | WebFinding
+  | DirectoryFinding
+  | AccountFinding
+  | CountFinding;

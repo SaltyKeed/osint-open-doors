@@ -290,6 +290,45 @@ Autres choix :
 - Framer Motion n'est pas encore installé : il sera ajouté avec la première
   animation.
 
+## D14. Sources du mode surface
+
+Date : 2026-11-11
+
+Toutes les sources gratuites et légales discutées sont intégrées. Les
+services payants attendent l'acceptation du budget (D12, `BUDGET.md`) et le
+rebond reste une idée (`IDEES.md`, I1).
+
+| Source | Saisie utilisée | Ce qui est affiché | Clé |
+|---|---|---|---|
+| XposedOrNot (retenu) | Email | Fuites : service, année, types de données exposées | Aucune |
+| Tavily (retenu) | Email, téléphone (tous les formats), nom | Pages qui contiennent vraiment l'email ou le téléphone ; total pour le nom seul | `TAVILY_API_KEY` |
+| search.ch (retenu) | Téléphone, nom | Inscription trouvée par le numéro (types de données publiées, astérisque) ; total pour le nom (`count_only`) | `SEARCH_CH_API_KEY` |
+| GitHub (retenu) | Email | Nombre de commits publics signés avec l'email exact | Optionnelle (`GITHUB_TOKEN`) |
+| Gravatar (retenu) | Email (empreinte SHA-256) | Photo de profil publique liée à l'email | Aucune |
+| keys.openpgp.org (retenu) | Email | Clé publique publiée pour l'email | Aucune |
+| RDAP (retenu) | Domaine de l'email, sauf messageries partagées | Date d'enregistrement, nom du titulaire public ou masqué | Aucune |
+| Recherche GitHub d'utilisateurs par email | Email | Écartée : recherche approximative, renvoie d'autres comptes | |
+
+Vérification des résultats : une page web ou une inscription n'est détaillée
+que si son texte contient l'email ou le numéro du visiteur
+(`domain/matching.ts`). Un résultat trouvé par le nom seul est seulement
+compté. Les titres de pages sont masqués (`maskInText`).
+
+Nouvelles dépendances :
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **libphonenumber-js (retenu)** | Règles officielles de Google pour valider et formater les numéros de tous les pays ; très utilisée. | Environ 150 Ko. |
+| Expressions régulières maison | Aucune dépendance. | Formats suisses et étrangers difficiles à couvrir correctement. |
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **fast-xml-parser (retenu)** | Lit la réponse XML (Atom) de search.ch, sans dépendance, très utilisé. | Une dépendance de plus. |
+| Lecture par expressions régulières | Aucune dépendance. | Fragile si le format change. |
+
+Remarque : search.ch recopie la clé API dans sa réponse. La réponse brute
+n'est donc jamais journalisée ni renvoyée au navigateur.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
