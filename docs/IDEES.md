@@ -97,3 +97,30 @@ Vitest.
 | Énumération de comptes (holehe, GHunt) | Détourne les fonctions « mot de passe oublié » ou des API internes, contraire aux conditions d'utilisation des sites. |
 | Présence sur WhatsApp, Telegram, Truecaller | Nécessite de synchroniser des contacts, interdit par ces services. |
 | Scraping direct de Google ou des réseaux sociaux | Interdit par leurs conditions d'utilisation ; passer par une API de recherche. |
+
+## I2. Améliorations de la CI
+
+Date : 2026-11-11
+
+### Principe
+
+La CI vérifie aujourd'hui les secrets (gitleaks) et la documentation
+(markdownlint, liens). D'autres contrôles deviennent utiles quand le projet
+contient du code, des dépendances et une image Docker.
+
+### Outils envisagés
+
+| Outil | Rôle | Utile à partir de |
+|---|---|---|
+| Dependabot | Ouvre une pull request quand une action GitHub, un paquet npm ou l'image de base Docker a une nouvelle version, en particulier une correction de sécurité. Configuré dans `.github/dependabot.yml`. | Possible dès maintenant pour les actions ; `npm` et `docker` quand `package.json` et le `Dockerfile` existent. |
+| CodeQL | Analyse statique du code TypeScript : injections, données non validées qui arrivent dans une requête, secrets écrits en dur. Gratuit pour un dépôt public, résultats dans l'onglet Security. | Premier code dans `src/`. |
+| Trivy | Cherche les vulnérabilités connues dans l'image Docker (paquets du système et dépendances npm) et les erreurs de configuration du `Dockerfile` et de `compose.yaml`. | Premier build de l'image dans la CI (D11). |
+
+### Points à trancher
+
+- Si une alerte bloque la fusion de la pull request ou est seulement affichée.
+  Trivy peut par exemple bloquer uniquement les vulnérabilités critiques et
+  élevées.
+- La fréquence de Dependabot (une fois par semaine devrait suffire) et le
+  regroupement des mises à jour pour éviter trop de pull requests.
+- Qui traite les alertes dans le binôme.
