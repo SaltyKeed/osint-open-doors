@@ -25,7 +25,7 @@ Les choix de stack ont été faits selon trois critères :
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Next.js (App Router) (retenu)** | Front et API dans un seul projet ; rendu serveur natif, la clé n'est jamais envoyée au navigateur ; écosystème très large ; très demandé en entreprise ; mode `standalone` adapté à Docker. | Courbe d'apprentissage (Server et Client Components, cache) ; beaucoup de comportements implicites ; lié à l'écosystème Vercel. |
 | Vite + React + Express | Simple, explicite, séparation front/back claire et pédagogique. | Deux projets à configurer, à faire communiquer (CORS ou proxy) et à dockeriser ; plus de code d'infrastructure. |
 | SvelteKit | Agréable à écrire, moins de code, performant ; front et serveur intégrés. | Écosystème plus petit (composants, ressources) ; moins demandé sur le marché suisse. |
@@ -43,7 +43,7 @@ Express, plus explicite mais qui demande plus de code.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **TypeScript strict (retenu)** | Erreurs détectées avant l'exécution ; garantit qu'un type « brut » (avec mot de passe) ne peut pas atteindre l'UI ; autocomplétion. | Un peu plus verbeux ; les erreurs de typage peuvent être difficiles à comprendre au début. |
 | JavaScript | Aucune configuration. | Rien n'empêche de passer `rawRecord.password` à un composant par erreur, ce qui n'est pas acceptable avec des données sensibles. |
 
@@ -55,7 +55,7 @@ de protection pour la sécurité, et pas seulement de confort de développement.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Tailwind + shadcn/ui (retenu)** | Le code des composants est copié dans le projet (lisible, modifiable) ; accessible (Radix) ; design moderne par défaut. | HTML chargé de classes ; apparence « shadcn » courante, à personnaliser. |
 | MUI (Material UI) | Très complet. | Apparence « Google » difficile à personnaliser ; lourd ; ne permet pas d'apprendre le CSS. |
 | Chakra UI / Mantine | Rapides à prendre en main, bonne documentation. | Composants peu modifiables, moins de contrôle. |
@@ -71,7 +71,7 @@ puisque les composants font partie du projet. La solution de repli est Mantine.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Framer Motion (Motion) (retenu)** | API déclarative simple ; animations en cascade faciles à écrire. | Augmente la taille du bundle (négligeable en local). |
 | Animations CSS / Tailwind | Aucune dépendance, performant. | Fastidieux pour enchaîner des animations. |
 | GSAP | Très complet (timelines complexes). | Trop puissant pour nos besoins ; API impérative moins naturelle en React. |
@@ -84,7 +84,7 @@ Framer Motion est retenu parce qu'il permet de réaliser les animations prévues
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **zod (retenu)** | Un même schéma fournit la validation à l'exécution et le type TypeScript ; très répandu. | Un peu plus lourd que Valibot. |
 | Valibot | Même principe, beaucoup plus léger. | Moins répandu, moins d'exemples. |
 | Validation manuelle | Aucune dépendance. | Verbeux, oublis fréquents, types et validation désynchronisés. |
@@ -98,7 +98,7 @@ réponse au lieu d'afficher des informations incorrectes.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Vitest (retenu)** | Rapide, presque aucune configuration, TypeScript natif ; API compatible avec Jest. | Un peu moins de ressources disponibles que pour Jest. |
 | Jest | Le plus connu. | Configuration TypeScript/ESM pénible, plus lent. |
 | Playwright (E2E) | Teste le parcours complet dans un vrai navigateur. | Plus lent ; à ajouter plus tard en complément. |
@@ -111,7 +111,7 @@ tester le parcours complet.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Docker compose en local (retenu)** | Reproductible sur n'importe quel PC ; `read_only` garantit l'absence de stockage ; aucune donnée n'est envoyée à un hébergeur. | Docker Desktop doit être installé sur le PC de l'école (droits administrateur). |
 | `npm run start` direct | Le plus simple. | Dépend de la configuration du poste ; pas d'isolation. |
 | Vercel / cloud | Déploiement en un clic. | Les logs de la plateforme échappent à notre contrôle, on ne peut donc plus garantir l'absence de stockage ; inutile pour un seul PC. |
@@ -125,7 +125,7 @@ l'absence de stockage.
 Date : 2026-11-10
 
 | Provider | Recherche | Coût | Rôle |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **XposedOrNot (retenu)** | Email | Gratuit | Premier provider implémenté. |
 | Have I Been Pwned | Email | Payant (abonnement mensuel) | Remplaçant ou complément possible ; clé et comptes de test disponibles. |
 | Snusbase | Email, nom, téléphone… | Payant | Recherche par nom ou téléphone ; les réponses contiennent des données en clair, qui sont filtrées par la liste blanche. |
@@ -148,6 +148,12 @@ mise en place). Une fois fusionnée dans `main`, chaque fonctionnalité ou
 correction est développée sur sa propre branche, puis intégrée dans `main` par
 une pull request relue par l'autre membre du binôme.
 
+Les commits, push et pull requests sont faits par les élèves. Par défaut,
+Claude propose les commandes et le message ; chaque élève peut l'autoriser à
+les exécuter lui-même dans son `CLAUDE.local.md`. Les commits et pull requests
+ne mentionnent pas Claude ni l'IA.
+La règle de relecture est remplacée par D14.
+
 ## D10. Modes surface et deep
 
 Date : 2026-11-10
@@ -161,7 +167,7 @@ L'application a deux usages :
   volées par une API payante (Snusbase, Dehashed ou équivalent, voir D8).
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Une image, mode choisi à l'exécution par `APP_MODE` (retenu)** | Une seule image à construire et à tester ; le code est commun, seuls les providers actifs changent ; correspond à l'architecture ports & adapters (`registry.ts`) ; Next.js lit les variables serveur à l'exécution, un seul build suffit. | L'image `surface` contient aussi le code des providers deep (inutilisable sans clé). |
 | Deux images, mode fixé au build | L'image `surface` ne contient pas le code deep. | Deux builds et deux séries de tests ; les images peuvent diverger. |
 | Deux branches Git permanentes | Séparation visible dans le dépôt. | Chaque correction doit être fusionnée deux fois ; les branches divergent ; `main` n'est plus la référence (contraire à D9). |
@@ -173,7 +179,7 @@ Une seule image est retenue. Le mode est choisi au lancement du conteneur.
 `compose.yaml` qui les transmet, avec `env_file: ${ENV_FILE:-.env.surface}`.
 Sans précision, le conteneur démarre en `surface` :
 
-```
+```powershell
 docker compose up                              # surface (par défaut)
 $env:ENV_FILE=".env.deep"; docker compose up   # deep (PowerShell)
 ```
@@ -201,14 +207,15 @@ exception.
 
 Date : 2026-11-10
 
-Statut : ouverte, pas encore tranchée.
+Statut : ouverte, pas encore tranchée. La CI de vérification (secrets et
+documentation) est en place depuis D13.
 
 Nous prévoyons d'utiliser GitHub Actions pour la CI/CD et de stocker l'image
 Docker sur GitHub (GitHub Container Registry, `ghcr.io`). Une fois tranchée,
 cette décision complétera D7, qui prévoit aujourd'hui un build local.
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | GitHub Actions + GitHub Container Registry (envisagé) | Tout reste sur GitHub, à côté du code et des pull requests ; gratuit pour un package public, quota gratuit limité en privé ; standard en entreprise. | Le PC de l'école doit pouvoir télécharger l'image (connexion, authentification si le package est privé). |
 | Build local uniquement (situation actuelle, D7) | Rien à configurer. | Pas de tests automatiques sur les pull requests ; l'image dépend du PC qui la construit. |
 | Docker Hub | Registre le plus connu. | Un compte et un service de plus ; limites de téléchargement. |
@@ -239,7 +246,7 @@ confirmer par écrit) :
 Conséquences :
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Interroger les fuites publiques par des services qui les indexent (retenu)** | Aucune donnée de tiers stockée chez nous ; les invariants (zéro stockage, liste blanche) restent respectés ; une requête ne renvoie que les fiches liées à la saisie du visiteur. | Payant pour la recherche par téléphone ou pseudo ; dépend de services externes. |
 | Télécharger les fuites publiques et les interroger en local | Aucun coût, aucune dépendance. | Stocke sur le poste les données de millions de personnes : contraire à l'invariant « zéro stockage » et à la nLPD (minimisation). |
 
@@ -248,7 +255,58 @@ Le mode `deep` (D10) peut être développé. Les invariants de `ARCHITECTURE.md`
 valeurs masquées, règle anti-homonymes. Aucun service payant n'est souscrit
 avant l'acceptation du budget.
 
-## D13. Mise en place du projet
+## D13. CI de vérification
+
+Date : 2026-11-11
+
+Tant que le projet ne contient pas de code à builder, la CI vérifie les
+secrets et la documentation. Elle répond en partie à la première question de
+D11. Le build, les tests et la publication de l'image restent ouverts dans D11.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **gitleaks (retenu)** | Analyse tout l'historique Git, pas seulement le dernier commit ; action GitHub gratuite pour un compte personnel ; règles connues pour les clés API courantes. | Peut signaler des faux positifs, à exclure dans un fichier de configuration. |
+| TruffleHog | Peut vérifier si une clé trouvée est encore valide. | Plus lourd à configurer ; la vérification envoie la clé au service concerné. |
+| Secret scanning de GitHub seul | Déjà activé, bloque le push avant l'arrivée du secret. | Couvre seulement les formats de clés connus de GitHub ; pas de contrôle visible dans la pull request. |
+
+Gitleaks est retenu en complément du secret scanning de GitHub : le secret
+scanning bloque le push, gitleaks contrôle chaque pull request et tout
+l'historique.
+
+Pour la documentation :
+
+- markdownlint vérifie la structure des fichiers Markdown (titres, listes,
+  tableaux, blocs de code). La longueur des lignes n'est pas vérifiée, car les
+  tableaux et les schémas ne peuvent pas être coupés.
+- lychee vérifie les liens et les ancres entre les documents, par exemple les
+  renvois de `ARCHITECTURE.md` vers les décisions.
+
+Ces deux contrôles ne tournent que si `docs/` change. Les actions sont
+épinglées par SHA de commit : une version publiée ne peut pas être remplacée
+par du code différent sans que le workflow change. Les outils prévus pour plus
+tard (Dependabot, CodeQL, Trivy) sont dans `IDEES.md`, I2.
+
+## D14. Protection de main et relecture
+
+Date : 2026-11-11
+
+Remplace la règle de relecture de D9.
+
+Tiago est responsable du dépôt et relit le travail d'Enzo. Les pull requests
+d'Enzo doivent être approuvées par Tiago avant la fusion. Tiago peut pousser
+sur `main` et fusionner ses propres pull requests sans approbation.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Ruleset avec contournement pour le rôle admin (retenu)** | Les règles s'appliquent à Enzo ; Tiago garde tous les droits ; chaque contournement est enregistré par GitHub. | Le contournement s'applique à toutes les règles, y compris le force push. |
+| Relecture croisée sans contournement | Chaque changement est relu par une deuxième personne. | Ne correspond pas à la répartition des rôles dans le binôme. |
+| Protection de branche classique | Interface plus ancienne et connue. | GitHub recommande les rulesets, qui permettent une liste de contournement par rôle. |
+
+Le réglage détaillé du ruleset est dans `ARCHITECTURE.md`, section 8. Le check
+`gitleaks-scan` est obligatoire. Les push directs de Tiago sur `main` sont
+quand même analysés, car `ci.yml` tourne à chaque push sur `main`.
+
+## D15. Mise en place du projet
 
 Date : 2026-11-11
 
@@ -259,7 +317,7 @@ Les choix faits pendant la mise en place sont les suivants.
 Base des composants shadcn/ui :
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Radix (retenu)** | Composants accessibles, très utilisés ; c'est la base citée dans D3. | Aucun pour notre usage. |
 | Base UI | Proposée par défaut par la nouvelle version de shadcn. | Plus récente, moins d'exemples ; D3 avait été décidé sur Radix. |
 | React Aria | Très complète sur l'accessibilité. | Moins répandue avec shadcn. |
@@ -290,7 +348,7 @@ Autres choix :
 - Framer Motion n'est pas encore installé : il sera ajouté avec la première
   animation.
 
-## D14. Sources du mode surface
+## D16. Sources du mode surface
 
 Date : 2026-11-11
 
@@ -299,9 +357,9 @@ services payants attendent l'acceptation du budget (D12, `BUDGET.md`) et le
 rebond reste une idée (`IDEES.md`, I1).
 
 | Source | Saisie utilisée | Ce qui est affiché | Clé |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | XposedOrNot (retenu) | Email | Fuites : service, année, types de données exposées | Aucune |
-| Tavily (retenu) | Email, téléphone (tous les formats), nom | Pages qui contiennent vraiment l'email ou le téléphone ; pages trouvées par le nom seul (voir D15) | `TAVILY_API_KEY` |
+| Tavily (retenu) | Email, téléphone (tous les formats), nom | Pages qui contiennent vraiment l'email ou le téléphone ; pages trouvées par le nom seul (voir D17) | `TAVILY_API_KEY` |
 | search.ch (retenu) | Téléphone, nom | Inscription trouvée par le numéro (types de données publiées, astérisque) ; total pour le nom (`count_only`) | `SEARCH_CH_API_KEY` |
 | GitHub (retenu) | Email | Nombre de commits publics signés avec l'email exact | Optionnelle (`GITHUB_TOKEN`) |
 | Gravatar (retenu) | Email (empreinte SHA-256) | Photo de profil publique liée à l'email | Aucune |
@@ -317,19 +375,19 @@ compté. Les titres de pages sont masqués (`maskInText`).
 Nouvelles dépendances :
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **libphonenumber-js (retenu)** | Règles officielles de Google pour valider et formater les numéros de tous les pays ; très utilisée. | Environ 150 Ko. |
 | Expressions régulières maison | Aucune dépendance. | Formats suisses et étrangers difficiles à couvrir correctement. |
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **fast-xml-parser (retenu)** | Lit la réponse XML (Atom) de search.ch, sans dépendance, très utilisé. | Une dépendance de plus. |
 | Lecture par expressions régulières | Aucune dépendance. | Fragile si le format change. |
 
 Remarque : search.ch recopie la clé API dans sa réponse. La réponse brute
 n'est donc jamais journalisée ni renvoyée au navigateur.
 
-## D15. Pages trouvées par le nom en mode surface
+## D17. Pages trouvées par le nom en mode surface
 
 Date : 2026-11-11
 
@@ -341,7 +399,7 @@ un total était affiché. Le visiteur ne voyait donc pas ce qu'on trouve en
 cherchant son nom, alors que c'est le premier réflexe de n'importe qui.
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | Total uniquement (règle d'origine) | Aucune information sur un homonyme n'est affichée. | Le visiteur ne voit pas ce que tout le monde trouve en cherchant son nom. |
 | **Pages web affichées comme « non vérifiées » (appliqué sur `sandbox`)** | Montre exactement ce qu'un moteur de recherche montre à n'importe qui ; en mode `surface`, ce sont des pages publiques. | Certaines pages parlent d'un homonyme ; n'importe qui peut taper n'importe quel nom sur le poste. |
 | Liste des sites seulement | Indique où chercher sans aucun contenu. | Moins parlant pour le visiteur. |
@@ -365,7 +423,7 @@ Règles de l'option appliquée :
   contrat d'utilisation.
 - Les pages non vérifiées ne déclenchent pas d'action dans le plan d'action.
 
-## D16. Recherche approfondie et archives du web
+## D18. Recherche approfondie et archives du web
 
 Date : 2026-11-11
 
@@ -373,7 +431,7 @@ Les premières recherches ne trouvaient qu'une partie de ce qu'un enquêteur
 trouve à la main. Trois ajouts, tous gratuits et sur des données publiques :
 
 - Recherches ciblées sur le nom complet (toujours « Prénom Nom » ensemble,
-  voir D15) : une recherche approfondie, puis une recherche par thème avec une
+  voir D17) : une recherche approfondie, puis une recherche par thème avec une
   liste de sites (réseaux sociaux, presse suisse, sport et clubs) et une
   recherche de documents (CV, PDF, listes de membres). Les listes de sites
   sont dans `providers/tavily/searches.ts`.
@@ -394,14 +452,14 @@ couvre environ 125 visiteurs complets ; le budget (`BUDGET.md`) prévoit une
 réserve.
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Plusieurs recherches ciblées (retenu)** | Trouve les réseaux sociaux, la presse locale et les résultats sportifs qu'une recherche générale manque. | 8 crédits au lieu de 3 ; recherche plus longue (environ 15 à 20 secondes). |
 | Une recherche générale par donnée | 3 crédits, plus rapide. | Beaucoup moins de résultats. |
 
 Limite : certains sites (LinkedIn, Facebook, Instagram) refusent l'archivage,
 la Wayback Machine n'a donc pas de copie de leurs pages.
 
-## D17. Pseudo et rebond
+## D19. Pseudo et rebond
 
 Date : 2026-11-11
 
@@ -443,12 +501,12 @@ appartenir à quelqu'un d'autre »), pas comme une preuve.
 Durée : environ 20 à 25 secondes avec tous les champs remplis.
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Liste WhatsMyName (retenu)** | Maintenue par la communauté OSINT, règles par site, licence libre. | Faux positifs possibles (pages de connexion, sites qui changent) ; environ 650 requêtes par pseudo. |
 | Outils Sherlock ou Maigret | Très connus. | Programmes Python à part, difficiles à intégrer dans l'application. |
 | Liste de sites maison | Contrôle total. | Long à créer et à maintenir. |
 
-## D18. Variantes, contexte et nouvelles sources publiques
+## D20. Variantes, contexte et nouvelles sources publiques
 
 Date : 2026-11-11
 
@@ -462,7 +520,7 @@ Suite de l'idée I2 (points 2, 3 et sources publiques).
   marquée « probablement toi ». Une recherche « Prénom Nom » + localité est
   ajoutée. Ces pages restent « non vérifiées » : elles ne servent ni au rebond
   ni au plan d'action.
-- Partie de l'email avant le @ : utilisée comme pseudo pour le rebond (D17),
+- Partie de l'email avant le @ : utilisée comme pseudo pour le rebond (D19),
   sauf les noms de boîtes génériques (info, contact, test…).
 - Téléphone : recherche supplémentaire sur les sites de signalement d'appels
   et les annuaires (tellows, local.ch, telguarder…). Une page n'est gardée que
@@ -470,7 +528,7 @@ Suite de l'idée I2 (points 2, 3 et sources publiques).
 - Keybase : pour le pseudo saisi et les pseudos du rebond, liste des comptes
   que le compte Keybase prouve posséder.
 - ORCID (chercheurs) et Wikidata (personnes connues) : recherche par nom
-  complet exact, résultats affichés comme pages non vérifiées (D15).
+  complet exact, résultats affichés comme pages non vérifiées (D17).
 
 Coût : jusqu'à 11 crédits Tavily par visiteur (email 1, téléphone 2, nom 8).
 `BUDGET.md` est mis à jour.
@@ -478,7 +536,7 @@ Coût : jusqu'à 11 crédits Tavily par visiteur (email 1, téléphone 2, nom 8)
 Sources écartées pour le moment :
 
 | Source | Raison |
-|---|---|
+| --- | --- |
 | ProxyNova (COMB), psbdmp | Bloqués par le filtre de sécurité du réseau (Cisco Umbrella). Le filtre n'est pas contourné. |
 | Intelligence X | Demande un compte et une clé, à créer par les élèves. |
 | Marginalia (2e moteur) | Inaccessible depuis le réseau au moment du test. |
@@ -486,7 +544,7 @@ Sources écartées pour le moment :
 | Hunter.io, Brave | Demandent un compte (et une carte bancaire pour Brave). |
 | Lecture des PDF | Tavily fournit déjà le texte des PDF qu'il indexe (`raw_content`), utilisé pour la vérification. |
 
-## D19. Interface : une seule barre de recherche
+## D21. Interface : une seule barre de recherche
 
 Date : 2026-11-11
 
@@ -501,14 +559,14 @@ peuvent être inversés. Une liste collée est découpée automatiquement. Le
 serveur valide de nouveau chaque valeur (`route.ts`).
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Une barre avec reconnaissance automatique (retenu)** | Un seul geste à expliquer aux visiteurs ; aucun champ vide intimidant. | La reconnaissance peut se tromper : le visiteur doit pouvoir corriger le type. |
 | Formulaire avec un champ par information | Aucune ambiguïté. | Long et peu engageant sur un poste de portes ouvertes. |
 
 Identité visuelle : l'idée du surligneur, qui marque ce qui est exposé.
 
 | Rôle | Valeur |
-|---|---|
+| --- | --- |
 | Fond | `#f3f5f8` (papier gris-bleu froid) |
 | Encre (texte, bordures, bouton) | `#1b2a4a` |
 | Surligneur (étiquettes, ombre de la barre, chiffres trouvés) | `#ffe45c` |
@@ -526,16 +584,18 @@ Pendant la recherche, un écran d'attente liste les sources interrogées.
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
-|---|---|---|
+| --- | --- | --- |
 | Framework | Next.js (App Router) | Vite + React + Express |
 | Langage | TypeScript strict | Aucun |
 | UI | Tailwind + shadcn/ui | Mantine |
 | Animations | Framer Motion | CSS pur |
 | Validation | zod | Valibot |
 | Tests | Vitest (+ Playwright plus tard) | Jest |
-| Qualité du code | ESLint (configuration Next.js) | Aucun |
 | Exécution | Docker compose (local) | `npm run start` |
 | Premier provider | XposedOrNot | Have I Been Pwned |
 | Modes | Une image, `APP_MODE` à l'exécution | Deux images |
-| CI/CD | Ouverte (D11) | |
+| CI | GitHub Actions : gitleaks, markdownlint, lychee (D13) | |
+| CD et image | Ouverte (D11) | |
+| Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
+| Qualité du code | ESLint (configuration Next.js) | Aucun |

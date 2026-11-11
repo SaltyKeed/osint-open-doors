@@ -21,7 +21,7 @@ const searchSchema = z.object({
     .nullish(),
 });
 
-// Researchers registered with exactly this first and last name (name only: not verified, D15).
+// Researchers registered with exactly this first and last name (name only: not verified, D17).
 export function toFindings(raw: unknown, query: SearchQuery): WebFinding[] {
   const parsed = searchSchema.safeParse(raw);
   const { firstName, lastName } = query;

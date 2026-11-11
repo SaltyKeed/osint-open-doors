@@ -18,8 +18,15 @@ ports & adapters, stack, exécution. Il est mis à jour quand le code change.
 Une nouvelle décision (dépendance, changement de structure, nouveau provider)
 y est ajoutée à la fin, numérotée et datée.
 
+Toute modification (code, configuration, Docker, agents, variables
+d'environnement, organisation) met à jour la documentation concernée dans la
+même pull request : `README.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`,
+`CLAUDE.md`, `.env.example`. La documentation décrit toujours l'état actuel du
+projet.
+
 `docs/BUDGET.md` liste les services payants et leur coût. Aucun service payant
 n'est souscrit ni intégré avant l'acceptation du budget par l'enseignant.
+
 `docs/IDEES.md` garde les idées d'amélioration pas encore décidées. Une idée
 retenue devient une décision dans `docs/DECISIONS.md` et est retirée de ce
 fichier.
@@ -33,7 +40,7 @@ Ils s'appliquent à tout le code, sans exception. Détail et justification :
   liste blanche de champs. La réponse brute reste dans le dossier du provider.
 - Une fiche trouvée par nom est détaillée seulement si elle contient aussi le
   téléphone ou l'email saisi par le visiteur. Sinon, seul un total est affiché.
-  Exception en cours de validation (D15, branche `sandbox`) : en mode
+  Exception en cours de validation (D17, branche `sandbox`) : en mode
   `surface`, les pages web trouvées par nom sont affichées comme « non
   vérifiées », emails et numéros masqués. L'annuaire search.ch reste un total.
 - Les valeurs affichées sont masquées (`+41 79 ••• •• 42`).
@@ -66,6 +73,10 @@ Documentation sobre et factuelle, comme écrite par les élèves : phrases simpl
 texte brut sans emoji, sections séparées uniquement par des titres. Dans les
 tableaux comparatifs, l'option choisie est marquée « (retenu) ».
 
+La CI vérifie les fichiers de `docs/` avec markdownlint et lychee : tableaux au
+format `| --- | --- |` (un espace autour de chaque `|`), langage indiqué sur
+chaque bloc de code (`text` pour un schéma), liens et ancres valides.
+
 ## Outils Claude
 
 Sous-agents dans `.claude/agents/`, plugins déclarés dans
@@ -73,13 +84,13 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
 
 | Tâche | Outil |
 |---|---|
-| Rédiger ou relire un document | Sous-agent Technical Writer, avec la section « Style des documents » ci-dessus dans sa consigne |
+| Rédiger ou relire un document | Sous-agent `technical-writer` |
 | Préparer une étape de travail | Skill `superpowers:writing-plans` |
 | Provider, mapper, logique du domaine | Skill `superpowers:test-driven-development` |
-| Interface (parcours, mise en page) | Sous-agent UX Architect, puis skill `frontend-design` |
-| Identité visuelle (couleurs, cartes, jauge) | Sous-agent UI Designer |
-| Composants React en parallèle | Sous-agent Frontend Developer, seulement sur demande des élèves |
-| Docker, CI | Sous-agent DevOps Automator |
+| Interface (parcours, mise en page) | Sous-agent `ux-architect`, puis skill `frontend-design` |
+| Identité visuelle (couleurs, cartes, jauge) | Sous-agent `ui-designer` |
+| Coder une partie de l'interface | Par défaut, Claude guide les élèves ; sur leur demande, il délègue au sous-agent `frontend-developer` |
+| Docker, CI | Sous-agent `devops-automator` |
 | Nouvelle décision ou terme du domaine | Skill `mattpocock-skills:domain-modeling` |
 | Bug qui résiste | Skill `superpowers:systematic-debugging` |
 | Relecture avant pull request | Skills `code-review` et `security-review` |
@@ -89,12 +100,22 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
 
 - `main` est la branche de référence. Chaque fonctionnalité ou correction a sa
   propre branche créée depuis `main` (`feat/…`, `fix/…`, `docs/…`, `chore/…`),
-  intégrée par une pull request relue par l'autre membre du binôme.
+  intégrée par une pull request.
+- Tiago est responsable du dépôt : il relit et approuve les pull requests
+  d'Enzo, et peut fusionner les siennes sans approbation. Le check
+  `gitleaks-scan` doit passer. Détail : `docs/ARCHITECTURE.md`, section 8, et
+  `docs/DECISIONS.md`, D14.
 - La branche `research` sert uniquement au démarrage du projet ; elle n'est plus
   utilisée une fois fusionnée dans `main`.
-- Les élèves font eux-mêmes les commits et les push. À la fin d'une tâche,
-  Claude donne les commandes `git add`, `git commit` et `git push` avec une
-  suggestion de message (style Conventional Commits, en anglais), sans mention
-  de Claude ni d'IA.
+- Commits, push et pull requests : par défaut, Claude donne les commandes
+  `git add`, `git commit` et `git push` avec une suggestion de message, et
+  l'élève les lance. Un élève peut autoriser Claude à créer la branche,
+  commiter, pousser et ouvrir la pull request avec `gh` en l'indiquant dans son
+  `CLAUDE.local.md`. La relecture est demandée à l'autre membre du binôme.
+- Messages de commit en anglais, style Conventional Commits. Ni les commits ni
+  les pull requests ne mentionnent Claude ou l'IA : l'attribution automatique
+  est désactivée dans `.claude/settings.json` (clé `attribution`).
+- Avant de commencer un travail, vérifier que `main` et la branche en cours sont
+  à jour avec GitHub (`git fetch`, puis `git pull` si nécessaire).
 - Tâches suivies dans les GitHub Issues, avec un responsable assigné.
 - Préférences personnelles dans `CLAUDE.local.md` (non versionné).

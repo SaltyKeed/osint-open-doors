@@ -33,7 +33,7 @@ export function containsFullName(text: string, firstName: string, lastName: stri
 }
 
 // Full name or initial forms, always together with the last name:
-// "E. Pachoud", "E Pachoud", "Pachoud E.", "Pachoud, E." (D18).
+// "E. Pachoud", "E Pachoud", "Pachoud E.", "Pachoud, E." (D20).
 export function containsNameOrInitial(text: string, firstName: string, lastName: string): boolean {
   if (containsFullName(text, firstName, lastName)) return true;
   const initial = escapeRegExp(fold(firstName.trim()).charAt(0));

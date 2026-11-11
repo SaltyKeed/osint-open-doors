@@ -8,7 +8,7 @@ souscrit avant l'acceptation du budget.
 ## Ce que permettent les services gratuits
 
 | Service | Recherche | Limite |
-|---|---|---|
+| --- | --- | --- |
 | XposedOrNot | Fuites par email | Renvoie seulement le nom des fuites, pas de recherche par téléphone ou pseudo |
 | search.ch | Annuaire par téléphone ou nom | 1000 recherches par mois |
 | Tavily | Recherche web et presse | 1000 crédits par mois |
@@ -26,7 +26,7 @@ Les prix viennent des pages des services ou de comparatifs consultés le
 officielle le jour de la demande.
 
 | Service | Ce qu'il apporte | Prix | Source du prix |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Have I Been Pwned (Pwned 1) | Fuites par email, base de référence, plus complète que XposedOrNot | Environ 4 à 5.30 par mois | Comparatifs tiers |
 | LeakCheck (Monthly) | Fuites par email, pseudo et téléphone, 200 recherches par jour | 9.99 par mois | Page officielle |
 | Dehashed | Fuites par email, nom, téléphone, pseudo, adresse | 21.99 par mois, plus environ 0.02 par requête API | Comparatifs tiers |
@@ -39,8 +39,8 @@ est donc impossible de le budgéter.
 ## Hypothèses
 
 - Environ 200 visiteurs pendant les portes ouvertes (à confirmer avec l'école).
-- Jusqu'à 11 crédits Tavily par visiteur qui remplit tous les champs (D16,
-  D18 : email 1, téléphone 2, nom 8 avec la localité), soit environ 2200
+- Jusqu'à 11 crédits Tavily par visiteur qui remplit tous les champs (D18,
+  D20 : email 1, téléphone 2, nom 8 avec la localité), soit environ 2200
   crédits pour la journée, plus environ 400 pour les tests : environ 2600
   crédits, dont 1000 gratuits.
 - Les abonnements sont pris uniquement pour la durée nécessaire : un mois de
@@ -50,7 +50,7 @@ est donc impossible de le budgéter.
 ## Scénarios
 
 | Scénario | Contenu | Coût estimé |
-|---|---|---|
+| --- | --- | --- |
 | A. Gratuit | XposedOrNot, search.ch, Tavily gratuit (environ 90 visiteurs complets par mois) | 0 |
 | B. Recommandé | A, plus Have I Been Pwned et LeakCheck pendant 2 mois, plus une réserve Tavily | Environ 43 |
 | C. Complet | B, plus Dehashed pendant 1 mois avec des crédits API | Environ 85 |
@@ -58,7 +58,7 @@ est donc impossible de le budgéter.
 Détail du scénario B :
 
 | Poste | Calcul | Montant |
-|---|---|---|
+| --- | --- | --- |
 | Have I Been Pwned | 2 mois x 5.30 | 10.60 |
 | LeakCheck | 2 mois x 9.99 | 19.98 |
 | Réserve Tavily | environ 1600 crédits au-delà du gratuit x 0.008 | 12.80 |
@@ -67,7 +67,7 @@ Détail du scénario B :
 Détail du scénario C :
 
 | Poste | Calcul | Montant |
-|---|---|---|
+| --- | --- | --- |
 | Scénario B | | 43 |
 | Dehashed, abonnement | 1 mois x 21.99 | 21.99 |
 | Dehashed, crédits API | environ 1000 requêtes x 0.02 | 20.00 |

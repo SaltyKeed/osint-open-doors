@@ -25,7 +25,7 @@ function snippetOf(content: string): string {
 
 // Every page is checked against the visitor's email and phone:
 // - it contains one of them: verified, it is about the visitor;
-// - name search: kept as "not verified" (D15) only if the full name appears
+// - name search: kept as "not verified" (D17) only if the full name appears
 //   together (first + last name), otherwise dropped;
 // - email or phone search without such a link: dropped (the engine matched something else).
 // Emails and phone numbers inside titles and snippets are always masked.

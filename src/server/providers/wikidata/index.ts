@@ -14,7 +14,7 @@ const searchSchema = z.object({
     .optional(),
 });
 
-// Notable people with this exact name (name only: not verified, D15).
+// Notable people with this exact name (name only: not verified, D17).
 export function toFindings(raw: unknown, query: SearchQuery): WebFinding[] {
   const parsed = searchSchema.safeParse(raw);
   const { firstName, lastName } = query;

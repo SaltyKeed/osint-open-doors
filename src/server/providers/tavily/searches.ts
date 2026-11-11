@@ -51,7 +51,7 @@ export function plannedSearches(query: SearchQuery): PlannedSearch[] {
       { searchedOn: "name", text: name, options: { maxResults: 20, depth: "basic", includeDomains: SWISS_PRESS } },
       { searchedOn: "name", text: name, options: { maxResults: 20, depth: "basic", includeDomains: SPORT_AND_CLUBS } },
       { searchedOn: "name", text: `${name} CV OR pdf OR curriculum OR résumé OR membres OR liste`, options: { maxResults: 20, depth: "basic" } },
-      // Initial forms often used in results lists and press (D18).
+      // Initial forms often used in results lists and press (D20).
       {
         searchedOn: "name",
         text: `"${query.firstName.charAt(0)}. ${query.lastName}" OR "${query.lastName} ${query.firstName.charAt(0)}."`,

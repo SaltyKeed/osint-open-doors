@@ -9,7 +9,7 @@ const GENERIC_LOCAL_PARTS = new Set([
   "no-reply", "secretariat", "direction", "sales", "team", "webmaster",
 ]);
 
-// The part before the @ is often reused as a username (D18).
+// The part before the @ is often reused as a username (D20).
 export function emailLocalPart(email: string | undefined): string | null {
   const local = email?.split("@")[0]?.split("+")[0];
   if (!local || GENERIC_LOCAL_PARTS.has(local.toLowerCase()) || !isUsableHandle(local)) return null;

@@ -10,7 +10,7 @@ export type SearchQuery = {
   firstName?: string;
   lastName?: string;
   username?: string;
-  // Optional context to tell the visitor apart from homonyms (D18).
+  // Optional context to tell the visitor apart from homonyms (D20).
   city?: string;
   birthYear?: string;
 };
@@ -52,11 +52,11 @@ export type BreachFinding = FindingBase & {
 
 // A public web page found with the visitor's data.
 // verified = the page text contains the visitor's email or phone.
-// Not verified = found by name only, maybe a homonym (D15).
+// Not verified = found by name only, maybe a homonym (D17).
 export type WebFinding = FindingBase & {
   kind: "web";
   verified: boolean;
-  // Not verified but the page also contains the visitor's city or birth year (D18).
+  // Not verified but the page also contains the visitor's city or birth year (D20).
   probable?: boolean;
   probableBecause?: string; // e.g. "localité"
   site: string;
