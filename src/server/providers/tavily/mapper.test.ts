@@ -46,6 +46,8 @@ describe("tavily mapper", () => {
         kind: "web",
         providerId: "tavily",
         verified: false,
+        probable: false,
+        probableBecause: undefined,
         site: "news.example",
         url: "https://news.example/a",
         title: "Jean Dupont gagne la course",
@@ -57,6 +59,17 @@ describe("tavily mapper", () => {
 
   it("drops name-search pages where first and last name are not together", () => {
     expect(findings.map((f) => f.url)).not.toContain("https://cars.example/f");
+  });
+
+  it("marks a name page as probable when it also contains the city", () => {
+    const withCity = toFindings([nameBatch], { ...query, city: "Nulle-Part" });
+    const cityBatch = {
+      searchedOn: "name" as const,
+      results: [{ url: "https://club.example/b", title: "J. Dupont, Nulle-Part", content: "Résultats 2023" }],
+    };
+    const [page] = toFindings([cityBatch], { ...query, city: "Nulle-Part" });
+    expect(page).toMatchObject({ verified: false, probable: true, probableBecause: "localité" });
+    expect(withCity.find((f) => f.url === "https://news.example/a")?.probable).toBe(false);
   });
 
   it("drops unlinked pages of the email search and keeps each page once", () => {

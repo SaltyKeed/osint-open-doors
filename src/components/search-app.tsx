@@ -34,8 +34,16 @@ type Status =
   | { kind: "error"; message: string }
   | { kind: "done"; result: SearchResponse };
 
-type FormState = { email: string; phone: string; firstName: string; lastName: string; username: string };
-const EMPTY_FORM: FormState = { email: "", phone: "", firstName: "", lastName: "", username: "" };
+type FormState = {
+  email: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  city: string;
+  birthYear: string;
+};
+const EMPTY_FORM: FormState = { email: "", phone: "", firstName: "", lastName: "", username: "", city: "", birthYear: "" };
 
 const CATEGORY_LABELS: Record<DataCategory, string> = {
   email: "Email",
@@ -62,6 +70,8 @@ const PROVIDER_LABELS: Record<string, string> = {
   pgp: "Serveur de clés PGP",
   rdap: "Registre des domaines",
   whatsmyname: "Vérification des pseudos",
+  orcid: "ORCID",
+  wikidata: "Wikidata",
   wayback: "Archives du web",
 };
 
@@ -116,7 +126,9 @@ export function SearchApp() {
             ? "L'adresse email n'est pas valide."
             : body.fields?.includes("username")
               ? "Le pseudo doit faire 3 à 40 caractères (lettres, chiffres, . _ -)."
-            : "Saisie invalide. Remplis au moins un champ (prénom et nom ensemble).";
+              : body.fields?.includes("birthYear")
+                ? "L'année de naissance doit avoir 4 chiffres (par exemple 2008)."
+                : "Saisie invalide. Remplis au moins un champ (prénom et nom ensemble).";
         setStatus({ kind: "error", message });
         return;
       }
@@ -146,14 +158,19 @@ export function SearchApp() {
             <Field id="firstName" label="Prénom" value={form.firstName} onChange={update("firstName")} />
             <Field id="lastName" label="Nom" value={form.lastName} onChange={update("lastName")} />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field id="city" label="Localité (optionnel)" value={form.city} onChange={update("city")} placeholder="aide à reconnaître tes pages" />
+            <Field id="birthYear" label="Année de naissance (optionnel)" value={form.birthYear} onChange={update("birthYear")} placeholder="2008" />
+          </div>
           <Field id="username" label="Pseudo (optionnel)" value={form.username} onChange={update("username")} placeholder="celui que tu utilises sur les réseaux" />
           <div className="flex items-start gap-3">
             <Checkbox id="consent" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
             <Label htmlFor="consent" className="leading-snug font-normal">
               Je confirme que ces informations sont les miennes. Elles sont envoyées pour la recherche à
-              XposedOrNot, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org et au registre des
-              domaines ; le pseudo est testé sur environ 650 sites publics. Tout est ensuite effacé. Les pages trouvées sont vérifiées dans les archives du web
-              (Internet Archive). Rien n&apos;est enregistré.
+              XposedOrNot, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org, Keybase, ORCID,
+              Wikidata et au registre des domaines ; le pseudo et la partie de l&apos;email avant le @
+              sont testés sur environ 650 sites publics. Les pages trouvées sont vérifiées dans les
+              archives du web (Internet Archive). Tout est ensuite effacé, rien n&apos;est enregistré.
             </Label>
           </div>
           {status.kind === "error" && (
@@ -341,7 +358,12 @@ function WebPageList({ items }: { items: WebFinding[] }) {
     <ul className="flex flex-col gap-4">
       {items.map((item) => (
         <li key={item.url} className="flex flex-col gap-0.5">
-          <span className="font-medium">{item.title}</span>
+          <span className="font-medium">
+            {item.probable && (
+              <Badge className="mr-2 align-middle">Probablement toi ({item.probableBecause})</Badge>
+            )}
+            {item.title}
+          </span>
           <span className="text-xs break-all text-muted-foreground">{item.url}</span>
           {item.snippet && <span className="text-sm">{item.snippet}</span>}
           <ArchiveLine item={item} />
@@ -385,10 +407,11 @@ function WebSection({ items }: { items: WebFinding[] }) {
 
 function NameSection({ items }: { items: WebFinding[] }) {
   const sites = [...new Set(items.map((i) => i.site))];
+  const probable = items.filter((i) => i.probable).length;
   return (
     <Section
-      title={`Avec ton nom et prénom (${items.length} pages, non vérifiées)`}
-      description={`Ce que n'importe qui trouve en cherchant ton nom. Ces pages ne contiennent ni ton email ni ton numéro : certaines parlent peut-être d'un homonyme. Les emails et numéros qu'elles contiennent sont masqués. Sites : ${sites.join(", ")}.`}
+      title={`Avec ton nom et prénom (${items.length} pages, non vérifiées${probable > 0 ? `, dont ${probable} probablement toi` : ""})`}
+      description={`Ce que n'importe qui trouve en cherchant ton nom, y compris avec ton initiale (« E. Nom »). Ces pages ne contiennent ni ton email ni ton numéro : certaines parlent peut-être d'un homonyme. « Probablement toi » : la page contient aussi ta localité ou ton année de naissance. Les emails et numéros qu'elles contiennent sont masqués. Sites : ${sites.join(", ")}.`}
     >
       <Card size="sm">
         <CardContent>

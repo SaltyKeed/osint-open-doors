@@ -3,6 +3,19 @@ import type { Finding, SearchQuery } from "./types";
 
 export type Pivot = { username: string; origin: string };
 
+// Shared mailbox names: they say nothing about a person.
+const GENERIC_LOCAL_PARTS = new Set([
+  "info", "contact", "admin", "test", "mail", "hello", "bonjour", "office", "support", "noreply",
+  "no-reply", "secretariat", "direction", "sales", "team", "webmaster",
+]);
+
+// The part before the @ is often reused as a username (D18).
+export function emailLocalPart(email: string | undefined): string | null {
+  const local = email?.split("@")[0]?.split("+")[0];
+  if (!local || GENERIC_LOCAL_PARTS.has(local.toLowerCase()) || !isUsableHandle(local)) return null;
+  return local;
+}
+
 // Pivot step (rebond): usernames found in results that are surely about the visitor
 // (accounts linked to the email, verified pages). Unverified pages (name only) are
 // never used: they may belong to a homonym. Duplicates are ignored (case-insensitive).
@@ -16,6 +29,9 @@ export function collectPivots(findings: Finding[], query: SearchQuery, limit = 3
     seen.add(key);
     pivots.push({ username, origin });
   };
+
+  const local = emailLocalPart(query.email);
+  if (local) add(local, "la partie de ton email avant le @");
 
   for (const finding of findings) {
     if (finding.kind === "account") {

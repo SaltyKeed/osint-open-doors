@@ -26,6 +26,8 @@ const inputSchema = z
     username: optionalText(40).pipe(
       z.string().regex(/^[A-Za-z0-9._-]{3,40}$/).optional(),
     ),
+    city: optionalText(60),
+    birthYear: optionalText(4).pipe(z.string().regex(/^(19|20)\d{2}$/).optional()),
     consent: z.literal(true),
   })
   .transform((input, ctx) => {
@@ -42,6 +44,9 @@ const inputSchema = z
       firstName: hasName ? input.firstName : undefined,
       lastName: hasName ? input.lastName : undefined,
       username: input.username,
+      // The context only helps with a name.
+      city: hasName ? input.city : undefined,
+      birthYear: hasName ? input.birthYear : undefined,
     };
   })
   .refine((q) => q.email || q.phone || q.firstName || q.username, { message: "empty" });

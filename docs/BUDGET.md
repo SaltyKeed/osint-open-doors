@@ -39,9 +39,10 @@ est donc impossible de le budgéter.
 ## Hypothèses
 
 - Environ 200 visiteurs pendant les portes ouvertes (à confirmer avec l'école).
-- Jusqu'à 8 crédits Tavily par visiteur qui remplit tous les champs (D16),
-  soit environ 1600 crédits pour la journée, plus environ 400 pour les tests :
-  environ 2000 crédits, dont 1000 gratuits.
+- Jusqu'à 11 crédits Tavily par visiteur qui remplit tous les champs (D16,
+  D18 : email 1, téléphone 2, nom 8 avec la localité), soit environ 2200
+  crédits pour la journée, plus environ 400 pour les tests : environ 2600
+  crédits, dont 1000 gratuits.
 - Les abonnements sont pris uniquement pour la durée nécessaire : un mois de
   développement et de tests, puis le mois des portes ouvertes.
 - Les abonnements sont résiliés après l'événement.
@@ -50,9 +51,9 @@ est donc impossible de le budgéter.
 
 | Scénario | Contenu | Coût estimé |
 |---|---|---|
-| A. Gratuit | XposedOrNot, search.ch, Tavily gratuit (environ 125 visiteurs complets par mois) | 0 |
-| B. Recommandé | A, plus Have I Been Pwned et LeakCheck pendant 2 mois, plus une réserve Tavily | Environ 39 |
-| C. Complet | B, plus Dehashed pendant 1 mois avec des crédits API | Environ 81 |
+| A. Gratuit | XposedOrNot, search.ch, Tavily gratuit (environ 90 visiteurs complets par mois) | 0 |
+| B. Recommandé | A, plus Have I Been Pwned et LeakCheck pendant 2 mois, plus une réserve Tavily | Environ 43 |
+| C. Complet | B, plus Dehashed pendant 1 mois avec des crédits API | Environ 85 |
 
 Détail du scénario B :
 
@@ -60,17 +61,17 @@ Détail du scénario B :
 |---|---|---|
 | Have I Been Pwned | 2 mois x 5.30 | 10.60 |
 | LeakCheck | 2 mois x 9.99 | 19.98 |
-| Réserve Tavily | environ 1000 crédits au-delà du gratuit x 0.008 | 8.00 |
-| Total | | environ 39 |
+| Réserve Tavily | environ 1600 crédits au-delà du gratuit x 0.008 | 12.80 |
+| Total | | environ 43 |
 
 Détail du scénario C :
 
 | Poste | Calcul | Montant |
 |---|---|---|
-| Scénario B | | 39 |
+| Scénario B | | 43 |
 | Dehashed, abonnement | 1 mois x 21.99 | 21.99 |
 | Dehashed, crédits API | environ 1000 requêtes x 0.02 | 20.00 |
-| Total | | environ 81 |
+| Total | | environ 85 |
 
 Une marge d'environ 10 % est à prévoir pour le taux de change et la TVA.
 

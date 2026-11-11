@@ -113,18 +113,18 @@ Pistes classées par gain attendu. Le point 1 est en cours sur la branche
    (GitHub, Gravatar) et dans les adresses des pages vérifiées, puis vérifier
    chaque pseudo sur environ 650 sites avec la liste WhatsMyName. Ajouter un
    champ « pseudo » au formulaire.
-2. Variantes : chercher « E. Pachoud », « Pachoud E. » et la partie de l'email
+2. (Fait, D18.) Variantes : chercher « E. Pachoud », « Pachoud E. » et la partie de l'email
    avant le @ comme pseudo ; pour le téléphone, interroger aussi les sites de
    signalement de spam (tellows…).
-3. Contexte : un champ optionnel « localité » ou « année de naissance ». Une
+3. (Fait, D18.) Contexte : un champ optionnel « localité » ou « année de naissance ». Une
    page avec le nom complet et la localité devient « probable ».
-4. Fuites publiques gratuites en mode `deep` : ProxyNova (compilation COMB),
+4. (Bloqué par le filtre réseau, voir D18.) Fuites publiques gratuites en mode `deep` : ProxyNova (compilation COMB),
    psbdmp (pastes), Intelligence X (offre gratuite). Jamais de mot de passe
    affiché. État des services et conditions d'utilisation à vérifier.
-5. Lecture des PDF vérifiés (email, téléphone, auteur) et archives des profils
+5. (Archives X faites en D17 ; PDF couverts par Tavily, voir D18.) Lecture des PDF vérifiés (email, téléphone, auteur) et archives des profils
    déduits des pseudos (par exemple `twitter.com/pseudo` avant 2023).
 
-Autres sources publiques envisagées : Zefix et la Feuille officielle suisse du
+Autres sources publiques envisagées (Keybase, ORCID et Wikidata faits en D18) : Zefix et la Feuille officielle suisse du
 commerce (FOSC), Keybase, ORCID, Wikidata, Hunter.io (25 recherches par mois),
 un deuxième moteur de recherche (Brave, Marginalia).
 

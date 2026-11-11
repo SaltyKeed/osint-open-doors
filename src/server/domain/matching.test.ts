@@ -1,5 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { containsFullName, strongMatch } from "./matching";
+import { containsFullName, containsNameOrInitial, contextMatch, strongMatch } from "./matching";
+
+describe("containsNameOrInitial", () => {
+  it("accepts initial forms next to the last name", () => {
+    expect(containsNameOrInitial("Classement : E. Pachoud 3e", "Enzo", "Pachoud")).toBe(true);
+    expect(containsNameOrInitial("Pachoud E. (NE)", "Enzo", "Pachoud")).toBe(true);
+    expect(containsNameOrInitial("PACHOUD, E.", "Enzo", "Pachoud")).toBe(true);
+    expect(containsNameOrInitial("Enzo Pachoud", "Enzo", "Pachoud")).toBe(true);
+  });
+
+  it("rejects another initial or the last name alone", () => {
+    expect(containsNameOrInitial("M. Pachoud", "Enzo", "Pachoud")).toBe(false);
+    expect(containsNameOrInitial("La famille Pachoud", "Enzo", "Pachoud")).toBe(false);
+  });
+});
+
+describe("contextMatch", () => {
+  it("finds the city as a whole word, without accents", () => {
+    expect(contextMatch("Jean Dupont, Neuchatel", { city: "Neuchâtel" })).toBe("localité");
+    expect(contextMatch("Neuchâtelois", { city: "Neuchâtel" })).toBeNull();
+  });
+
+  it("finds the birth year as a number on its own", () => {
+    expect(contextMatch("Dupont Jean 2007 NE", { birthYear: "2007" })).toBe("année de naissance");
+    expect(contextMatch("Tel 0792007123", { birthYear: "2007" })).toBeNull();
+  });
+});
 
 describe("containsFullName", () => {
   it("accepts the full name in either order, whatever the case and accents", () => {

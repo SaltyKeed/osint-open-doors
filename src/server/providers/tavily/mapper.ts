@@ -1,6 +1,6 @@
 import "server-only";
 import { maskContacts } from "@/server/domain/masking";
-import { containsFullName, strongMatch } from "@/server/domain/matching";
+import { containsNameOrInitial, contextMatch, strongMatch } from "@/server/domain/matching";
 import type { QueryKind, SearchQuery, WebFinding } from "@/server/domain/types";
 import type { TavilyResult } from "./schema";
 
@@ -39,8 +39,9 @@ export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFindi
       const match = strongMatch(text, query);
       if (!match) {
         if (searchedOn !== "name" || !query.firstName || !query.lastName) continue;
-        if (!containsFullName(text, query.firstName, query.lastName)) continue;
+        if (!containsNameOrInitial(text, query.firstName, query.lastName)) continue;
       }
+      const context = match ? null : contextMatch(text, query);
 
       const existing = byUrl.get(result.url);
       if (existing?.verified) continue;
@@ -49,6 +50,8 @@ export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFindi
         kind: "web",
         providerId: PROVIDER_ID,
         verified: match !== null,
+        probable: context !== null,
+        probableBecause: context ?? undefined,
         site: siteOf(result.url),
         url: result.url,
         title: maskContacts(result.title || siteOf(result.url)),
@@ -58,6 +61,7 @@ export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFindi
     }
   }
 
-  // Verified pages first.
-  return [...byUrl.values()].sort((a, b) => Number(b.verified) - Number(a.verified));
+  // Verified pages first, then probable ones.
+  const rank = (f: WebFinding) => (f.verified ? 2 : f.probable ? 1 : 0);
+  return [...byUrl.values()].sort((a, b) => rank(b) - rank(a));
 }

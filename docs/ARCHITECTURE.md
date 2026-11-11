@@ -80,6 +80,9 @@ src/
 │   │   ├── pgp/                  ← clé publique sur keys.openpgp.org
 │   │   ├── rdap/                 ← registre du domaine de l'email (domaines perso)
 │   │   ├── whatsmyname/          ← pseudo testé sur ~650 sites (liste WhatsMyName)
+│   │   ├── keybase/              ← comptes prouvés d'un pseudo (rebond)
+│   │   ├── orcid/                ← chercheurs au même nom
+│   │   ├── wikidata/             ← personnes connues au même nom
 │   │   └── wayback/              ← 2e étape : archives des pages trouvées, page supprimée ou non
 │   │
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable

@@ -12,7 +12,7 @@ describe("getActiveProviders", () => {
 
   it("registers every surface source, even without keys", () => {
     const ids = getActiveProviders("surface", env).map((p) => p.id);
-    expect(ids).toEqual(["xposedornot", "tavily", "searchch", "github", "gravatar", "pgp", "rdap", "whatsmyname"]);
+    expect(ids).toEqual(["xposedornot", "tavily", "searchch", "github", "gravatar", "pgp", "rdap", "whatsmyname", "orcid", "wikidata"]);
   });
 
   it("includes the surface providers in deep mode", () => {

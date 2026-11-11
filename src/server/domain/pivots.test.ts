@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { collectPivots } from "./pivots";
+import { collectPivots, emailLocalPart } from "./pivots";
 import type { Finding } from "./types";
 
 // Invented findings (fixtures never contain real data).
@@ -17,6 +17,18 @@ describe("collectPivots", () => {
       { username: "jdupont_x", origin: "Profil GitHub @jdupont" },
       { username: "jean.d.42", origin: "instagram.com" },
     ]);
+  });
+
+  it("starts with the part of the email before the @", () => {
+    expect(collectPivots(findings, { email: "jean.dupont+news@example.com" })[0]).toEqual({
+      username: "jean.dupont",
+      origin: "la partie de ton email avant le @",
+    });
+  });
+
+  it("ignores generic mailbox names", () => {
+    expect(emailLocalPart("info@example.com")).toBeNull();
+    expect(emailLocalPart("contact@example.com")).toBeNull();
   });
 
   it("skips the username already typed by the visitor and respects the limit", () => {

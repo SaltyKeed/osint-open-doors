@@ -10,6 +10,9 @@ export type SearchQuery = {
   firstName?: string;
   lastName?: string;
   username?: string;
+  // Optional context to tell the visitor apart from homonyms (D18).
+  city?: string;
+  birthYear?: string;
 };
 
 // Kinds of exposed data. Only the category is kept, never the value.
@@ -53,6 +56,9 @@ export type BreachFinding = FindingBase & {
 export type WebFinding = FindingBase & {
   kind: "web";
   verified: boolean;
+  // Not verified but the page also contains the visitor's city or birth year (D18).
+  probable?: boolean;
+  probableBecause?: string; // e.g. "localité"
   site: string;
   url: string;
   title: string; // emails and phone numbers already masked

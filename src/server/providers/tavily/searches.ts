@@ -16,6 +16,11 @@ const SWISS_PRESS = [
   "lacote.ch", "lenouvelliste.ch", "lequotidienjurassien.ch", "laliberte.ch", "20min.ch",
   "watson.ch", "blick.ch", "srf.ch", "nzz.ch", "tagesanzeiger.ch", "bernerzeitung.ch",
 ];
+// Sites where people report and comment phone numbers (spam, callers) and directories.
+const PHONE_SITES = [
+  "tellows.ch", "tellows.de", "tellows.fr", "tellows.at", "local.ch", "search.ch",
+  "telguarder.com", "werruft.info", "wemgehoert.de", "sync.me", "callfilter.app",
+];
 const SPORT_AND_CLUBS = [
   "datasport.com", "mychip.ch", "swiss-athletics.ch", "swiss-ski.ch", "swimrankings.net",
   "football.ch", "swissvolley.ch", "swissbasketball.ch", "swiss-unihockey.ch", "sihf.ch",
@@ -32,7 +37,10 @@ export function plannedSearches(query: SearchQuery): PlannedSearch[] {
 
   if (query.phone) {
     const variants = phoneSearchVariants(query.phone).map((v) => `"${v}"`).join(" OR ");
-    searches.push({ searchedOn: "phone", text: variants, options: { maxResults: 20, depth: "basic" } });
+    searches.push(
+      { searchedOn: "phone", text: variants, options: { maxResults: 20, depth: "basic" } },
+      { searchedOn: "phone", text: variants, options: { maxResults: 20, depth: "basic", includeDomains: PHONE_SITES } },
+    );
   }
 
   if (query.firstName && query.lastName) {
@@ -43,7 +51,16 @@ export function plannedSearches(query: SearchQuery): PlannedSearch[] {
       { searchedOn: "name", text: name, options: { maxResults: 20, depth: "basic", includeDomains: SWISS_PRESS } },
       { searchedOn: "name", text: name, options: { maxResults: 20, depth: "basic", includeDomains: SPORT_AND_CLUBS } },
       { searchedOn: "name", text: `${name} CV OR pdf OR curriculum OR résumé OR membres OR liste`, options: { maxResults: 20, depth: "basic" } },
+      // Initial forms often used in results lists and press (D18).
+      {
+        searchedOn: "name",
+        text: `"${query.firstName.charAt(0)}. ${query.lastName}" OR "${query.lastName} ${query.firstName.charAt(0)}."`,
+        options: { maxResults: 20, depth: "basic" },
+      },
     );
+    if (query.city) {
+      searches.push({ searchedOn: "name", text: `${name} "${query.city}"`, options: { maxResults: 20, depth: "basic" } });
+    }
   }
 
   return searches;

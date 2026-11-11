@@ -448,6 +448,44 @@ Durée : environ 20 à 25 secondes avec tous les champs remplis.
 | Outils Sherlock ou Maigret | Très connus. | Programmes Python à part, difficiles à intégrer dans l'application. |
 | Liste de sites maison | Contrôle total. | Long à créer et à maintenir. |
 
+## D18. Variantes, contexte et nouvelles sources publiques
+
+Date : 2026-11-11
+
+Suite de l'idée I2 (points 2, 3 et sources publiques).
+
+- Initiales : le nom est aussi cherché sous la forme « E. Pachoud » ou
+  « Pachoud E. ». Une page est gardée si elle contient le nom complet ou
+  l'initiale collée au nom (`containsNameOrInitial`).
+- Contexte : deux champs optionnels, « localité » et « année de naissance ».
+  Une page trouvée par le nom qui contient aussi la localité ou l'année est
+  marquée « probablement toi ». Une recherche « Prénom Nom » + localité est
+  ajoutée. Ces pages restent « non vérifiées » : elles ne servent ni au rebond
+  ni au plan d'action.
+- Partie de l'email avant le @ : utilisée comme pseudo pour le rebond (D17),
+  sauf les noms de boîtes génériques (info, contact, test…).
+- Téléphone : recherche supplémentaire sur les sites de signalement d'appels
+  et les annuaires (tellows, local.ch, telguarder…). Une page n'est gardée que
+  si elle contient le numéro.
+- Keybase : pour le pseudo saisi et les pseudos du rebond, liste des comptes
+  que le compte Keybase prouve posséder.
+- ORCID (chercheurs) et Wikidata (personnes connues) : recherche par nom
+  complet exact, résultats affichés comme pages non vérifiées (D15).
+
+Coût : jusqu'à 11 crédits Tavily par visiteur (email 1, téléphone 2, nom 8).
+`BUDGET.md` est mis à jour.
+
+Sources écartées pour le moment :
+
+| Source | Raison |
+|---|---|
+| ProxyNova (COMB), psbdmp | Bloqués par le filtre de sécurité du réseau (Cisco Umbrella). Le filtre n'est pas contourné. |
+| Intelligence X | Demande un compte et une clé, à créer par les élèves. |
+| Marginalia (2e moteur) | Inaccessible depuis le réseau au moment du test. |
+| Zefix | Accès à l'API sur demande par email à l'OFJ. |
+| Hunter.io, Brave | Demandent un compte (et une carte bancaire pour Brave). |
+| Lecture des PDF | Tavily fournit déjà le texte des PDF qu'il indexe (`raw_content`), utilisé pour la vérification. |
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
