@@ -99,9 +99,12 @@ src/
 │   └── search-service.ts         ← orchestration (Promise.allSettled + timeout, puis archives et rebond)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
-│   ├── search-app.tsx            ← formulaire, consentement, résultats, reset
+│   ├── search-app.tsx            ← écran de recherche, attente, résultats, reset
+│   ├── search-bar.tsx            ← barre unique : étiquettes, changement de type
 │   └── ui/                       ← composants shadcn/ui copiés dans le projet
-├── lib/utils.ts                  ← fonction cn() pour combiner les classes Tailwind
+├── lib/
+│   ├── utils.ts                  ← fonction cn() pour combiner les classes Tailwind
+│   └── detect.ts                 ← reconnaissance automatique de la saisie (navigateur)
 └── tests/
     ├── fixtures/                 ← réponses d'API fictives (jamais de vraies données)
     └── stubs/server-only.ts      ← remplace server-only dans Vitest (voir D13)

@@ -486,6 +486,43 @@ Sources écartées pour le moment :
 | Hunter.io, Brave | Demandent un compte (et une carte bancaire pour Brave). |
 | Lecture des PDF | Tavily fournit déjà le texte des PDF qu'il indexe (`raw_content`), utilisé pour la vérification. |
 
+## D19. Interface : une seule barre de recherche
+
+Date : 2026-11-11
+
+Le formulaire à sept champs est remplacé par une seule barre. Le visiteur tape
+une information, appuie sur Entrée (ou Tab, ou une virgule) et l'application
+reconnaît seule ce que c'est (`src/lib/detect.ts`) : email, téléphone suisse,
+prénom et nom (deux à quatre mots), pseudo, localité ou année de naissance.
+Chaque information devient une étiquette. Quand la reconnaissance hésite (un
+mot seul peut être un pseudo ou une localité, deux mots un nom ou une
+localité), un clic sur le type de l'étiquette le change. Le prénom et le nom
+peuvent être inversés. Une liste collée est découpée automatiquement. Le
+serveur valide de nouveau chaque valeur (`route.ts`).
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **Une barre avec reconnaissance automatique (retenu)** | Un seul geste à expliquer aux visiteurs ; aucun champ vide intimidant. | La reconnaissance peut se tromper : le visiteur doit pouvoir corriger le type. |
+| Formulaire avec un champ par information | Aucune ambiguïté. | Long et peu engageant sur un poste de portes ouvertes. |
+
+Identité visuelle : l'idée du surligneur, qui marque ce qui est exposé.
+
+| Rôle | Valeur |
+|---|---|
+| Fond | `#f3f5f8` (papier gris-bleu froid) |
+| Encre (texte, bordures, bouton) | `#1b2a4a` |
+| Surligneur (étiquettes, ombre de la barre, chiffres trouvés) | `#ffe45c` |
+| Mot de passe exposé, erreur | `#c8283c` |
+| Vérifié | `#1e8e5a` |
+| Texte secondaire | `#5b6b82` |
+
+Polices : Bricolage Grotesque pour les titres, Atkinson Hyperlegible pour le
+texte. Atkinson Hyperlegible a été dessinée pour être lisible par tous, ce qui
+compte sur un poste utilisé par des visiteurs de tous âges. Les polices sont
+servies localement par `next/font` : le navigateur ne contacte pas Google.
+
+Pendant la recherche, un écran d'attente liste les sources interrogées.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |

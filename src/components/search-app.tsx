@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search } from "lucide-react";
+import { type Entry, entriesToPayload, SearchBar } from "@/components/search-bar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 // Type-only imports: erased at build time, no server code reaches the browser.
 import type { Action } from "@/server/domain/actions";
@@ -33,17 +34,6 @@ type Status =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | { kind: "done"; result: SearchResponse };
-
-type FormState = {
-  email: string;
-  phone: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  city: string;
-  birthYear: string;
-};
-const EMPTY_FORM: FormState = { email: "", phone: "", firstName: "", lastName: "", username: "", city: "", birthYear: "" };
 
 const CATEGORY_LABELS: Record<DataCategory, string> = {
   email: "Email",
@@ -75,17 +65,28 @@ const PROVIDER_LABELS: Record<string, string> = {
   wayback: "Archives du web",
 };
 
+// Shown while waiting: the sources really queried, in parallel.
+const SOURCES_SHOWN = [
+  "les fuites de données",
+  "le web et la presse",
+  "les réseaux sociaux",
+  "l'annuaire téléphonique",
+  "GitHub et Gravatar",
+  "650 sites pour ton pseudo",
+  "les archives d'Internet",
+];
+
 // After this delay without interaction, everything is erased for the next visitor.
 const INACTIVITY_MS = 2 * 60 * 1000;
 
 export function SearchApp() {
   // State lives in memory only: no localStorage, no cookie (CLAUDE.md invariant).
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [entries, setEntries] = useState<Entry[]>([]);
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const reset = useCallback(() => {
-    setForm(EMPTY_FORM);
+    setEntries([]);
     setConsent(false);
     setStatus({ kind: "idle" });
   }, []);
@@ -104,10 +105,9 @@ export function SearchApp() {
     };
   }, [reset]);
 
-  const update = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((f) => ({ ...f, [field]: e.target.value }));
-
-  const hasInput = Boolean(form.email || form.phone || (form.firstName && form.lastName) || form.username);
+  const payload = entriesToPayload(entries);
+  const hasInput = Boolean(payload.email || payload.phone || payload.lastName || payload.username);
+  const onlyContext = entries.length > 0 && !hasInput;
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -116,7 +116,7 @@ export function SearchApp() {
       const response = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, consent }),
+        body: JSON.stringify({ ...payload, consent }),
       });
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { fields?: string[] };
@@ -126,9 +126,7 @@ export function SearchApp() {
             ? "L'adresse email n'est pas valide."
             : body.fields?.includes("username")
               ? "Le pseudo doit faire 3 à 40 caractères (lettres, chiffres, . _ -)."
-              : body.fields?.includes("birthYear")
-                ? "L'année de naissance doit avoir 4 chiffres (par exemple 2008)."
-                : "Saisie invalide. Remplis au moins un champ (prénom et nom ensemble).";
+              : "Ajoute au moins un email, un numéro, un prénom et un nom, ou un pseudo.";
         setStatus({ kind: "error", message });
         return;
       }
@@ -141,71 +139,85 @@ export function SearchApp() {
   if (status.kind === "done") {
     return <Results result={status.result} onReset={reset} />;
   }
+  if (status.kind === "loading") {
+    return <Loading />;
+  }
 
   return (
-    <Card className="w-full max-w-lg">
-      <CardHeader>
-        <CardTitle className="text-2xl">Qu&apos;est-ce qu&apos;on trouve sur toi ?</CardTitle>
-        <CardDescription>
-          Remplis ce que tu veux tester. Plus tu donnes d&apos;informations, plus la recherche va loin.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="flex flex-col gap-5" autoComplete="off">
-          <Field id="email" label="Adresse email" type="email" value={form.email} onChange={update("email")} />
-          <Field id="phone" label="Téléphone" type="tel" value={form.phone} onChange={update("phone")} placeholder="079 123 45 67" />
-          <div className="grid grid-cols-2 gap-3">
-            <Field id="firstName" label="Prénom" value={form.firstName} onChange={update("firstName")} />
-            <Field id="lastName" label="Nom" value={form.lastName} onChange={update("lastName")} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field id="city" label="Localité (optionnel)" value={form.city} onChange={update("city")} placeholder="aide à reconnaître tes pages" />
-            <Field id="birthYear" label="Année de naissance (optionnel)" value={form.birthYear} onChange={update("birthYear")} placeholder="2008" />
-          </div>
-          <Field id="username" label="Pseudo (optionnel)" value={form.username} onChange={update("username")} placeholder="celui que tu utilises sur les réseaux" />
-          <div className="flex items-start gap-3">
-            <Checkbox id="consent" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
-            <Label htmlFor="consent" className="leading-snug font-normal">
-              Je confirme que ces informations sont les miennes. Elles sont envoyées pour la recherche à
-              XposedOrNot, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org, Keybase, ORCID,
-              Wikidata et au registre des domaines ; le pseudo et la partie de l&apos;email avant le @
-              sont testés sur environ 650 sites publics. Les pages trouvées sont vérifiées dans les
-              archives du web (Internet Archive). Tout est ensuite effacé, rien n&apos;est enregistré.
-            </Label>
-          </div>
-          {status.kind === "error" && (
-            <p role="alert" className="text-sm text-destructive">
-              {status.message}
-            </p>
-          )}
-          <Button type="submit" disabled={!consent || !hasInput || status.kind === "loading"}>
-            {status.kind === "loading" ? "Recherche en cours… (jusqu'à 25 secondes)" : "Lancer la recherche"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <form onSubmit={onSubmit} autoComplete="off" className="flex w-full max-w-3xl flex-col gap-8">
+      <div className="flex flex-col gap-3">
+        <h1 className="font-heading text-5xl leading-[1.05] font-bold tracking-tight text-balance sm:text-6xl">
+          Qu&apos;est-ce qu&apos;Internet sait de toi&nbsp;?
+        </h1>
+        <p className="max-w-2xl text-lg text-muted-foreground">
+          Tape ce que tu veux tester, une information à la fois, et appuie sur Entrée. On reconnaît tout seul
+          s&apos;il s&apos;agit d&apos;un email, d&apos;un numéro, de ton prénom et nom ou d&apos;un pseudo.
+        </p>
+      </div>
+
+      <SearchBar entries={entries} onChange={setEntries} />
+
+      <p className="-mt-4 text-sm text-muted-foreground">
+        Pour mieux te reconnaître parmi les homonymes, ajoute aussi ta localité ou ton année de naissance.
+        {onlyContext && " Il faut au moins un email, un numéro, un prénom et un nom, ou un pseudo."}
+      </p>
+
+      <div className="flex items-start gap-3 rounded-xl bg-card p-4">
+        <Checkbox
+          id="consent"
+          className="mt-0.5 size-5"
+          checked={consent}
+          onCheckedChange={(checked) => setConsent(checked === true)}
+        />
+        <Label htmlFor="consent" className="text-sm leading-relaxed font-normal">
+          Ces informations sont les miennes. Je sais qu&apos;elles sont envoyées pour la recherche à XposedOrNot,
+          Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org, Keybase, ORCID, Wikidata et au registre des
+          domaines, que mon pseudo et la partie de mon email avant le @ sont testés sur environ 650 sites publics,
+          puis que tout est effacé. Rien n&apos;est enregistré.
+        </Label>
+      </div>
+
+      {status.kind === "error" && (
+        <p role="alert" className="text-base font-bold text-destructive">
+          {status.message}
+        </p>
+      )}
+
+      <Button type="submit" size="lg" disabled={!consent || !hasInput} className="h-14 self-start px-8 text-lg">
+        <Search className="size-5" aria-hidden />
+        Lancer la recherche
+      </Button>
+    </form>
   );
 }
 
-function Field(props: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  type?: string;
-  placeholder?: string;
-}) {
+function Loading() {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setIndex((i) => (i + 1) % SOURCES_SHOWN.length), 1100);
+    return () => clearInterval(timer);
+  }, []);
   return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor={props.id}>{props.label}</Label>
-      <Input
-        id={props.id}
-        type={props.type ?? "text"}
-        autoComplete="off"
-        value={props.value}
-        onChange={props.onChange}
-        placeholder={props.placeholder}
-      />
+    <div className="flex w-full max-w-3xl flex-col gap-6" role="status" aria-live="polite">
+      <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">Recherche en cours…</h1>
+      <p className="text-lg text-muted-foreground">
+        Toutes les sources sont interrogées en même temps. Ça prend entre 10 et 25 secondes.
+      </p>
+      <ul className="flex flex-col gap-2 text-xl">
+        {SOURCES_SHOWN.map((source, i) => (
+          <li key={source}>
+            <span
+              className={
+                i === index
+                  ? "bg-highlight px-1 transition-colors motion-reduce:transition-none"
+                  : "px-1 text-muted-foreground transition-colors motion-reduce:transition-none"
+              }
+            >
+              {source}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -226,14 +238,19 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
   const searched = [result.searched.email, result.searched.phone, result.searched.name, result.searched.username].filter(Boolean);
 
   return (
-    <div className="flex w-full max-w-4xl flex-col gap-6">
+    <div className="flex w-full max-w-4xl flex-col gap-10">
       <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-semibold">
-          {linked === 0
-            ? "Rien de public n'est relié à tes informations"
-            : `${linked} élément${linked > 1 ? "s" : ""} public${linked > 1 ? "s" : ""} relié${linked > 1 ? "s" : ""} à toi`}
+        <h2 className="font-heading text-4xl leading-tight font-bold tracking-tight sm:text-5xl">
+          {linked === 0 ? (
+            "Rien de public n'est relié à tes informations"
+          ) : (
+            <>
+              <span className="bg-highlight px-2">{linked}</span> élément{linked > 1 ? "s" : ""} public
+              {linked > 1 ? "s" : ""} relié{linked > 1 ? "s" : ""} à toi
+            </>
+          )}
         </h2>
-        <p className="text-sm text-muted-foreground">Recherche pour : {searched.join(" · ")}</p>
+        <p className="text-base text-muted-foreground">Recherche pour {searched.join(", ")}</p>
         {deletedButArchived > 0 && (
           <p className="text-sm font-medium">
             {deletedButArchived} page{deletedButArchived > 1 ? "s" : ""} supprimée{deletedButArchived > 1 ? "s" : ""} du web{" "}
@@ -275,7 +292,7 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
       {counts.length > 0 && <CountSection items={counts} />}
 
       <div className="flex items-center justify-between">
-        <Button onClick={onReset} size="lg">
+        <Button onClick={onReset} size="lg" className="h-14 px-8 text-lg">
           Effacer et terminer
         </Button>
         {/* Active mode shown discreetly to check the kiosk on the event day (D10, rule 4). */}
@@ -289,7 +306,7 @@ function Section({ title, description, children }: { title: string; description?
   return (
     <section className="flex flex-col gap-3">
       <div>
-        <h3 className="text-lg font-semibold">{title}</h3>
+        <h3 className="font-heading text-2xl font-bold tracking-tight">{title}</h3>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </div>
       {children}
