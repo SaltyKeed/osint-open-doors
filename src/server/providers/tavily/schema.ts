@@ -8,6 +8,8 @@ export const tavilyResponseSchema = z.object({
       url: z.string(),
       title: z.string().default(""),
       content: z.string().default(""),
+      // Full page text: used only to check the page, never displayed or stored.
+      raw_content: z.string().nullish(),
     }),
   ),
 });

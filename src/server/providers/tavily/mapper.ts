@@ -1,6 +1,6 @@
 import "server-only";
 import { maskContacts } from "@/server/domain/masking";
-import { strongMatch } from "@/server/domain/matching";
+import { containsFullName, strongMatch } from "@/server/domain/matching";
 import type { QueryKind, SearchQuery, WebFinding } from "@/server/domain/types";
 import type { TavilyResult } from "./schema";
 
@@ -25,7 +25,8 @@ function snippetOf(content: string): string {
 
 // Every page is checked against the visitor's email and phone:
 // - it contains one of them: verified, it is about the visitor;
-// - name search without such a link: shown as "not verified" (D15), maybe a homonym;
+// - name search: kept as "not verified" (D15) only if the full name appears
+//   together (first + last name), otherwise dropped;
 // - email or phone search without such a link: dropped (the engine matched something else).
 // Emails and phone numbers inside titles and snippets are always masked.
 export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFinding[] {
@@ -33,8 +34,13 @@ export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFindi
 
   for (const { searchedOn, results } of batches) {
     for (const result of results) {
-      const match = strongMatch(`${result.title} ${result.content}`, query);
-      if (!match && searchedOn !== "name") continue;
+      // The full page text is checked too: the short snippet often misses the name.
+      const text = `${result.title} ${result.content} ${result.raw_content ?? ""}`;
+      const match = strongMatch(text, query);
+      if (!match) {
+        if (searchedOn !== "name" || !query.firstName || !query.lastName) continue;
+        if (!containsFullName(text, query.firstName, query.lastName)) continue;
+      }
 
       const existing = byUrl.get(result.url);
       if (existing?.verified) continue;

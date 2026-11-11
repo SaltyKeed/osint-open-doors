@@ -82,7 +82,7 @@ src/
 │   │
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
 │   │   ├── types.ts              ← Finding (5 types), DataCategory, SearchQuery…
-│   │   ├── matching.ts           ← règle anti-homonymes (email ou téléphone dans le texte)
+│   │   ├── matching.ts           ← email ou téléphone dans le texte ; nom et prénom ensemble
 │   │   ├── masking.ts            ← masquage des valeurs (email, téléphone, nom, texte)
 │   │   ├── phone.ts              ← normalisation et formats du téléphone
 │   │   └── actions.ts            ← résultats → plan d'action

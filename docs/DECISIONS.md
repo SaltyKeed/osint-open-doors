@@ -349,6 +349,13 @@ cherchant son nom, alors que c'est le premier réflexe de n'importe qui.
 Règles de l'option appliquée :
 
 - Seulement en mode `surface` et seulement pour la recherche web (Tavily).
+- Une page n'est gardée que si le prénom et le nom y figurent ensemble, dans
+  un sens ou dans l'autre (« Enzo Pachoud », « Pachoud, Enzo »), sans tenir
+  compte des majuscules ni des accents (`containsFullName`). Une page qui ne
+  contient que le prénom ou que le nom est écartée. L'email et le téléphone
+  restent cherchés entiers, chacun de son côté.
+- La vérification lit aussi le texte complet de la page fourni par Tavily
+  (`include_raw_content`). Ce texte n'est ni affiché ni conservé.
 - Les pages sont séparées des pages vérifiées et marquées « non vérifiées,
   peut-être un homonyme ».
 - Tous les emails et numéros présents dans les titres et extraits sont

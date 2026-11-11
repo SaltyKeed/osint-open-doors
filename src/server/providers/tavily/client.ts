@@ -14,7 +14,12 @@ export async function tavilySearch(
   const response = await providerFetch(PROVIDER_ID, URL_SEARCH, signal, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ query: searchQuery, max_results: maxResults, search_depth: "basic" }),
+    body: JSON.stringify({
+      query: searchQuery,
+      max_results: maxResults,
+      search_depth: "basic",
+      include_raw_content: "text",
+    }),
   });
   return response.json();
 }

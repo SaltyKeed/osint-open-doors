@@ -21,6 +21,7 @@ const nameBatch = {
   searchedOn: "name" as const,
   results: [
     { url: "https://news.example/a", title: "Jean Dupont gagne la course", content: "Contact : autre.personne@example.org" },
+    { url: "https://cars.example/f", title: "Jean-Claude Ferrari", content: "Rien sur Dupont ici, seulement Jean" },
     { url: "https://www.forum.example/u/42", title: "Doublon", content: "jean.dupont@example.com" },
   ],
 };
@@ -52,6 +53,10 @@ describe("tavily mapper", () => {
         matchedOn: "name",
       },
     ]);
+  });
+
+  it("drops name-search pages where first and last name are not together", () => {
+    expect(findings.map((f) => f.url)).not.toContain("https://cars.example/f");
   });
 
   it("drops unlinked pages of the email search and keeps each page once", () => {
