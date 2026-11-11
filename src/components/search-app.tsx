@@ -16,12 +16,13 @@ import type {
   DataCategory,
   DirectoryFinding,
   Finding,
+  ProfileFinding,
   WebFinding,
 } from "@/server/domain/types";
 
 type SearchResponse = {
   mode: "surface" | "deep";
-  searched: { email?: string; phone?: string; name?: string };
+  searched: { email?: string; phone?: string; name?: string; username?: string };
   findings: Finding[];
   actions: Action[];
   failedProviders: string[];
@@ -33,8 +34,8 @@ type Status =
   | { kind: "error"; message: string }
   | { kind: "done"; result: SearchResponse };
 
-type FormState = { email: string; phone: string; firstName: string; lastName: string };
-const EMPTY_FORM: FormState = { email: "", phone: "", firstName: "", lastName: "" };
+type FormState = { email: string; phone: string; firstName: string; lastName: string; username: string };
+const EMPTY_FORM: FormState = { email: "", phone: "", firstName: "", lastName: "", username: "" };
 
 const CATEGORY_LABELS: Record<DataCategory, string> = {
   email: "Email",
@@ -60,6 +61,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   gravatar: "Gravatar",
   pgp: "Serveur de clés PGP",
   rdap: "Registre des domaines",
+  whatsmyname: "Vérification des pseudos",
   wayback: "Archives du web",
 };
 
@@ -95,7 +97,7 @@ export function SearchApp() {
   const update = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  const hasInput = Boolean(form.email || form.phone || (form.firstName && form.lastName));
+  const hasInput = Boolean(form.email || form.phone || (form.firstName && form.lastName) || form.username);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -112,6 +114,8 @@ export function SearchApp() {
           ? "Le numéro de téléphone n'est pas valide."
           : body.fields?.includes("email")
             ? "L'adresse email n'est pas valide."
+            : body.fields?.includes("username")
+              ? "Le pseudo doit faire 3 à 40 caractères (lettres, chiffres, . _ -)."
             : "Saisie invalide. Remplis au moins un champ (prénom et nom ensemble).";
         setStatus({ kind: "error", message });
         return;
@@ -142,12 +146,13 @@ export function SearchApp() {
             <Field id="firstName" label="Prénom" value={form.firstName} onChange={update("firstName")} />
             <Field id="lastName" label="Nom" value={form.lastName} onChange={update("lastName")} />
           </div>
+          <Field id="username" label="Pseudo (optionnel)" value={form.username} onChange={update("username")} placeholder="celui que tu utilises sur les réseaux" />
           <div className="flex items-start gap-3">
             <Checkbox id="consent" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
             <Label htmlFor="consent" className="leading-snug font-normal">
               Je confirme que ces informations sont les miennes. Elles sont envoyées pour la recherche à
               XposedOrNot, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org et au registre des
-              domaines, puis effacées. Les pages trouvées sont vérifiées dans les archives du web
+              domaines ; le pseudo est testé sur environ 650 sites publics. Tout est ensuite effacé. Les pages trouvées sont vérifiées dans les archives du web
               (Internet Archive). Rien n&apos;est enregistré.
             </Label>
           </div>
@@ -157,7 +162,7 @@ export function SearchApp() {
             </p>
           )}
           <Button type="submit" disabled={!consent || !hasInput || status.kind === "loading"}>
-            {status.kind === "loading" ? "Recherche en cours… (jusqu'à 20 secondes)" : "Lancer la recherche"}
+            {status.kind === "loading" ? "Recherche en cours… (jusqu'à 25 secondes)" : "Lancer la recherche"}
           </Button>
         </form>
       </CardContent>
@@ -198,9 +203,10 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
   const directory = byKind("directory");
   const accounts = byKind("account");
   const counts = byKind("count");
-  const linked = breaches.length + web.length + directory.length + accounts.length;
+  const profiles = byKind("profile");
+  const linked = breaches.length + web.length + directory.length + accounts.length + profiles.length;
   const deletedButArchived = byKind("web").filter((f) => f.live === "gone" && f.archive).length;
-  const searched = [result.searched.email, result.searched.phone, result.searched.name].filter(Boolean);
+  const searched = [result.searched.email, result.searched.phone, result.searched.name, result.searched.username].filter(Boolean);
 
   return (
     <div className="flex w-full max-w-4xl flex-col gap-6">
@@ -245,6 +251,7 @@ function Results({ result, onReset }: { result: SearchResponse; onReset: () => v
 
       {directory.length > 0 && <DirectorySection items={directory} />}
       {accounts.length > 0 && <AccountsSection items={accounts} />}
+      {profiles.length > 0 && <ProfileSection items={profiles} />}
       {web.length > 0 && <WebSection items={web} />}
       {breaches.length > 0 && <BreachSection items={breaches} />}
       {nameOnlyPages.length > 0 && <NameSection items={nameOnlyPages} />}
@@ -388,6 +395,52 @@ function NameSection({ items }: { items: WebFinding[] }) {
           <WebPageList items={items} />
         </CardContent>
       </Card>
+    </Section>
+  );
+}
+
+function ProfileSection({ items }: { items: ProfileFinding[] }) {
+  const groups = new Map<string, ProfileFinding[]>();
+  for (const item of items) {
+    const key = `${item.username}|${item.origin}`;
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+  return (
+    <Section
+      title={`Comptes trouvés avec un pseudo (${items.length})`}
+      description="Un compte existe avec ce pseudo sur ces sites. Le même pseudo peut appartenir à quelqu'un d'autre : vérifie toi-même. Liste des sites : WhatsMyName (CC BY-SA 4.0)."
+    >
+      {[...groups.values()].map((group) => {
+        const first = group[0];
+        if (!first) return null;
+        return (
+          <Card key={`${first.username}-${first.origin}`} size="sm">
+            <CardHeader>
+              <CardTitle>@{first.username}</CardTitle>
+              <CardDescription>
+                {first.origin === "pseudo" ? "Pseudo que tu as saisi" : `Rebond : pseudo trouvé dans ${first.origin}`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="flex flex-col gap-1.5">
+                {group.map((item) => (
+                  <li key={item.url} className="flex flex-col">
+                    <span className="text-sm font-medium">
+                      {item.site} <span className="font-normal text-muted-foreground">· {item.category}</span>
+                    </span>
+                    <span className="text-xs break-all text-muted-foreground">{item.url}</span>
+                    {item.archive && (
+                      <span className="text-xs text-muted-foreground">
+                        Archivé de {item.archive.firstYear} à {item.archive.lastYear}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        );
+      })}
     </Section>
   );
 }

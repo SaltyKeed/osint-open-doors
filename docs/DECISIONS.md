@@ -401,6 +401,53 @@ réserve.
 Limite : certains sites (LinkedIn, Facebook, Instagram) refusent l'archivage,
 la Wayback Machine n'a donc pas de copie de leurs pages.
 
+## D17. Pseudo et rebond
+
+Date : 2026-11-11
+
+Première partie de l'idée I1 (rebond) et du point 1 de I2. Le rebond se fait
+sur un seul niveau.
+
+- Champ optionnel « pseudo » (3 à 40 caractères : lettres, chiffres, `.`,
+  `_`, `-`).
+- WhatsMyName : liste publique d'environ 690 sites, avec pour chacun
+  l'adresse du profil et la règle qui distingue « le compte existe » de « pas
+  de compte » (code HTTP et texte de la page). La liste est téléchargée depuis
+  GitHub au premier usage et gardée en mémoire (ce n'est pas une donnée
+  personnelle). Licence CC BY-SA 4.0 : la source est citée à l'écran.
+  Exclus : les catégories « NSFW » et « dating » (poste d'école, portes
+  ouvertes) et les sites qui demandent une requête `POST`. Les sites sont
+  testés par ordre de catégorie (réseaux sociaux d'abord), 80 en parallèle,
+  5 secondes maximum chacun ; à la fin du délai, les comptes déjà trouvés sont
+  gardés.
+- GitHub : en plus des commits, lecture du profil public du compte qui les a
+  signés (nom, localité, entreprise, site, compte X). Les comptes techniques
+  (`invalid-email-address`, bots) sont ignorés.
+- Gravatar : lecture du profil public (API v3, sans clé) et des comptes que
+  la personne y a déclarés.
+- Rebond (`domain/pivots.ts`, `pivot.ts`) : les pseudos trouvés dans GitHub,
+  Gravatar et les adresses des pages vérifiées (au plus 3) sont testés avec
+  WhatsMyName, et l'archive de leur ancien profil X (Twitter) est cherchée
+  dans la Wayback Machine. Les pages non vérifiées (nom seul) ne sont jamais
+  utilisées pour le rebond : elles peuvent concerner un homonyme. Le rebond
+  tourne en même temps que l'étape des archives, dans le même délai de 10
+  secondes.
+- RDAP : `rdap.org` refuse les requêtes sans en-tête `User-Agent` ; un
+  en-tête au nom du projet est envoyé.
+
+Affichage : les pseudos et les adresses des profils sont affichés en clair,
+comme le nom saisi ; les emails et téléphones restent masqués. Un compte
+trouvé avec un pseudo est présenté comme une piste (« le même pseudo peut
+appartenir à quelqu'un d'autre »), pas comme une preuve.
+
+Durée : environ 20 à 25 secondes avec tous les champs remplis.
+
+| Option | Avantages | Inconvénients |
+|---|---|---|
+| **Liste WhatsMyName (retenu)** | Maintenue par la communauté OSINT, règles par site, licence libre. | Faux positifs possibles (pages de connexion, sites qui changent) ; environ 650 requêtes par pseudo. |
+| Outils Sherlock ou Maigret | Très connus. | Programmes Python à part, difficiles à intégrer dans l'application. |
+| Liste de sites maison | Contrôle total. | Long à créer et à maintenir. |
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |

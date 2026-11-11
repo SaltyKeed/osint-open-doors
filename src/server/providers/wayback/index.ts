@@ -1,11 +1,11 @@
 import "server-only";
-import type { Finding, WebFinding } from "@/server/domain/types";
+import type { Finding, ProfileFinding, WebFinding } from "@/server/domain/types";
 import { toArchiveInfo, toLiveStatus } from "./mapper";
 
 const MAX_PAGES = 20;
 const CONCURRENCY = 10;
 
-async function archiveRows(url: string, signal: AbortSignal): Promise<string[][]> {
+export async function archiveRows(url: string, signal: AbortSignal): Promise<string[][]> {
   const params = new URLSearchParams({
     url,
     output: "json",
@@ -56,4 +56,25 @@ export async function enrichWithArchive(findings: Finding[], signal: AbortSignal
   }
 
   return findings.map((f) => (f.kind === "web" ? (enriched.get(f.url) ?? f) : f));
+}
+
+// Old X (Twitter) profiles: X was widely archived before 2023, and a deleted or
+// renamed account often stays readable in the archive.
+export async function archivedXProfile(username: string, origin: string, signal: AbortSignal): Promise<ProfileFinding[]> {
+  const url = `twitter.com/${username}`;
+  const archive = toArchiveInfo(await archiveRows(url, signal).catch(() => []), `https://${url}`);
+  if (!archive) return [];
+  return [
+    {
+      kind: "profile",
+      providerId: "wayback",
+      site: "X (Twitter), archive",
+      category: "archived",
+      url: archive.snapshotUrl,
+      username,
+      origin,
+      matchedOn: "username",
+      archive,
+    },
+  ];
 }

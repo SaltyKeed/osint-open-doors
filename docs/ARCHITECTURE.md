@@ -79,6 +79,7 @@ src/
 │   │   ├── gravatar/             ← photo de profil publique liée à l'email
 │   │   ├── pgp/                  ← clé publique sur keys.openpgp.org
 │   │   ├── rdap/                 ← registre du domaine de l'email (domaines perso)
+│   │   ├── whatsmyname/          ← pseudo testé sur ~650 sites (liste WhatsMyName)
 │   │   └── wayback/              ← 2e étape : archives des pages trouvées, page supprimée ou non
 │   │
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
@@ -86,10 +87,13 @@ src/
 │   │   ├── matching.ts           ← email ou téléphone dans le texte ; nom et prénom ensemble
 │   │   ├── masking.ts            ← masquage des valeurs (email, téléphone, nom, texte)
 │   │   ├── phone.ts              ← normalisation et formats du téléphone
+│   │   ├── handles.ts            ← pseudo lu dans l'adresse d'un profil
+│   │   ├── pivots.ts             ← pseudos à utiliser pour le rebond
 │   │   └── actions.ts            ← résultats → plan d'action
 │   │
 │   ├── env.ts                    ← variables d'environnement validées par zod (APP_MODE, clés)
-│   └── search-service.ts         ← orchestration (Promise.allSettled + timeout, puis archives)
+│   ├── pivot.ts                  ← rebond : pseudos trouvés → WhatsMyName + archives X
+│   └── search-service.ts         ← orchestration (Promise.allSettled + timeout, puis archives et rebond)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
 │   ├── search-app.tsx            ← formulaire, consentement, résultats, reset
@@ -127,9 +131,10 @@ export interface BreachProvider {
 }
 ```
 
-Un provider renvoie des `Finding` de cinq types : `breach` (fuite), `web`
+Un provider renvoie des `Finding` de six types : `breach` (fuite), `web`
 (page qui contient l'email ou le téléphone), `directory` (inscription dans
-l'annuaire), `account` (trace publique liée à l'email) et `count` (total de
+l'annuaire), `account` (trace publique liée à l'email), `profile` (compte
+trouvé avec un pseudo) et `count` (total de
 résultats trouvés par le nom seul, sans détail : règle anti-homonymes). Une
 page `web` porte `verified: true` si elle contient l'email ou le téléphone du
 visiteur, `false` si elle a été trouvée par le nom seul (D15).

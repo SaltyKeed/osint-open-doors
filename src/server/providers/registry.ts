@@ -7,6 +7,7 @@ import { rdap } from "./rdap";
 import { createSearchChProvider } from "./searchch";
 import { createTavilyProvider } from "./tavily";
 import type { BreachProvider } from "./types";
+import { whatsMyName } from "./whatsmyname";
 import { xposedOrNot } from "./xposedornot";
 
 // Adding a provider = one folder in providers/ and one line here.
@@ -19,6 +20,7 @@ function allProviders(env: Env): BreachProvider[] {
     gravatar,
     pgpKeyserver,
     rdap,
+    whatsMyName,
   ];
 }
 

@@ -101,3 +101,32 @@ Vitest.
 | Énumération de comptes (holehe, GHunt) | Détourne les fonctions « mot de passe oublié » ou des API internes, contraire aux conditions d'utilisation des sites. |
 | Présence sur WhatsApp, Telegram, Truecaller | Nécessite de synchroniser des contacts, interdit par ces services. |
 | Scraping direct de Google ou des réseaux sociaux | Interdit par leurs conditions d'utilisation ; passer par une API de recherche. |
+
+## I2. Aller plus loin : méthode et sources
+
+Date : 2026-11-11
+
+Pistes classées par gain attendu. Le point 1 est en cours sur la branche
+`sandbox` (voir D17).
+
+1. (Fait, D17.) Rebond et pseudo : récupérer les pseudos dans les profils liés à l'email
+   (GitHub, Gravatar) et dans les adresses des pages vérifiées, puis vérifier
+   chaque pseudo sur environ 650 sites avec la liste WhatsMyName. Ajouter un
+   champ « pseudo » au formulaire.
+2. Variantes : chercher « E. Pachoud », « Pachoud E. » et la partie de l'email
+   avant le @ comme pseudo ; pour le téléphone, interroger aussi les sites de
+   signalement de spam (tellows…).
+3. Contexte : un champ optionnel « localité » ou « année de naissance ». Une
+   page avec le nom complet et la localité devient « probable ».
+4. Fuites publiques gratuites en mode `deep` : ProxyNova (compilation COMB),
+   psbdmp (pastes), Intelligence X (offre gratuite). Jamais de mot de passe
+   affiché. État des services et conditions d'utilisation à vérifier.
+5. Lecture des PDF vérifiés (email, téléphone, auteur) et archives des profils
+   déduits des pseudos (par exemple `twitter.com/pseudo` avant 2023).
+
+Autres sources publiques envisagées : Zefix et la Feuille officielle suisse du
+commerce (FOSC), Keybase, ORCID, Wikidata, Hunter.io (25 recherches par mois),
+un deuxième moteur de recherche (Brave, Marginalia).
+
+Protection à prévoir avant le rebond complet : le code de vérification par
+email décrit dans I1.

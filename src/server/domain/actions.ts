@@ -87,6 +87,15 @@ const RULES: Rule[] = [
     },
   },
   {
+    applies: hasKind("profile"),
+    action: {
+      id: "old-accounts",
+      title: "Faire le tri dans tes comptes",
+      detail:
+        "Ferme les comptes que tu n'utilises plus et vérifie ce que montrent les autres. Utiliser le même pseudo partout permet de relier tous tes comptes entre eux.",
+    },
+  },
+  {
     applies: hasCategory("financial"),
     action: {
       id: "watch-bank",

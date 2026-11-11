@@ -15,6 +15,7 @@ function queryKinds(query: SearchQuery): QueryKind[] {
   if (query.email) kinds.push("email");
   if (query.phone) kinds.push("phone");
   if (query.firstName && query.lastName) kinds.push("name");
+  if (query.username) kinds.push("username");
   return kinds;
 }
 

@@ -35,3 +35,10 @@ apparaître.
 | `npm run typecheck` | Vérifie les types TypeScript |
 | `npm test` | Lance les tests Vitest une fois |
 | `npm run test:watch` | Relance les tests à chaque modification |
+
+## Sources et licences
+
+La vérification des pseudos utilise la liste WhatsMyName
+(github.com/WebBreacher/WhatsMyName), sous licence Creative Commons
+Attribution-ShareAlike 4.0. Les sources interrogées sont décrites dans
+`docs/DECISIONS.md` (D14, D16, D17).

@@ -5,6 +5,7 @@ import { normalizePhone } from "@/server/domain/phone";
 import { getEnv } from "@/server/env";
 import { getActiveProviders } from "@/server/providers/registry";
 import { enrichWithArchive } from "@/server/providers/wayback";
+import { pivot } from "@/server/pivot";
 import { runSearch } from "@/server/search-service";
 
 const optionalText = (max: number) =>
@@ -22,6 +23,9 @@ const inputSchema = z
     phone: optionalText(30),
     firstName: optionalText(80),
     lastName: optionalText(80),
+    username: optionalText(40).pipe(
+      z.string().regex(/^[A-Za-z0-9._-]{3,40}$/).optional(),
+    ),
     consent: z.literal(true),
   })
   .transform((input, ctx) => {
@@ -37,9 +41,10 @@ const inputSchema = z
       phone,
       firstName: hasName ? input.firstName : undefined,
       lastName: hasName ? input.lastName : undefined,
+      username: input.username,
     };
   })
-  .refine((q) => q.email || q.phone || q.firstName, { message: "empty" });
+  .refine((q) => q.email || q.phone || q.firstName || q.username, { message: "empty" });
 
 // POST only: personal data never appears in the URL (CLAUDE.md invariant).
 export async function POST(request: Request) {
@@ -63,7 +68,14 @@ export async function POST(request: Request) {
     query,
     getActiveProviders(APP_MODE),
     12000,
-    enrichWithArchive,
+    // Second step, in parallel: web archive of the pages found + pivot on usernames.
+    async (found, signal) => {
+      const [archived, pivoted] = await Promise.all([
+        enrichWithArchive(found, signal),
+        pivot(found, query, signal),
+      ]);
+      return [...archived, ...pivoted];
+    },
     10000,
   );
 
@@ -74,6 +86,7 @@ export async function POST(request: Request) {
         email: query.email ? maskEmail(query.email) : undefined,
         phone: query.phone ? maskPhone(query.phone) : undefined,
         name: query.firstName && query.lastName ? maskName(query.firstName, query.lastName) : undefined,
+        username: query.username,
       },
       findings,
       actions: buildActionPlan(findings),

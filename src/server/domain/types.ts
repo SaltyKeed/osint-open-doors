@@ -1,7 +1,7 @@
 // Domain model: what the rest of the app knows about a search and its results.
 // No provider-specific field and no unmasked personal value ever appear here.
 
-export type QueryKind = "email" | "phone" | "name";
+export type QueryKind = "email" | "phone" | "name" | "username";
 
 // Validated visitor input. The phone is normalized to E.164 (+41791234567).
 export type SearchQuery = {
@@ -9,6 +9,7 @@ export type SearchQuery = {
   phone?: string;
   firstName?: string;
   lastName?: string;
+  username?: string;
 };
 
 // Kinds of exposed data. Only the category is kept, never the value.
@@ -82,6 +83,21 @@ export type AccountFinding = FindingBase & {
   service: string;
   summary: string; // shown to the visitor (French), no unmasked value
   categories: DataCategory[];
+  // Usernames found in this account, used for the pivot step (rebond).
+  handles?: string[];
+};
+
+// An account with this username exists on a site (WhatsMyName check).
+// The same username can belong to someone else: it is a lead, not a proof.
+export type ProfileFinding = FindingBase & {
+  kind: "profile";
+  site: string;
+  category: string;
+  url: string;
+  username: string;
+  // "pseudo": typed by the visitor; otherwise the source of the pivot (e.g. "GitHub").
+  origin: string;
+  archive?: WebArchiveInfo;
 };
 
 // Results found by name only: probably homonyms, so only a total is shown.
@@ -97,4 +113,5 @@ export type Finding =
   | WebFinding
   | DirectoryFinding
   | AccountFinding
+  | ProfileFinding
   | CountFinding;
