@@ -40,7 +40,7 @@ permettent, une fois assemblées, d'en apprendre beaucoup sur une personne.
 ### Sources envisagées
 
 | Catégorie | Sources | Accès |
-|---|---|---|
+| --- | --- | --- |
 | Moteurs de recherche | Tavily : donnée exacte, plusieurs formats de téléphone, filtres par site et par type de fichier | Clé gratuite |
 | Pseudos et réseaux sociaux | Liste WhatsMyName (pages de profil publiques) | Gratuit |
 | Code | GitHub, GitLab (commits, profils) | Gratuit |
@@ -59,7 +59,7 @@ souvent la donnée qui mène au plus grand nombre de profils.
 Chaque résultat est relié au visiteur par des preuves :
 
 | Preuve | Force |
-|---|---|
+| --- | --- |
 | Email ou téléphone identique (après normalisation) | Forte |
 | Même photo de profil (comparaison d'empreinte d'image) | Forte |
 | Même pseudo, avec une autre preuve | Moyenne |
@@ -93,7 +93,7 @@ Vitest.
 ### Pistes écartées
 
 | Piste | Raison |
-|---|---|
+| --- | --- |
 | Énumération de comptes (holehe, GHunt) | Détourne les fonctions « mot de passe oublié » ou des API internes, contraire aux conditions d'utilisation des sites. |
 | Présence sur WhatsApp, Telegram, Truecaller | Nécessite de synchroniser des contacts, interdit par ces services. |
 | Scraping direct de Google ou des réseaux sociaux | Interdit par leurs conditions d'utilisation ; passer par une API de recherche. |
@@ -111,7 +111,7 @@ contient du code, des dépendances et une image Docker.
 ### Outils envisagés
 
 | Outil | Rôle | Utile à partir de |
-|---|---|---|
+| --- | --- | --- |
 | Dependabot | Ouvre une pull request quand une action GitHub, un paquet npm ou l'image de base Docker a une nouvelle version, en particulier une correction de sécurité. Configuré dans `.github/dependabot.yml`. | Possible dès maintenant pour les actions ; `npm` et `docker` quand `package.json` et le `Dockerfile` existent. |
 | CodeQL | Analyse statique du code TypeScript : injections, données non validées qui arrivent dans une requête, secrets écrits en dur. Gratuit pour un dépôt public, résultats dans l'onglet Security. | Premier code dans `src/`. |
 | Trivy | Cherche les vulnérabilités connues dans l'image Docker (paquets du système et dépendances npm) et les erreurs de configuration du `Dockerfile` et de `compose.yaml`. | Premier build de l'image dans la CI (D11). |

@@ -25,7 +25,7 @@ Les choix de stack ont été faits selon trois critères :
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Next.js (App Router) (retenu)** | Front et API dans un seul projet ; rendu serveur natif, la clé n'est jamais envoyée au navigateur ; écosystème très large ; très demandé en entreprise ; mode `standalone` adapté à Docker. | Courbe d'apprentissage (Server et Client Components, cache) ; beaucoup de comportements implicites ; lié à l'écosystème Vercel. |
 | Vite + React + Express | Simple, explicite, séparation front/back claire et pédagogique. | Deux projets à configurer, à faire communiquer (CORS ou proxy) et à dockeriser ; plus de code d'infrastructure. |
 | SvelteKit | Agréable à écrire, moins de code, performant ; front et serveur intégrés. | Écosystème plus petit (composants, ressources) ; moins demandé sur le marché suisse. |
@@ -43,7 +43,7 @@ Express, plus explicite mais qui demande plus de code.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **TypeScript strict (retenu)** | Erreurs détectées avant l'exécution ; garantit qu'un type « brut » (avec mot de passe) ne peut pas atteindre l'UI ; autocomplétion. | Un peu plus verbeux ; les erreurs de typage peuvent être difficiles à comprendre au début. |
 | JavaScript | Aucune configuration. | Rien n'empêche de passer `rawRecord.password` à un composant par erreur, ce qui n'est pas acceptable avec des données sensibles. |
 
@@ -55,7 +55,7 @@ de protection pour la sécurité, et pas seulement de confort de développement.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Tailwind + shadcn/ui (retenu)** | Le code des composants est copié dans le projet (lisible, modifiable) ; accessible (Radix) ; design moderne par défaut. | HTML chargé de classes ; apparence « shadcn » courante, à personnaliser. |
 | MUI (Material UI) | Très complet. | Apparence « Google » difficile à personnaliser ; lourd ; ne permet pas d'apprendre le CSS. |
 | Chakra UI / Mantine | Rapides à prendre en main, bonne documentation. | Composants peu modifiables, moins de contrôle. |
@@ -71,7 +71,7 @@ puisque les composants font partie du projet. La solution de repli est Mantine.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Framer Motion (Motion) (retenu)** | API déclarative simple ; animations en cascade faciles à écrire. | Augmente la taille du bundle (négligeable en local). |
 | Animations CSS / Tailwind | Aucune dépendance, performant. | Fastidieux pour enchaîner des animations. |
 | GSAP | Très complet (timelines complexes). | Trop puissant pour nos besoins ; API impérative moins naturelle en React. |
@@ -84,7 +84,7 @@ Framer Motion est retenu parce qu'il permet de réaliser les animations prévues
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **zod (retenu)** | Un même schéma fournit la validation à l'exécution et le type TypeScript ; très répandu. | Un peu plus lourd que Valibot. |
 | Valibot | Même principe, beaucoup plus léger. | Moins répandu, moins d'exemples. |
 | Validation manuelle | Aucune dépendance. | Verbeux, oublis fréquents, types et validation désynchronisés. |
@@ -98,7 +98,7 @@ réponse au lieu d'afficher des informations incorrectes.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Vitest (retenu)** | Rapide, presque aucune configuration, TypeScript natif ; API compatible avec Jest. | Un peu moins de ressources disponibles que pour Jest. |
 | Jest | Le plus connu. | Configuration TypeScript/ESM pénible, plus lent. |
 | Playwright (E2E) | Teste le parcours complet dans un vrai navigateur. | Plus lent ; à ajouter plus tard en complément. |
@@ -111,7 +111,7 @@ tester le parcours complet.
 Date : 2026-11-10
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Docker compose en local (retenu)** | Reproductible sur n'importe quel PC ; `read_only` garantit l'absence de stockage ; aucune donnée n'est envoyée à un hébergeur. | Docker Desktop doit être installé sur le PC de l'école (droits administrateur). |
 | `npm run start` direct | Le plus simple. | Dépend de la configuration du poste ; pas d'isolation. |
 | Vercel / cloud | Déploiement en un clic. | Les logs de la plateforme échappent à notre contrôle, on ne peut donc plus garantir l'absence de stockage ; inutile pour un seul PC. |
@@ -125,7 +125,7 @@ l'absence de stockage.
 Date : 2026-11-10
 
 | Provider | Recherche | Coût | Rôle |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **XposedOrNot (retenu)** | Email | Gratuit | Premier provider implémenté. |
 | Have I Been Pwned | Email | Payant (abonnement mensuel) | Remplaçant ou complément possible ; clé et comptes de test disponibles. |
 | Snusbase | Email, nom, téléphone… | Payant | Recherche par nom ou téléphone ; les réponses contiennent des données en clair, qui sont filtrées par la liste blanche. |
@@ -161,7 +161,7 @@ L'application a deux usages :
   volées par une API payante (Snusbase, Dehashed ou équivalent, voir D8).
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Une image, mode choisi à l'exécution par `APP_MODE` (retenu)** | Une seule image à construire et à tester ; le code est commun, seuls les providers actifs changent ; correspond à l'architecture ports & adapters (`registry.ts`) ; Next.js lit les variables serveur à l'exécution, un seul build suffit. | L'image `surface` contient aussi le code des providers deep (inutilisable sans clé). |
 | Deux images, mode fixé au build | L'image `surface` ne contient pas le code deep. | Deux builds et deux séries de tests ; les images peuvent diverger. |
 | Deux branches Git permanentes | Séparation visible dans le dépôt. | Chaque correction doit être fusionnée deux fois ; les branches divergent ; `main` n'est plus la référence (contraire à D9). |
@@ -208,7 +208,7 @@ Docker sur GitHub (GitHub Container Registry, `ghcr.io`). Une fois tranchée,
 cette décision complétera D7, qui prévoit aujourd'hui un build local.
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | GitHub Actions + GitHub Container Registry (envisagé) | Tout reste sur GitHub, à côté du code et des pull requests ; gratuit pour un package public, quota gratuit limité en privé ; standard en entreprise. | Le PC de l'école doit pouvoir télécharger l'image (connexion, authentification si le package est privé). |
 | Build local uniquement (situation actuelle, D7) | Rien à configurer. | Pas de tests automatiques sur les pull requests ; l'image dépend du PC qui la construit. |
 | Docker Hub | Registre le plus connu. | Un compte et un service de plus ; limites de téléchargement. |
@@ -239,7 +239,7 @@ confirmer par écrit) :
 Conséquences :
 
 | Option | Avantages | Inconvénients |
-|---|---|---|
+| --- | --- | --- |
 | **Interroger les fuites publiques par des services qui les indexent (retenu)** | Aucune donnée de tiers stockée chez nous ; les invariants (zéro stockage, liste blanche) restent respectés ; une requête ne renvoie que les fiches liées à la saisie du visiteur. | Payant pour la recherche par téléphone ou pseudo ; dépend de services externes. |
 | Télécharger les fuites publiques et les interroger en local | Aucun coût, aucune dépendance. | Stocke sur le poste les données de millions de personnes : contraire à l'invariant « zéro stockage » et à la nLPD (minimisation). |
 
@@ -251,7 +251,7 @@ avant l'acceptation du budget.
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
-|---|---|---|
+| --- | --- | --- |
 | Framework | Next.js (App Router) | Vite + React + Express |
 | Langage | TypeScript strict | Aucun |
 | UI | Tailwind + shadcn/ui | Mantine |

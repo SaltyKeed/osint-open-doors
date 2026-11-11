@@ -17,7 +17,7 @@ ensuite un plan d'action concret.
 ## 2. Invariants (non négociables)
 
 | Invariant | Mise en œuvre |
-|---|---|
+| --- | --- |
 | Jamais de mot de passe ni de hash affiché | Les mappers des providers appliquent une liste blanche de champs. Le type brut ne sort jamais de l'adaptateur. |
 | Pas d'exposition de tiers (homonymes) | Une fiche trouvée par nom n'est détaillée que si elle contient aussi un autre identifiant saisi par le visiteur (téléphone ou email). Sinon, seul un agrégat est affiché (« N fiches portent ce nom »). |
 | Valeurs masquées | Les fiches correspondantes sont aussi masquées : `+41 79 ••• •• 42`, « Adresse : présente ». |
@@ -103,7 +103,7 @@ export interface BreachProvider {
 ### Bonnes pratiques appliquées
 
 | Principe | Où | Pourquoi |
-|---|---|---|
+| --- | --- | --- |
 | Parse, don't validate (zod aux frontières) | `schema.ts`, `route.ts` | Tout ce qui entre (visiteur, API) est vérifié une seule fois. À l'intérieur de l'application, les types sont fiables. |
 | Le type brut ne sort jamais de l'adaptateur | `mapper.ts` | Le mot de passe est retiré à cet endroit et ne peut donc pas être affiché par erreur plus loin. |
 | Domaine pur | `domain/` | Le domaine n'utilise pas `fetch` et peut être testé avec Vitest sans réseau. |
@@ -118,7 +118,7 @@ Les raisons de chaque choix et les alternatives comparées sont dans
 correspondante.
 
 | Couche | Technologie | Décision |
-|---|---|---|
+| --- | --- | --- |
 | Framework | Next.js (App Router) | [D1](DECISIONS.md#d1-framework-front-et-serveur) |
 | Langage | TypeScript (mode strict) | [D2](DECISIONS.md#d2-langage) |
 | UI | Tailwind CSS, shadcn/ui | [D3](DECISIONS.md#d3-ui-et-style) |

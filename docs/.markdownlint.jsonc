@@ -6,5 +6,10 @@
   "MD013": false,
 
   // The same heading (e.g. "Principe") may repeat under different parents.
-  "MD024": { "siblings_only": true }
+  "MD024": { "siblings_only": true },
+
+  // Tables use one space around each cell, delimiter row included:
+  // | Option | Avantages |
+  // | --- | --- |
+  "MD060": { "style": "compact" }
 }
