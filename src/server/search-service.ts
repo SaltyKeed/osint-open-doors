@@ -7,6 +7,9 @@ export type Enricher = (findings: Finding[], signal: AbortSignal) => Promise<Fin
 
 export type SearchResult = {
   findings: Finding[];
+  // Providers asked for this query, and those that failed (the screen tells
+  // "all sources failed" apart from "nothing found").
+  queriedProviders: string[];
   failedProviders: string[];
 };
 
@@ -50,11 +53,13 @@ export async function runSearch(
     }
   });
 
-  if (!enrich) return { findings, failedProviders };
+  const queriedProviders = relevant.map((p) => p.id);
+  if (!enrich) return { findings, queriedProviders, failedProviders };
   try {
-    return { findings: await enrich(findings, AbortSignal.timeout(enrichTimeoutMs)), failedProviders };
+    const enriched = await enrich(findings, AbortSignal.timeout(enrichTimeoutMs));
+    return { findings: enriched, queriedProviders, failedProviders };
   } catch {
     console.error("[search] enrichment failed");
-    return { findings, failedProviders };
+    return { findings, queriedProviders, failedProviders };
   }
 }

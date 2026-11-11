@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toFindings } from "./mapper";
+import { plainText, toFindings } from "./mapper";
 
 // Invented results (fixtures never contain real data).
 const query = { email: "jean.dupont@example.com", phone: "+41791234567", firstName: "Jean", lastName: "Dupont" };
@@ -25,6 +25,12 @@ const nameBatch = {
     { url: "https://www.forum.example/u/42", title: "Doublon", content: "jean.dupont@example.com" },
   ],
 };
+
+describe("plainText", () => {
+  it("removes Markdown headings, emphasis and link targets", () => {
+    expect(plainText("# Jean Dupont ### Work **Engineer** at [NASA](/c/nasa/123)")).toBe("Jean Dupont Work Engineer at NASA");
+  });
+});
 
 describe("tavily mapper", () => {
   const findings = toFindings([emailBatch, phoneBatch, nameBatch], query);

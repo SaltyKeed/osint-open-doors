@@ -581,6 +581,84 @@ servies localement par `next/font` : le navigateur ne contacte pas Google.
 
 Pendant la recherche, un écran d'attente liste les sources interrogées.
 
+Trois couleurs ont été corrigées pour le contraste, et l'écran revu : voir D22.
+
+## D22. Révision de l'interface par les agents UX et UI
+
+Date : 2026-11-11
+
+L'interface de D21 a été relue par les sous-agents `ux-architect` et
+`ui-designer` du projet, puis corrigée selon leurs retours. Les agents n'étant
+pas encore chargés dans la session, leur définition (`.claude/agents/`) a été
+donnée telle quelle à un agent général, en lecture seule.
+
+Corrections du parcours (agent UX) :
+
+- Reset complet : l'écran de recherche est recréé (clé React), la page
+  remonte en haut, une requête en cours est annulée et sa réponse ignorée. Le
+  texte en cours de saisie ne reste plus affiché pour le visiteur suivant.
+- Avertissement 20 secondes avant l'effacement automatique, avec « Je suis
+  encore là » et « Effacer maintenant ».
+- Titre juste dans chaque cas : éléments reliés au visiteur, résultat
+  incomplet (source des fuites en panne), seulement des pistes, rien trouvé,
+  et un écran d'erreur quand aucune source n'a répondu. Les comptes trouvés
+  avec un pseudo et les pages au nom sont comptés comme pistes, pas comme
+  éléments reliés (D17, D19).
+- Une suite de chiffres n'est jamais un pseudo : c'est un téléphone ou une
+  saisie non reconnue avec un message clair.
+- Découpage du prénom et du nom visible dans l'étiquette, inversion et
+  changement de découpage pour les noms de trois ou quatre mots.
+- Bouton « Lancer la recherche » qui explique ce qui manque, au lieu d'être
+  grisé sans explication. Le texte resté dans le champ est validé avant
+  l'envoi.
+- Écran d'attente : sources réellement interrogées selon la saisie, barre de
+  temps, bouton « Annuler et effacer ».
+- Plan d'action toujours présent : le nombre qui déclenche chaque action est
+  dans son titre ; sans élément relié, trois actions de prévention.
+- Accessibilité : un titre `h1` par écran, qui reçoit le focus à chaque
+  changement ; annonces pour lecteur d'écran (type de l'étiquette, jamais sa
+  valeur) ; retour arrière en deux appuis pour retirer une étiquette.
+- Les adresses restent du texte et non des liens : en mode kiosque, un lien
+  ferait quitter les résultats.
+
+Corrections visuelles (agent UI) :
+
+| Élément | Avant | Après | Raison |
+| --- | --- | --- | --- |
+| Texte secondaire | `#5b6b82` | `#4f5d72` | Contraste AA aussi sur le jaune et le gris clair |
+| Vert « vérifié » | `#1e8e5a` | `#17784b` (fond `#e3f2ea`) | 4.1 : contraste insuffisant pour du texte |
+| Contour des champs | `#c3ccd9` | `#7d8aa0` | La case à cocher doit atteindre 3:1 |
+| Anneau de focus | encre à 50 % | encre pleine | 2.96 : juste sous le seuil |
+| Graisse 500 | `font-medium` | `font-bold` | Atkinson Hyperlegible n'existe qu'en 400 et 700 |
+
+- Ombre « surligneur » en token du thème (`shadow-marker`).
+- Badges avec icône et texte, jamais la couleur seule : vérifié, probablement
+  toi, non vérifié (pointillé), mot de passe exposé (seul usage du rouge
+  plein), supprimée du site.
+- Les email et téléphone d'une étiquette sont masqués une fois validés
+  (invariant « valeurs affichées masquées ») ; le nom et le pseudo restent
+  lisibles pour pouvoir corriger leur type.
+- Écran des résultats en deux colonnes : onglets à gauche (preuves, puis
+  pistes séparées), plan d'action et « Effacer et terminer » fixés à droite.
+  Au-delà de 6 éléments, la suite est repliée ; au-delà de 6 fuites, liste
+  compacte. Les fuites avec mot de passe sont en premier.
+- Le texte Markdown renvoyé par Tavily est nettoyé (`plainText`).
+
+Composants shadcn/ui ajoutés (sur `radix-ui`, déjà installé, sans nouvelle
+dépendance) : Tabs, Collapsible, Tooltip, Separator, AlertDialog.
+
+Animations avec Framer Motion (D4), paquet `motion` : une animation marquante,
+le chiffre surligné de gauche à droite sur l'écran des résultats ; des
+animations courtes (moins de 300 ms) qui répondent à une action : ajout et
+retrait d'étiquette, changement de type, passage d'un écran à l'autre,
+marqueur de l'écran d'attente, ouverture d'une liste repliée. `MotionConfig
+reducedMotion="user"` respecte le réglage « réduire les animations ».
+
+| Option pour l'écran des résultats | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Onglets et plan d'action fixe (retenu)** | Tout est visible sans long défilement ; le plan d'action reste à l'écran ; preuves et pistes séparées. | Un clic pour passer d'une catégorie à l'autre. |
+| Une colonne avec sections repliées et barre fixe en haut (proposition UX) | Lecture linéaire. | Page très longue avec plus de 200 fuites. |
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |

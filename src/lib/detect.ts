@@ -14,20 +14,26 @@ export type Detected = {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const YEAR = /^(19|20)\d{2}$/;
-const PHONE_LIKE = /^[+0(][\d\s./()-]{6,}$/;
+const DIGITS_ONLY = /^[+\d\s./()-]+$/;
 const NAME = /^[\p{L}'’-]+(\s+[\p{L}'’-]+){1,3}$/u;
 const HANDLE = /^[A-Za-z0-9._-]{3,40}$/;
 const PLAIN_WORD = /^[A-Za-z]+$/;
 const WORD_WITH_ACCENTS = /^[\p{L}'’-]{2,}$/u;
 
+function clean(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ");
+}
+
 export function detect(raw: string): Detected | null {
-  const value = raw.trim().replace(/\s+/g, " ");
+  const value = clean(raw);
   if (value === "") return null;
 
   if (EMAIL.test(value)) return { type: "email", value, alternatives: ["email"] };
   if (YEAR.test(value)) return { type: "birthYear", value, alternatives: ["birthYear"] };
-  if (PHONE_LIKE.test(value) && parsePhoneNumberFromString(value, "CH")?.isValid()) {
-    return { type: "phone", value, alternatives: ["phone"] };
+  // Only digits and signs: a phone number or nothing, never a username (it would be
+  // sent to hundreds of sites).
+  if (DIGITS_ONLY.test(value)) {
+    return parsePhoneNumberFromString(value, "CH")?.isValid() ? { type: "phone", value, alternatives: ["phone"] } : null;
   }
   if (NAME.test(value)) return { type: "name", value, alternatives: ["name", "city"] };
   if (HANDLE.test(value)) {
@@ -38,7 +44,22 @@ export function detect(raw: string): Detected | null {
   return null;
 }
 
-// A pasted list becomes several entries.
+// Why an entry was not recognized, in the visitor's words.
+export function explainUnknown(raw: string): string {
+  const value = clean(raw);
+  if (DIGITS_ONLY.test(value)) {
+    return "Ce numéro n'est pas reconnu. Tape-le avec le 0 ou l'indicatif : 079 123 45 67 ou +41 79 123 45 67.";
+  }
+  if (value.includes("@")) return "Cette adresse email n'est pas complète. Vérifie-la, par exemple prenom.nom@exemple.ch.";
+  return `« ${value} » n'est pas reconnu. Essaie un email, un numéro suisse, ton prénom et ton nom, ou un pseudo sans espace.`;
+}
+
+// A single capitalized word was taken as a username: the visitor may have wanted a name.
+export function looksLikeLoneName(entry: Detected): boolean {
+  return entry.type === "username" && /^\p{Lu}\p{Ll}+$/u.test(entry.value);
+}
+
+// A list typed or pasted at once becomes several entries.
 export function splitEntries(text: string): string[] {
   return text
     .split(/[,;\n]+/)
@@ -46,8 +67,15 @@ export function splitEntries(text: string): string[] {
     .filter((part) => part.length > 0);
 }
 
-// "Jean Dupont" -> first name "Jean", last name "Dupont" (the rest).
-export function splitName(value: string): { firstName: string; lastName: string } {
-  const [firstName = "", ...rest] = value.trim().split(/\s+/);
-  return { firstName, lastName: rest.join(" ") };
+// Name split: the first `firstNameWords` words are the first name, unless the order
+// is reversed ("Dupont Jean"). Defaults: one first-name word, first name first.
+export type NameSplit = { firstNameWords: number; lastFirst: boolean };
+
+export function splitName(value: string, split: NameSplit = { firstNameWords: 1, lastFirst: false }) {
+  const words = value.trim().split(/\s+/);
+  const k = Math.min(Math.max(split.firstNameWords, 1), Math.max(words.length - 1, 1));
+  if (split.lastFirst) {
+    return { lastName: words.slice(0, words.length - k).join(" "), firstName: words.slice(words.length - k).join(" ") };
+  }
+  return { firstName: words.slice(0, k).join(" "), lastName: words.slice(k).join(" ") };
 }

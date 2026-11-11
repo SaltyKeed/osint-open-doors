@@ -18,8 +18,18 @@ function siteOf(url: string): string {
   }
 }
 
+// Tavily content is often Markdown: keep the words only (links become their text).
+export function plainText(text: string): string {
+  return text
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/(^|\s)#{1,6}\s+/g, "$1")
+    .replace(/[*`]{1,3}/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function snippetOf(content: string): string {
-  const text = content.replace(/\s+/g, " ").trim();
+  const text = plainText(content);
   return text.length > SNIPPET_LENGTH ? `${text.slice(0, SNIPPET_LENGTH)}…` : text;
 }
 
@@ -54,7 +64,7 @@ export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFindi
         probableBecause: context ?? undefined,
         site: siteOf(result.url),
         url: result.url,
-        title: maskContacts(result.title || siteOf(result.url)),
+        title: maskContacts(plainText(result.title) || siteOf(result.url)),
         snippet: maskContacts(snippetOf(result.content)),
         matchedOn: match ?? "name",
       });

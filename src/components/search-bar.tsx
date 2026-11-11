@@ -1,65 +1,108 @@
 "use client";
 
-import { ArrowLeftRight, AtSign, Calendar, Mail, MapPin, Phone, User, X } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import { useRef, useState } from "react";
-import { type Detected, detect, type EntryType, splitEntries, splitName } from "@/lib/detect";
+import { type Entry, SearchTag, TYPE_INFO } from "@/components/search-tag";
+import { detect, explainUnknown, splitEntries, splitName } from "@/lib/detect";
 
-export type Entry = Detected & { id: number };
-
-const TYPE_INFO: Record<EntryType, { label: string; Icon: typeof Mail }> = {
-  email: { label: "Email", Icon: Mail },
-  phone: { label: "Téléphone", Icon: Phone },
-  name: { label: "Prénom et nom", Icon: User },
-  username: { label: "Pseudo", Icon: AtSign },
-  city: { label: "Localité", Icon: MapPin },
-  birthYear: { label: "Année de naissance", Icon: Calendar },
-};
+export type { Entry } from "@/components/search-tag";
 
 let nextId = 1;
 
-// Adds entries to the list. One entry per type: a new email replaces the previous one.
+// Adds what was typed or pasted. One entry per type: a new email replaces the previous one.
 export function addEntries(current: Entry[], text: string): { entries: Entry[]; unknown: string[] } {
   const unknown: string[] = [];
   let entries = current;
   for (const part of splitEntries(text)) {
     const detected = detect(part);
     if (!detected) {
-      unknown.push(part);
+      unknown.push(explainUnknown(part));
       continue;
     }
-    entries = [...entries.filter((e) => e.type !== detected.type), { ...detected, id: nextId++ }];
+    const entry: Entry = { ...detected, id: nextId++ };
+    if (entry.type === "name") entry.split = { firstNameWords: 1, lastFirst: false };
+    entries = [...entries.filter((e) => e.type !== entry.type), entry];
   }
   return { entries, unknown };
 }
 
+// Converts the entries into the fields expected by POST /api/search.
+export function entriesToPayload(entries: Entry[]) {
+  const find = (type: Entry["type"]) => entries.find((e) => e.type === type);
+  const name = find("name");
+  const split = name ? splitName(name.value, name.split) : undefined;
+  return {
+    email: find("email")?.value,
+    phone: find("phone")?.value,
+    firstName: split?.firstName,
+    lastName: split?.lastName,
+    username: find("username")?.value,
+    city: find("city")?.value,
+    birthYear: find("birthYear")?.value,
+  };
+}
+
 export function SearchBar({
   entries,
-  onChange,
+  onEntriesChange,
+  text,
+  onTextChange,
+  onUnknown,
+  onAnnounce,
+  contextIgnored,
   disabled,
 }: {
   entries: Entry[];
-  onChange: (entries: Entry[]) => void;
+  onEntriesChange: (entries: Entry[]) => void;
+  text: string;
+  onTextChange: (text: string) => void;
+  onUnknown: (messages: string[]) => void;
+  onAnnounce: (message: string) => void;
+  contextIgnored: boolean;
   disabled?: boolean;
 }) {
-  const [text, setText] = useState("");
-  const [unknown, setUnknown] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Backspace on an empty field first marks the last tag, a second press removes it.
+  const [armedId, setArmedId] = useState<number | null>(null);
 
   function commit(value: string) {
     if (value.trim() === "") return;
     const result = addEntries(entries, value);
-    onChange(result.entries);
-    setUnknown(result.unknown);
-    setText("");
+    const added = result.entries.filter((e) => !entries.includes(e));
+    onEntriesChange(result.entries);
+    onUnknown(result.unknown);
+    // Unrecognized text stays in the field so it can be corrected.
+    onTextChange(result.unknown.length > 0 ? splitEntries(value).filter((p) => !detect(p)).join(", ") : "");
+    // The type is announced, never the value (public kiosk, screen reader).
+    if (added.length > 0) onAnnounce(`Étiquette ajoutée : ${added.map((e) => TYPE_INFO[e.type].label).join(", ")}`);
+  }
+
+  function remove(entry: Entry) {
+    onEntriesChange(entries.filter((e) => e.id !== entry.id));
+    onAnnounce(`Étiquette retirée : ${TYPE_INFO[entry.type].label}`);
+    onUnknown([]);
+    setArmedId(null);
+    inputRef.current?.focus();
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if ((event.key === "Enter" || event.key === "Tab" || event.key === ",") && text.trim() !== "") {
       event.preventDefault();
       commit(text);
-    } else if (event.key === "Backspace" && text === "" && entries.length > 0) {
-      onChange(entries.slice(0, -1));
+      return;
     }
+    if (event.key === "Backspace" && text === "" && entries.length > 0) {
+      const last = entries[entries.length - 1];
+      if (!last) return;
+      if (armedId === last.id) {
+        remove(last);
+      } else {
+        setArmedId(last.id);
+        onAnnounce(`Appuie encore une fois pour retirer l'étiquette ${TYPE_INFO[last.type].label}`);
+      }
+      return;
+    }
+    setArmedId(null);
   }
 
   function onPaste(event: React.ClipboardEvent<HTMLInputElement>) {
@@ -73,106 +116,70 @@ export function SearchBar({
   function switchType(entry: Entry) {
     const index = entry.alternatives.indexOf(entry.type);
     const type = entry.alternatives[(index + 1) % entry.alternatives.length] ?? entry.type;
-    // Keeping one entry per type: switching replaces another entry of the target type.
-    onChange(entries.filter((e) => e.id === entry.id || e.type !== type).map((e) => (e.id === entry.id ? { ...e, type } : e)));
+    const replaced = entries.some((e) => e.id !== entry.id && e.type === type);
+    // One entry per type: switching replaces another entry of the target type.
+    onEntriesChange(
+      entries
+        .filter((e) => e.id === entry.id || e.type !== type)
+        .map((e) =>
+          e.id === entry.id
+            ? { ...e, type, split: type === "name" ? { firstNameWords: 1, lastFirst: false } : undefined }
+            : e,
+        ),
+    );
+    onAnnounce(`Type changé : ${TYPE_INFO[type].label}${replaced ? " (remplace l'étiquette précédente)" : ""}`);
   }
 
-  function swapName(entry: Entry) {
-    const words = entry.value.split(" ");
-    const swapped = [...words.slice(1), words[0]].join(" ");
-    onChange(entries.map((e) => (e.id === entry.id ? { ...e, value: swapped } : e)));
+  function updateSplit(entry: Entry, change: (split: NonNullable<Entry["split"]>) => NonNullable<Entry["split"]>) {
+    const split = entry.split ?? { firstNameWords: 1, lastFirst: false };
+    onEntriesChange(entries.map((e) => (e.id === entry.id ? { ...e, split: change(split) } : e)));
+    const next = splitName(entry.value, change(split));
+    onAnnounce(`Prénom : ${next.firstName}, nom : ${next.lastName}`);
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div
-        className="flex min-h-20 w-full cursor-text flex-wrap items-center gap-2 rounded-2xl border-[3px] border-primary bg-card px-4 py-3 shadow-[6px_6px_0_0_var(--highlight)] focus-within:shadow-[8px_8px_0_0_var(--highlight)] transition-shadow"
-        onClick={() => inputRef.current?.focus()}
-      >
-        {entries.map((entry) => {
-          const { label, Icon } = TYPE_INFO[entry.type];
-          const canSwitch = entry.alternatives.length > 1;
-          return (
-            <span
-              key={entry.id}
-              className="flex items-center gap-1 rounded-lg bg-highlight py-1 pr-1 pl-2 text-base text-highlight-foreground"
-            >
-              <button
-                type="button"
-                onClick={() => switchType(entry)}
-                disabled={!canSwitch || disabled}
-                className="flex items-center gap-1.5 rounded-md px-1 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring enabled:hover:bg-black/10"
-                aria-label={canSwitch ? `${label} : cliquer pour changer le type` : label}
-                title={canSwitch ? "Cliquer pour changer le type" : label}
-              >
-                <Icon className="size-4" aria-hidden />
-                {label}
-              </button>
-              <span className="px-1">{entry.value}</span>
-              {entry.type === "name" && (
-                <button
-                  type="button"
-                  onClick={() => swapName(entry)}
-                  disabled={disabled}
-                  className="rounded-md p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-black/10"
-                  aria-label="Inverser prénom et nom"
-                  title="Inverser prénom et nom"
-                >
-                  <ArrowLeftRight className="size-3.5" aria-hidden />
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => onChange(entries.filter((e) => e.id !== entry.id))}
-                disabled={disabled}
-                className="rounded-md p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-black/10"
-                aria-label={`Retirer ${entry.value}`}
-              >
-                <X className="size-3.5" aria-hidden />
-              </button>
-            </span>
-          );
-        })}
-        <input
-          ref={inputRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={onKeyDown}
-          onPaste={onPaste}
-          onBlur={() => commit(text)}
-          disabled={disabled}
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          aria-label="Ce que tu veux tester : email, téléphone, prénom et nom, pseudo"
-          placeholder={entries.length === 0 ? "Tape ton email, ton numéro, ton nom ou ton pseudo" : "Ajouter autre chose…"}
-          className="min-w-48 flex-1 bg-transparent py-2 text-xl outline-none placeholder:text-muted-foreground"
-        />
-      </div>
-      {unknown.length > 0 && (
-        <p role="alert" className="text-sm text-destructive">
-          Pas reconnu : {unknown.join(", ")}. Essaie un email, un numéro suisse, un prénom et un nom, ou un pseudo
-          sans espace.
-        </p>
-      )}
+    <div
+      className="flex min-h-20 w-full cursor-text flex-wrap items-center gap-2 rounded-2xl border-[3px] border-primary bg-card px-3 py-3 shadow-marker transition-shadow focus-within:shadow-marker-lg"
+      onClick={() => inputRef.current?.focus()}
+    >
+      <AnimatePresence mode="popLayout" initial={false}>
+        {entries.map((entry) => (
+          <SearchTag
+            key={entry.id}
+            entry={entry}
+            armed={armedId === entry.id}
+            contextIgnored={contextIgnored && (entry.type === "city" || entry.type === "birthYear")}
+            disabled={disabled}
+            onSwitchType={() => switchType(entry)}
+            onSwapName={() => updateSplit(entry, (s) => ({ ...s, lastFirst: !s.lastFirst }))}
+            onResplitName={() =>
+              updateSplit(entry, (s) => ({
+                ...s,
+                firstNameWords: (s.firstNameWords % (entry.value.split(" ").length - 1)) + 1,
+              }))
+            }
+            onRemove={() => remove(entry)}
+          />
+        ))}
+      </AnimatePresence>
+      <input
+        ref={inputRef}
+        value={text}
+        onChange={(e) => {
+          onTextChange(e.target.value);
+          setArmedId(null);
+        }}
+        onKeyDown={onKeyDown}
+        onPaste={onPaste}
+        disabled={disabled}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        aria-label="Ce que tu veux tester : email, téléphone, prénom et nom, ou pseudo. Entrée pour valider."
+        aria-describedby="search-help"
+        placeholder={entries.length === 0 ? "Tape ton email, ton numéro, ton prénom et nom ou ton pseudo" : "Ajouter autre chose…"}
+        className="min-w-56 flex-1 bg-transparent px-2 py-2 text-xl outline-none placeholder:text-muted-foreground"
+      />
     </div>
   );
 }
-
-// Converts the entries into the fields expected by POST /api/search.
-export function entriesToPayload(entries: Entry[]) {
-  const value = (type: EntryType) => entries.find((e) => e.type === type)?.value;
-  const name = value("name");
-  const { firstName, lastName } = name ? splitName(name) : { firstName: undefined, lastName: undefined };
-  return {
-    email: value("email"),
-    phone: value("phone"),
-    firstName,
-    lastName,
-    username: value("username"),
-    city: value("city"),
-    birthYear: value("birthYear"),
-  };
-}
-
-export { TYPE_INFO };

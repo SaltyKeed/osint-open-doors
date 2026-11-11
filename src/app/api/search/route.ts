@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 
   const query = input.data;
   const { APP_MODE } = getEnv();
-  const { findings, failedProviders } = await runSearch(
+  const { findings, queriedProviders, failedProviders } = await runSearch(
     query,
     getActiveProviders(APP_MODE),
     12000,
@@ -95,6 +95,7 @@ export async function POST(request: Request) {
       },
       findings,
       actions: buildActionPlan(findings),
+      queriedProviders,
       failedProviders,
     },
     { headers: { "Cache-Control": "no-store" } },

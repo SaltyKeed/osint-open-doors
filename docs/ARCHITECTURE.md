@@ -99,8 +99,14 @@ src/
 │   └── search-service.ts         ← orchestration (Promise.allSettled + timeout, puis archives et rebond)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
-│   ├── search-app.tsx            ← écran de recherche, attente, résultats, reset
-│   ├── search-bar.tsx            ← barre unique : étiquettes, changement de type
+│   ├── search-app.tsx            ← enchaînement des écrans, requête, reset, inactivité
+│   ├── search-screen.tsx         ← écran de recherche (barre, aide, consentement)
+│   ├── search-bar.tsx            ← barre unique : saisie, ajout et retrait d'étiquettes
+│   ├── search-tag.tsx            ← une étiquette (type, valeur masquée, boutons)
+│   ├── loading-screen.tsx        ← écran d'attente (sources interrogées, temps)
+│   ├── results-screen.tsx        ← résultats : onglets, plan d'action, effacement
+│   ├── inactivity-dialog.tsx     ← avertissement avant l'effacement automatique
+│   ├── labels.ts                 ← libellés affichés (catégories, sources)
 │   └── ui/                       ← composants shadcn/ui copiés dans le projet
 ├── lib/
 │   ├── utils.ts                  ← fonction cn() pour combiner les classes Tailwind
@@ -167,7 +173,7 @@ correspondante.
 | Framework | Next.js 16 (App Router), React 19 | [D1](DECISIONS.md#d1-framework-front-et-serveur) |
 | Langage | TypeScript 5 (mode strict), Node.js 24 | [D2](DECISIONS.md#d2-langage) |
 | UI | Tailwind CSS 4, shadcn/ui (base Radix) | [D3](DECISIONS.md#d3-ui-et-style), [D15](DECISIONS.md#d15-mise-en-place-du-projet) |
-| Animations | Framer Motion (pas encore installé) | [D4](DECISIONS.md#d4-animations) |
+| Animations | Framer Motion (paquet `motion`, import `motion/react`) | [D4](DECISIONS.md#d4-animations), [D22](DECISIONS.md#d22-révision-de-linterface-par-les-agents-ux-et-ui) |
 | Validation | zod 4 | [D5](DECISIONS.md#d5-validation-des-données) |
 | Tests | Vitest 5 | [D6](DECISIONS.md#d6-tests) |
 | Qualité du code | ESLint (configuration Next.js) | [D15](DECISIONS.md#d15-mise-en-place-du-projet) |
@@ -219,48 +225,3 @@ poste ([DECISIONS.md, D12](DECISIONS.md#d12-cadre-validé-par-lenseignant)).
 Les services payants suivent le budget de [BUDGET.md](BUDGET.md).
 
 ## 8. Intégration continue et réglages GitHub
-
-Les choix sont expliqués dans
-[DECISIONS.md, D13](DECISIONS.md#d13-ci-de-vérification) et
-[D14](DECISIONS.md#d14-protection-de-main-et-relecture).
-
-### Workflows GitHub Actions
-
-| Workflow | Job | Contrôle | Déclenchement |
-| --- | --- | --- | --- |
-| `ci.yml` | `gitleaks-scan` | Secrets dans tout l'historique Git (gitleaks) | Chaque pull request, chaque push sur `main` |
-| `docs.yml` | `markdownlint` | Structure des fichiers Markdown de `docs/` | Pull request ou push sur `main` qui modifie `docs/` |
-| `docs.yml` | `link check` | Liens et ancres des fichiers de `docs/` (lychee) | Idem |
-
-- Les actions sont épinglées par SHA de commit, avec la version en commentaire
-  (`# v7.0.1`).
-- Chaque workflow déclare ses permissions : lecture seule, plus l'écriture de
-  commentaires de pull request pour gitleaks.
-- Les règles de markdownlint sont dans `docs/.markdownlint.jsonc`. Les
-  tableaux utilisent le style `| --- |` et chaque bloc de code indique un
-  langage.
-
-### Ruleset de la branche `main`
-
-Le ruleset `main-branch` (Settings, Rules) s'applique à la branche par défaut.
-
-| Règle | Réglage |
-| --- | --- |
-| Suppression de la branche | Interdite |
-| Force push | Interdit |
-| Pull request obligatoire | 1 approbation ; approbation annulée par un nouveau commit ; conversations résolues avant la fusion |
-| Méthodes de fusion | Merge et squash |
-| Checks obligatoires | `gitleaks-scan`, branche à jour avec `main` |
-| Contournement | Rôle Repository admin (responsable du dépôt), toujours autorisé |
-
-`markdownlint` et `link check` ne sont pas obligatoires : `docs.yml` ne tourne
-que si `docs/` change, et un check obligatoire qui ne tourne pas bloquerait
-les autres pull requests.
-
-### Autres réglages du dépôt
-
-| Menu | Réglage |
-| --- | --- |
-| General, Pull Requests | Suppression automatique de la branche après la fusion |
-| Advanced Security | Secret scanning et push protection activés ; Dependabot alerts activé |
-| Actions, General | Jeton des workflows en lecture seule ; les workflows ne peuvent pas approuver de pull request ; actions épinglées par SHA obligatoires ; approbation requise pour les workflows des contributeurs externes |

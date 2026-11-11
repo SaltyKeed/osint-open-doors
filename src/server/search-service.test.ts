@@ -42,6 +42,7 @@ describe("runSearch", () => {
     const result = await runSearch({ email: "x@example.com" }, [okProvider, failingProvider]);
     expect(result.findings).toEqual([exposure]);
     expect(result.failedProviders).toEqual(["broken"]);
+    expect(result.queriedProviders).toEqual(["ok", "broken"]);
   });
 
   it("stops a provider that is too slow", async () => {
@@ -64,6 +65,6 @@ describe("runSearch", () => {
 
   it("skips providers that do not support the query", async () => {
     const result = await runSearch({}, [okProvider]);
-    expect(result).toEqual({ findings: [], failedProviders: [] });
+    expect(result).toEqual({ findings: [], queriedProviders: [], failedProviders: [] });
   });
 });

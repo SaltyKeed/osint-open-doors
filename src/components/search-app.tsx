@@ -1,532 +1,196 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { InactivityDialog } from "@/components/inactivity-dialog";
+import { LoadingScreen } from "@/components/loading-screen";
+import { ResultsScreen, type SearchResponse } from "@/components/results-screen";
+import { type Entry, entriesToPayload } from "@/components/search-bar";
+import { type Payload, SearchScreen } from "@/components/search-screen";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search } from "lucide-react";
-import { type Entry, entriesToPayload, SearchBar } from "@/components/search-bar";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-// Type-only imports: erased at build time, no server code reaches the browser.
-import type { Action } from "@/server/domain/actions";
-import type {
-  AccountFinding,
-  BreachFinding,
-  CountFinding,
-  DataCategory,
-  DirectoryFinding,
-  Finding,
-  ProfileFinding,
-  WebFinding,
-} from "@/server/domain/types";
-
-type SearchResponse = {
-  mode: "surface" | "deep";
-  searched: { email?: string; phone?: string; name?: string; username?: string };
-  findings: Finding[];
-  actions: Action[];
-  failedProviders: string[];
-};
 
 type Status =
-  | { kind: "idle" }
-  | { kind: "loading" }
-  | { kind: "error"; message: string }
+  | { kind: "idle"; error: string | null }
+  | { kind: "loading"; payload: Payload }
+  | { kind: "failed" }
   | { kind: "done"; result: SearchResponse };
 
-const CATEGORY_LABELS: Record<DataCategory, string> = {
-  email: "Email",
-  password: "Mot de passe",
-  name: "Nom",
-  phone: "Téléphone",
-  address: "Adresse",
-  birthDate: "Date de naissance",
-  username: "Pseudo",
-  photo: "Photo",
-  ipAddress: "Adresse IP",
-  financial: "Données bancaires",
-  governmentId: "Pièce d'identité",
-  location: "Localité",
-  other: "Autre",
-};
+// After WARN_MS without interaction a warning appears; at ERASE_MS everything is erased.
+const WARN_MS = 100_000;
+const ERASE_MS = 120_000;
+// The server stops after about 22 seconds; this only protects against a stuck request.
+const CLIENT_TIMEOUT_MS = 40_000;
 
-const PROVIDER_LABELS: Record<string, string> = {
-  xposedornot: "XposedOrNot",
-  tavily: "Recherche web",
-  searchch: "Annuaire search.ch",
-  github: "GitHub",
-  gravatar: "Gravatar",
-  pgp: "Serveur de clés PGP",
-  rdap: "Registre des domaines",
-  whatsmyname: "Vérification des pseudos",
-  orcid: "ORCID",
-  wikidata: "Wikidata",
-  wayback: "Archives du web",
-};
-
-// Shown while waiting: the sources really queried, in parallel.
-const SOURCES_SHOWN = [
-  "les fuites de données",
-  "le web et la presse",
-  "les réseaux sociaux",
-  "l'annuaire téléphonique",
-  "GitHub et Gravatar",
-  "650 sites pour ton pseudo",
-  "les archives d'Internet",
-];
-
-// After this delay without interaction, everything is erased for the next visitor.
-const INACTIVITY_MS = 2 * 60 * 1000;
+function errorMessage(status: number, fields: string[] | undefined): string {
+  if (status === 400 && fields?.includes("phone")) return "Ce numéro de téléphone n'est pas valide.";
+  if (status === 400 && fields?.includes("email")) return "Cette adresse email n'est pas valide.";
+  if (status === 400 && fields?.includes("username")) {
+    return "Le pseudo doit faire 3 à 40 caractères : lettres sans accent, chiffres, point, tiret ou trait de soulignement.";
+  }
+  if (status === 400) return "Ajoute au moins un email, un numéro, ton prénom et ton nom, ou un pseudo.";
+  return "La recherche n'a pas abouti. Réessaie.";
+}
 
 export function SearchApp() {
-  // State lives in memory only: no localStorage, no cookie (CLAUDE.md invariant).
+  // Everything lives in memory only: no localStorage, no cookie (CLAUDE.md invariant).
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [text, setText] = useState("");
   const [consent, setConsent] = useState(false);
-  const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [status, setStatus] = useState<Status>({ kind: "idle", error: null });
+  const [resetKey, setResetKey] = useState(0);
+  const [announcement, setAnnouncement] = useState("");
+  const [warning, setWarning] = useState<number | null>(null); // seconds left, or null
+
+  const request = useRef<{ id: number; controller: AbortController } | null>(null);
+  const lastActivity = useRef(0);
+
+  const hasSomething = entries.length > 0 || text !== "" || consent || status.kind !== "idle";
 
   const reset = useCallback(() => {
+    request.current?.controller.abort();
+    request.current = null;
     setEntries([]);
+    setText("");
     setConsent(false);
-    setStatus({ kind: "idle" });
+    setStatus({ kind: "idle", error: null });
+    setWarning(null);
+    setResetKey((k) => k + 1); // remounts the search screen: nothing typed survives
+    window.scrollTo(0, 0);
+    setAnnouncement("Tes informations ont été effacées.");
   }, []);
 
+  // Inactivity: warning, then erase. Only when there is something to erase.
   useEffect(() => {
-    let timer = setTimeout(reset, INACTIVITY_MS);
-    const restart = () => {
-      clearTimeout(timer);
-      timer = setTimeout(reset, INACTIVITY_MS);
+    lastActivity.current = Date.now();
+    const touch = () => {
+      lastActivity.current = Date.now();
+      setWarning(null);
     };
-    const events = ["pointerdown", "keydown", "scroll"] as const;
-    events.forEach((e) => window.addEventListener(e, restart));
+    const events = ["pointerdown", "keydown", "scroll", "wheel", "focusin"] as const;
+    events.forEach((e) => window.addEventListener(e, touch));
+    const tick = setInterval(() => {
+      if (!hasSomething || status.kind === "loading") {
+        lastActivity.current = Date.now();
+        return;
+      }
+      const idle = Date.now() - lastActivity.current;
+      if (idle >= ERASE_MS) reset();
+      else if (idle >= WARN_MS) setWarning(Math.ceil((ERASE_MS - idle) / 1000));
+    }, 1000);
     return () => {
-      clearTimeout(timer);
-      events.forEach((e) => window.removeEventListener(e, restart));
+      events.forEach((e) => window.removeEventListener(e, touch));
+      clearInterval(tick);
     };
-  }, [reset]);
+  }, [hasSomething, status.kind, reset]);
 
-  const payload = entriesToPayload(entries);
-  const hasInput = Boolean(payload.email || payload.phone || payload.lastName || payload.username);
-  const onlyContext = entries.length > 0 && !hasInput;
+  // Focus the title of each new screen: the screen reader announces it and the
+  // keyboard does not restart from the top of the page.
+  useEffect(() => {
+    const id = setTimeout(() => document.getElementById("screen-title")?.focus(), 350);
+    return () => clearTimeout(id);
+  }, [status.kind, resetKey]);
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setStatus({ kind: "loading" });
+  async function search(current: Entry[]) {
+    const payload = entriesToPayload(current);
+    const id = (request.current?.id ?? 0) + 1;
+    const controller = new AbortController();
+    request.current = { id, controller };
+    setStatus({ kind: "loading", payload });
+
     try {
       const response = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...payload, consent }),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(CLIENT_TIMEOUT_MS)]),
       });
+      if (request.current?.id !== id) return; // cancelled or reset meanwhile
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { fields?: string[] };
-        const message = body.fields?.includes("phone")
-          ? "Le numéro de téléphone n'est pas valide."
-          : body.fields?.includes("email")
-            ? "L'adresse email n'est pas valide."
-            : body.fields?.includes("username")
-              ? "Le pseudo doit faire 3 à 40 caractères (lettres, chiffres, . _ -)."
-              : "Ajoute au moins un email, un numéro, un prénom et un nom, ou un pseudo.";
-        setStatus({ kind: "error", message });
+        setStatus({ kind: "idle", error: errorMessage(response.status, body.fields) });
         return;
       }
-      setStatus({ kind: "done", result: (await response.json()) as SearchResponse });
+      const result = (await response.json()) as SearchResponse;
+      if (request.current?.id !== id) return;
+      const allFailed =
+        result.queriedProviders.length > 0 && result.failedProviders.length === result.queriedProviders.length;
+      setStatus(allFailed ? { kind: "failed" } : { kind: "done", result });
+      lastActivity.current = Date.now();
     } catch {
-      setStatus({ kind: "error", message: "La recherche n'a pas abouti. Réessaie." });
+      if (request.current?.id !== id) return;
+      setStatus({ kind: "idle", error: "La recherche n'a pas abouti. Réessaie." });
     }
   }
 
-  if (status.kind === "done") {
-    return <Results result={status.result} onReset={reset} />;
-  }
+  let screen: React.ReactNode;
   if (status.kind === "loading") {
-    return <Loading />;
-  }
-
-  return (
-    <form onSubmit={onSubmit} autoComplete="off" className="flex w-full max-w-3xl flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <h1 className="font-heading text-5xl leading-[1.05] font-bold tracking-tight text-balance sm:text-6xl">
-          Qu&apos;est-ce qu&apos;Internet sait de toi&nbsp;?
+    screen = <LoadingScreen payload={status.payload} onCancel={reset} />;
+  } else if (status.kind === "done") {
+    screen = <ResultsScreen result={status.result} onReset={reset} />;
+  } else if (status.kind === "failed") {
+    screen = (
+      <div className="flex w-full max-w-3xl flex-col gap-6">
+        <h1 id="screen-title" tabIndex={-1} className="font-heading text-5xl leading-[1.1] font-bold tracking-tight outline-none">
+          La recherche n&apos;a pas pu se faire
         </h1>
-        <p className="max-w-2xl text-lg text-muted-foreground">
-          Tape ce que tu veux tester, une information à la fois, et appuie sur Entrée. On reconnaît tout seul
-          s&apos;il s&apos;agit d&apos;un email, d&apos;un numéro, de ton prénom et nom ou d&apos;un pseudo.
+        <p className="text-lg">
+          Aucune source n&apos;a répondu, ce n&apos;est pas un résultat. Réessaie dans un moment ou appelle un élève du
+          stand.
         </p>
+        <div className="flex flex-wrap gap-3">
+          <Button size="lg" className="h-12 px-6 text-base" onClick={() => search(entries)}>
+            Réessayer
+          </Button>
+          <Button size="lg" variant="outline" className="h-12 px-6 text-base" onClick={reset}>
+            Effacer et terminer
+          </Button>
+        </div>
       </div>
-
-      <SearchBar entries={entries} onChange={setEntries} />
-
-      <p className="-mt-4 text-sm text-muted-foreground">
-        Pour mieux te reconnaître parmi les homonymes, ajoute aussi ta localité ou ton année de naissance.
-        {onlyContext && " Il faut au moins un email, un numéro, un prénom et un nom, ou un pseudo."}
-      </p>
-
-      <div className="flex items-start gap-3 rounded-xl bg-card p-4">
-        <Checkbox
-          id="consent"
-          className="mt-0.5 size-5"
-          checked={consent}
-          onCheckedChange={(checked) => setConsent(checked === true)}
-        />
-        <Label htmlFor="consent" className="text-sm leading-relaxed font-normal">
-          Ces informations sont les miennes. Je sais qu&apos;elles sont envoyées pour la recherche à XposedOrNot,
-          Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org, Keybase, ORCID, Wikidata et au registre des
-          domaines, que mon pseudo et la partie de mon email avant le @ sont testés sur environ 650 sites publics,
-          puis que tout est effacé. Rien n&apos;est enregistré.
-        </Label>
-      </div>
-
-      {status.kind === "error" && (
-        <p role="alert" className="text-base font-bold text-destructive">
-          {status.message}
-        </p>
-      )}
-
-      <Button type="submit" size="lg" disabled={!consent || !hasInput} className="h-14 self-start px-8 text-lg">
-        <Search className="size-5" aria-hidden />
-        Lancer la recherche
-      </Button>
-    </form>
-  );
-}
-
-function Loading() {
-  const [index, setIndex] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => setIndex((i) => (i + 1) % SOURCES_SHOWN.length), 1100);
-    return () => clearInterval(timer);
-  }, []);
-  return (
-    <div className="flex w-full max-w-3xl flex-col gap-6" role="status" aria-live="polite">
-      <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">Recherche en cours…</h1>
-      <p className="text-lg text-muted-foreground">
-        Toutes les sources sont interrogées en même temps. Ça prend entre 10 et 25 secondes.
-      </p>
-      <ul className="flex flex-col gap-2 text-xl">
-        {SOURCES_SHOWN.map((source, i) => (
-          <li key={source}>
-            <span
-              className={
-                i === index
-                  ? "bg-highlight px-1 transition-colors motion-reduce:transition-none"
-                  : "px-1 text-muted-foreground transition-colors motion-reduce:transition-none"
-              }
-            >
-              {source}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function Results({ result, onReset }: { result: SearchResponse; onReset: () => void }) {
-  const byKind = <K extends Finding["kind"]>(kind: K) =>
-    result.findings.filter((f): f is Extract<Finding, { kind: K }> => f.kind === kind);
-
-  const breaches = byKind("breach");
-  const web = byKind("web").filter((f) => f.verified);
-  const nameOnlyPages = byKind("web").filter((f) => !f.verified);
-  const directory = byKind("directory");
-  const accounts = byKind("account");
-  const counts = byKind("count");
-  const profiles = byKind("profile");
-  const linked = breaches.length + web.length + directory.length + accounts.length + profiles.length;
-  const deletedButArchived = byKind("web").filter((f) => f.live === "gone" && f.archive).length;
-  const searched = [result.searched.email, result.searched.phone, result.searched.name, result.searched.username].filter(Boolean);
-
-  return (
-    <div className="flex w-full max-w-4xl flex-col gap-10">
-      <div className="flex flex-col gap-1">
-        <h2 className="font-heading text-4xl leading-tight font-bold tracking-tight sm:text-5xl">
-          {linked === 0 ? (
-            "Rien de public n'est relié à tes informations"
-          ) : (
-            <>
-              <span className="bg-highlight px-2">{linked}</span> élément{linked > 1 ? "s" : ""} public
-              {linked > 1 ? "s" : ""} relié{linked > 1 ? "s" : ""} à toi
-            </>
-          )}
-        </h2>
-        <p className="text-base text-muted-foreground">Recherche pour {searched.join(", ")}</p>
-        {deletedButArchived > 0 && (
-          <p className="text-sm font-medium">
-            {deletedButArchived} page{deletedButArchived > 1 ? "s" : ""} supprimée{deletedButArchived > 1 ? "s" : ""} du web{" "}
-            {deletedButArchived > 1 ? "restent lisibles" : "reste lisible"} dans les archives d&apos;Internet.
-          </p>
-        )}
-        {result.failedProviders.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            Sans réponse : {result.failedProviders.map((id) => PROVIDER_LABELS[id] ?? id).join(", ")}. Le
-            résultat peut être incomplet.
-          </p>
-        )}
-      </div>
-
-      {result.actions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Ton plan d&apos;action</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="flex list-decimal flex-col gap-3 pl-5">
-              {result.actions.map((action) => (
-                <li key={action.id}>
-                  <p className="font-medium">{action.title}</p>
-                  <p className="text-sm text-muted-foreground">{action.detail}</p>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
-      )}
-
-      {directory.length > 0 && <DirectorySection items={directory} />}
-      {accounts.length > 0 && <AccountsSection items={accounts} />}
-      {profiles.length > 0 && <ProfileSection items={profiles} />}
-      {web.length > 0 && <WebSection items={web} />}
-      {breaches.length > 0 && <BreachSection items={breaches} />}
-      {nameOnlyPages.length > 0 && <NameSection items={nameOnlyPages} />}
-      {counts.length > 0 && <CountSection items={counts} />}
-
-      <div className="flex items-center justify-between">
-        <Button onClick={onReset} size="lg" className="h-14 px-8 text-lg">
-          Effacer et terminer
-        </Button>
-        {/* Active mode shown discreetly to check the kiosk on the event day (D10, rule 4). */}
-        <span className="text-xs text-muted-foreground">mode {result.mode}</span>
-      </div>
-    </div>
-  );
-}
-
-function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <h3 className="font-heading text-2xl font-bold tracking-tight">{title}</h3>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Categories({ categories }: { categories: DataCategory[] }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {categories.map((category) => (
-        <Badge key={category} variant={category === "password" ? "destructive" : "secondary"}>
-          {CATEGORY_LABELS[category]}
-        </Badge>
-      ))}
-    </div>
-  );
-}
-
-function DirectorySection({ items }: { items: DirectoryFinding[] }) {
-  return (
-    <Section title="Annuaire téléphonique" description="N'importe qui peut retrouver ces informations à partir de ton numéro.">
-      {items.map((item, index) => (
-        <Card key={index} size="sm">
-          <CardHeader>
-            <CardTitle>{item.source}</CardTitle>
-            <CardDescription>
-              {item.noPromo
-                ? "Ton inscription porte l'astérisque : pas de démarchage publicitaire."
-                : "Pas d'astérisque : ton numéro peut être utilisé pour du démarchage."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Categories categories={item.categories} />
-          </CardContent>
-        </Card>
-      ))}
-    </Section>
-  );
-}
-
-function AccountsSection({ items }: { items: AccountFinding[] }) {
-  return (
-    <Section title="Comptes et traces publiques" description="Services où ton adresse email laisse une trace visible.">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {items.map((item) => (
-          <Card key={item.service} size="sm">
-            <CardHeader>
-              <CardTitle>{item.service}</CardTitle>
-              <CardDescription>{item.summary}</CardDescription>
-            </CardHeader>
-            {item.categories.length > 0 && (
-              <CardContent>
-                <Categories categories={item.categories} />
-              </CardContent>
-            )}
-          </Card>
-        ))}
-      </div>
-    </Section>
-  );
-}
-
-function WebPageList({ items }: { items: WebFinding[] }) {
-  return (
-    <ul className="flex flex-col gap-4">
-      {items.map((item) => (
-        <li key={item.url} className="flex flex-col gap-0.5">
-          <span className="font-medium">
-            {item.probable && (
-              <Badge className="mr-2 align-middle">Probablement toi ({item.probableBecause})</Badge>
-            )}
-            {item.title}
-          </span>
-          <span className="text-xs break-all text-muted-foreground">{item.url}</span>
-          {item.snippet && <span className="text-sm">{item.snippet}</span>}
-          <ArchiveLine item={item} />
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function ArchiveLine({ item }: { item: WebFinding }) {
-  const deleted = item.live === "gone";
-  if (!item.archive && !deleted) return null;
-  return (
-    <span className="flex flex-wrap items-center gap-2 text-xs">
-      {deleted && <Badge variant="destructive">Supprimée du site</Badge>}
-      {item.archive && (
-        <span className="text-muted-foreground">
-          Archivée {item.archive.firstYear === item.archive.lastYear ? `en ${item.archive.firstYear}` : `de ${item.archive.firstYear} à ${item.archive.lastYear}`}
-          {deleted ? " : toujours lisible dans l'archive" : ""} ·{" "}
-          <span className="break-all">{item.archive.snapshotUrl}</span>
-        </span>
-      )}
-    </span>
-  );
-}
-
-function WebSection({ items }: { items: WebFinding[] }) {
-  return (
-    <Section
-      title={`Sur le web : pages vérifiées (${items.length})`}
-      description="Ces pages contiennent vraiment ton email ou ton numéro : elles parlent de toi."
-    >
-      <Card size="sm">
-        <CardContent>
-          <WebPageList items={items} />
-        </CardContent>
-      </Card>
-    </Section>
-  );
-}
-
-function NameSection({ items }: { items: WebFinding[] }) {
-  const sites = [...new Set(items.map((i) => i.site))];
-  const probable = items.filter((i) => i.probable).length;
-  return (
-    <Section
-      title={`Avec ton nom et prénom (${items.length} pages, non vérifiées${probable > 0 ? `, dont ${probable} probablement toi` : ""})`}
-      description={`Ce que n'importe qui trouve en cherchant ton nom, y compris avec ton initiale (« E. Nom »). Ces pages ne contiennent ni ton email ni ton numéro : certaines parlent peut-être d'un homonyme. « Probablement toi » : la page contient aussi ta localité ou ton année de naissance. Les emails et numéros qu'elles contiennent sont masqués. Sites : ${sites.join(", ")}.`}
-    >
-      <Card size="sm">
-        <CardContent>
-          <WebPageList items={items} />
-        </CardContent>
-      </Card>
-    </Section>
-  );
-}
-
-function ProfileSection({ items }: { items: ProfileFinding[] }) {
-  const groups = new Map<string, ProfileFinding[]>();
-  for (const item of items) {
-    const key = `${item.username}|${item.origin}`;
-    groups.set(key, [...(groups.get(key) ?? []), item]);
+    );
+  } else {
+    screen = (
+      <SearchScreen
+        entries={entries}
+        onEntriesChange={setEntries}
+        text={text}
+        onTextChange={setText}
+        consent={consent}
+        onConsentChange={setConsent}
+        error={status.error}
+        onSubmit={search}
+        onAnnounce={setAnnouncement}
+      />
+    );
   }
-  return (
-    <Section
-      title={`Comptes trouvés avec un pseudo (${items.length})`}
-      description="Un compte existe avec ce pseudo sur ces sites. Le même pseudo peut appartenir à quelqu'un d'autre : vérifie toi-même. Liste des sites : WhatsMyName (CC BY-SA 4.0)."
-    >
-      {[...groups.values()].map((group) => {
-        const first = group[0];
-        if (!first) return null;
-        return (
-          <Card key={`${first.username}-${first.origin}`} size="sm">
-            <CardHeader>
-              <CardTitle>@{first.username}</CardTitle>
-              <CardDescription>
-                {first.origin === "pseudo" ? "Pseudo que tu as saisi" : `Rebond : pseudo trouvé dans ${first.origin}`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="flex flex-col gap-1.5">
-                {group.map((item) => (
-                  <li key={item.url} className="flex flex-col">
-                    <span className="text-sm font-medium">
-                      {item.site} <span className="font-normal text-muted-foreground">· {item.category}</span>
-                    </span>
-                    <span className="text-xs break-all text-muted-foreground">{item.url}</span>
-                    {item.archive && (
-                      <span className="text-xs text-muted-foreground">
-                        Archivé de {item.archive.firstYear} à {item.archive.lastYear}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </Section>
-  );
-}
 
-function BreachSection({ items }: { items: BreachFinding[] }) {
   return (
-    <Section
-      title={`Fuites de données (${items.length})`}
-      description="Services piratés dont les données ont été publiées. Seuls les types de données sont affichés."
-    >
-      <div className="grid gap-3 sm:grid-cols-2">
-        {items.map((item) => (
-          <Card key={`${item.providerId}-${item.source}`} size="sm">
-            <CardHeader>
-              <CardTitle>{item.source}</CardTitle>
-              <CardDescription>
-                {[item.year, item.records && `${item.records.toLocaleString("fr-CH")} comptes`].filter(Boolean).join(" · ")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Categories categories={item.categories} />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </Section>
-  );
-}
+    <MotionConfig reducedMotion="user">
+      <AnimatePresence mode="wait">
+        <motion.div
+          // A new key remounts the screen: after a reset, nothing typed survives.
+          key={`${status.kind}-${resetKey}`}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.2, 0, 0, 1] } }}
+          exit={{ opacity: 0, y: -8, transition: { duration: 0.15 } }}
+          className="flex w-full justify-center"
+        >
+          {screen}
+        </motion.div>
+      </AnimatePresence>
 
-function CountSection({ items }: { items: CountFinding[] }) {
-  return (
-    <Section
-      title="Annuaire : recherche par nom"
-      description="Pour la recherche par nom, l'annuaire search.ch ne donne que le nombre d'inscriptions (condition de notre clé API)."
-    >
-      <Card size="sm">
-        <CardContent>
-          <ul className="flex flex-col gap-1">
-            {items.map((item) => (
-              <li key={item.providerId}>
-                <span className="font-semibold">{item.count}</span> {item.label} ({item.source})
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-    </Section>
+      <p className="sr-only" aria-live="polite">
+        {announcement}
+      </p>
+
+      <InactivityDialog
+        open={warning !== null}
+        secondsLeft={warning ?? 0}
+        onStay={() => {
+          lastActivity.current = Date.now();
+          setWarning(null);
+        }}
+        onEraseNow={reset}
+      />
+    </MotionConfig>
   );
 }
