@@ -21,7 +21,8 @@ y est ajoutée à la fin, numérotée et datée.
 Toute modification (code, configuration, Docker, agents, variables
 d'environnement, organisation) met à jour la documentation concernée dans la
 même pull request : `README.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`,
-`CLAUDE.md`, `.env.example`. La documentation décrit toujours l'état actuel du
+`docs/DEVSECOPS.md` (workflows, Dependabot, réglages GitHub), `CLAUDE.md`,
+`.env.example`. La documentation décrit toujours l'état actuel du
 projet.
 
 `docs/BUDGET.md` liste les services payants et leur coût. Aucun service payant
@@ -97,8 +98,8 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
   propre branche créée depuis `main` (`feat/…`, `fix/…`, `docs/…`, `chore/…`),
   intégrée par une pull request.
 - Tiago est responsable du dépôt : il relit et approuve les pull requests
-  d'Enzo, et peut fusionner les siennes sans approbation. Le check
-  `gitleaks-scan` doit passer. Détail : `docs/ARCHITECTURE.md`, section 8, et
+  d'Enzo, et peut fusionner les siennes sans approbation. Les checks
+  `gitleaks-scan` et `app-checks` doivent passer. Détail : `docs/DEVSECOPS.md` et
   `docs/DECISIONS.md`, D14.
 - La branche `research` sert uniquement au démarrage du projet ; elle n'est plus
   utilisée une fois fusionnée dans `main`.

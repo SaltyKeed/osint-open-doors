@@ -20,13 +20,18 @@ Voir [Commandes du projet](02-commandes.md#npm-run-build).
 ## Check obligatoire (required status check)
 
 Contrôle de la CI qui doit réussir pour qu'une pull request puisse être
-fusionnée dans `main`. Aujourd'hui, seul `gitleaks-scan` est obligatoire. Voir
-[ARCHITECTURE.md, section 8](../ARCHITECTURE.md#ruleset-de-la-branche-main).
+fusionnée dans `main`. Aujourd'hui, `gitleaks-scan` et `app-checks` sont
+obligatoires. Voir [DEVSECOPS.md](../DEVSECOPS.md#ruleset-de-la-branche-main).
 
 ## CI, intégration continue (continuous integration)
 
 Contrôles lancés automatiquement par GitHub Actions à chaque pull request ou
 push sur `main`. Voir [DECISIONS.md, D13](../DECISIONS.md#d13-ci-de-vérification).
+
+## DAST (Dynamic Application Security Testing)
+
+Test de sécurité d'une application qui tourne, en lui envoyant des requêtes.
+Prévu plus tard avec OWASP ZAP. Voir [DEVSECOPS.md](../DEVSECOPS.md#7-prévu).
 
 ## Dépendance (dependency)
 
@@ -40,6 +45,13 @@ Paquet npm qui sert seulement à développer, tester ou builder, par exemple
 ESLint ou TypeScript. Elle est listée dans `devDependencies` et s'installe avec
 `npm install -D`. Voir
 [Commandes du projet](02-commandes.md#npm-install-avec-un-paquet).
+
+## Dependabot
+
+Service de GitHub qui signale les dépendances avec une faille connue et ouvre
+des pull requests pour les mettre à jour. Configuré dans
+`.github/dependabot.yml`. Voir
+[DEVSECOPS.md](../DEVSECOPS.md#réglages-de-dependabot).
 
 ## ESLint
 
@@ -110,7 +122,17 @@ d'afficher une page. La recherche passera par le route handler
 
 Ensemble de règles GitHub qui protège une branche, par exemple en imposant
 une pull request et des checks obligatoires avant la fusion. Voir
-[ARCHITECTURE.md, section 8](../ARCHITECTURE.md#ruleset-de-la-branche-main).
+[DEVSECOPS.md](../DEVSECOPS.md#ruleset-de-la-branche-main).
+
+## SAST (Static Application Security Testing)
+
+Analyse de sécurité du code source sans le lancer, par exemple pour trouver
+une injection. Prévu avec CodeQL. Voir [DEVSECOPS.md](../DEVSECOPS.md#7-prévu).
+
+## SCA (Software Composition Analysis)
+
+Analyse des dépendances : on cherche les paquets utilisés qui ont une faille
+connue. Faite par Dependabot. Voir [DEVSECOPS.md](../DEVSECOPS.md#3-outils).
 
 ## server-only
 
