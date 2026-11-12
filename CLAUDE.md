@@ -112,5 +112,10 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
   est désactivée dans `.claude/settings.json` (clé `attribution`).
 - Avant de commencer un travail, vérifier que `main` et la branche en cours sont
   à jour avec GitHub (`git fetch`, puis `git pull` si nécessaire).
-- Tâches suivies dans les GitHub Issues, avec un responsable assigné.
+- Tâches suivies dans les GitHub Issues, avec un responsable assigné, et
+  dans le projet GitHub `OSINT-Open-Doors`. Le champ `Status` (Backlog,
+  Ready, In progress, In review, Done) donne l'avancement.
+- Le prototype d'Enzo sert à tester des idées. Ses issues ont le statut
+  `Prototyping` et ses pull requests ne sont jamais fusionnées dans `main`.
+  Une idée retenue est refaite dans le socle, avec sa propre issue.
 - Préférences personnelles dans `CLAUDE.local.md` (non versionné).
