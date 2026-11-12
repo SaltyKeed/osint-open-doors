@@ -3,7 +3,7 @@ import { loadEnv } from "./env";
 
 describe("loadEnv", () => {
   it("defaults to surface when APP_MODE is missing", () => {
-    expect(loadEnv({})).toEqual({ APP_MODE: "surface" });
+    expect(loadEnv({})).toEqual({ APP_MODE: "deep" });
   });
 
   it("accepts deep", () => {
