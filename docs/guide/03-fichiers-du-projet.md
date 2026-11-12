@@ -161,12 +161,16 @@ Fichiers statiques servis tels quels à la racine du site : `public/next.svg`
 est accessible à l'adresse `/next.svg`. Les fichiers actuels sont les images
 de la page par défaut de Next.js.
 
-## .github/workflows
+## .github
 
-Workflows GitHub Actions. `ci.yml` cherche des secrets avec gitleaks à chaque
-pull request. `docs.yml` vérifie les fichiers de `docs/` quand ils changent.
-Le détail est dans
-[ARCHITECTURE.md, section 8](../ARCHITECTURE.md#8-intégration-continue-et-réglages-github).
+Le dossier `workflows/` contient les workflows GitHub Actions. `ci.yml`
+cherche des secrets avec gitleaks à chaque pull request. `app.yml` lance le
+lint, le typage, les tests et le build. `docs.yml` vérifie les fichiers de
+`docs/` quand ils changent.
+
+`dependabot.yml` indique à Dependabot quelles dépendances surveiller (paquets
+npm et actions GitHub) et quand proposer des mises à jour. Le détail est dans
+[DEVSECOPS.md](../DEVSECOPS.md).
 
 ## docs
 

@@ -33,6 +33,8 @@ Documents de référence :
 
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) : architecture en place, structure
   du code et CI.
+- [DEVSECOPS.md](docs/DEVSECOPS.md) : CI, outils de sécurité, règles des
+  workflows et réglages GitHub.
 - [DECISIONS.md](docs/DECISIONS.md) : options comparées et raison de chaque
   choix.
 - [BUDGET.md](docs/BUDGET.md) : services payants envisagés et leur coût.

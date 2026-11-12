@@ -207,8 +207,8 @@ exception.
 
 Date : 2026-11-10
 
-Statut : ouverte, pas encore tranchée. La CI de vérification (secrets et
-documentation) est en place depuis D13.
+Statut : ouverte, pas encore tranchée. La CI de vérification (secrets,
+documentation, lint, tests et build) est en place depuis D13.
 
 Nous prévoyons d'utiliser GitHub Actions pour la CI/CD et de stocker l'image
 Docker sur GitHub (GitHub Container Registry, `ghcr.io`). Une fois tranchée,
@@ -261,7 +261,12 @@ Date : 2026-11-11
 
 Tant que le projet ne contient pas de code à builder, la CI vérifie les
 secrets et la documentation. Elle répond en partie à la première question de
-D11. Le build, les tests et la publication de l'image restent ouverts dans D11.
+D11. La publication de l'image reste ouverte dans D11.
+
+Depuis le 2026-11-12, le workflow `app.yml` vérifie aussi l'application à
+chaque pull request : lint, typage, tests et build, dans un seul job
+`app-checks` rendu obligatoire. Le build est inclus parce que lui seul détecte
+un module `server-only` importé par un composant du navigateur.
 
 | Option | Avantages | Inconvénients |
 | --- | --- | --- |
@@ -302,7 +307,7 @@ sur `main` et fusionner ses propres pull requests sans approbation.
 | Relecture croisée sans contournement | Chaque changement est relu par une deuxième personne. | Ne correspond pas à la répartition des rôles dans le binôme. |
 | Protection de branche classique | Interface plus ancienne et connue. | GitHub recommande les rulesets, qui permettent une liste de contournement par rôle. |
 
-Le réglage détaillé du ruleset est dans `ARCHITECTURE.md`, section 8. Le check
+Le réglage détaillé du ruleset est dans `DEVSECOPS.md`, section 5. Le check
 `gitleaks-scan` est obligatoire. Les push directs de Tiago sur `main` sont
 quand même analysés, car `ci.yml` tourne à chaque push sur `main`.
 
@@ -367,6 +372,31 @@ se faire plus tard, en changeant la version au même moment dans la CI, dans le
 Installation sur Windows : `winget install OpenJS.NodeJS.LTS --version 24.22.1`.
 Sans `--version`, winget installe la dernière LTS, donc Node.js 26.
 
+## D17. Outils DevSecOps
+
+Date : 2026-11-12
+
+La CI vérifie les secrets (gitleaks) et la qualité du code (`app-checks`).
+Il manquait deux familles de contrôles : l'analyse des dépendances (SCA) et
+l'analyse statique de notre propre code (SAST). Les actions étant épinglées
+par SHA (D13), elles ne se mettent plus à jour seules : il faut un outil qui
+propose les nouvelles versions.
+
+| Option | Famille | Avantages | Inconvénients |
+| --- | --- | --- | --- |
+| **Dependabot (retenu)** | SCA | Intégré à GitHub, gratuit ; met à jour npm et les actions épinglées par SHA ; option `cooldown` contre les versions piratées. | Des pull requests à relire chaque semaine. |
+| Renovate | SCA | Plus de réglages, regroupements plus fins. | Application externe à installer ; configuration plus longue. |
+| **dependency-review-action (retenu)** | SCA | Bloque une pull request qui ajoute un paquet vulnérable, avant la fusion. Gratuit pour un dépôt public. | Payant (Advanced Security) si le dépôt devient privé. |
+| OSV-Scanner | SCA | Base de failles ouverte, fonctionne partout. | Doublon avec les alertes Dependabot déjà activées. |
+| **CodeQL (retenu)** | SAST | Développé par GitHub, résultats dans l'onglet Security, règles pour l'injection et la SSRF. Gratuit pour un dépôt public. | Analyse lente (plusieurs minutes) ; payant si le dépôt devient privé. |
+| Semgrep | SAST | Rapide, règles faciles à écrire. | Règles avancées dans l'offre payante ; compte à créer. |
+
+Dependabot est en place depuis le 2026-11-12 (`.github/dependabot.yml`).
+`dependency-review-action` et CodeQL seront ajoutés chacun dans sa propre
+pull request. Trivy, hadolint et OWASP ZAP restent dans `IDEES.md`, I2, car ils
+demandent une image Docker ou une application qui tourne. Le détail des
+réglages est dans `DEVSECOPS.md`.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -382,7 +412,8 @@ Sans `--version`, winget installe la dernière LTS, donc Node.js 26.
 | Premier provider | XposedOrNot | Have I Been Pwned |
 | Quota XposedOrNot | Ouverte (D15) | |
 | Modes | Une image, `APP_MODE` à l'exécution | Deux images |
-| CI | GitHub Actions : gitleaks, markdownlint, lychee (D13) | |
+| CI | GitHub Actions : gitleaks, lint, typage, tests, build, markdownlint, lychee (D13) | |
+| DevSecOps | Dependabot, dependency-review-action, CodeQL (D17) | Renovate, Semgrep |
 | CD et image | Ouverte (D11) | |
 | Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
