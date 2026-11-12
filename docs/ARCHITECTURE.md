@@ -81,11 +81,18 @@ src/
 │   │   ├── severity.ts           ← score d'exposition
 │   │   └── actions.ts            ← catégories exposées → plan d'action
 │   │
-│   └── search-service.ts         ← orchestration (Promise.allSettled + timeout)
+│   ├── search-service.ts         ← orchestration (Promise.allSettled + timeout)
+│   └── env.ts                    ← variables d'environnement validées par zod (APP_MODE)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
-└── tests/fixtures/               ← réponses d'API fictives (jamais de vraies données)
+└── tests/
+    ├── fixtures/                 ← réponses d'API fictives (jamais de vraies données)
+    └── server-only-stub.ts       ← remplace `server-only` dans les tests
 ```
+
+Chaque test est placé à côté du fichier qu'il teste et porte le même nom avec
+`.test.ts` (`env.ts` et `env.test.ts`). Vitest est configuré dans
+`vitest.config.mts`.
 
 L'interface commune à tous les providers est la suivante :
 
@@ -125,6 +132,7 @@ correspondante.
 | Animations | Framer Motion | [D4](DECISIONS.md#d4-animations) |
 | Validation | zod | [D5](DECISIONS.md#d5-validation-des-données) |
 | Tests | Vitest | [D6](DECISIONS.md#d6-tests) |
+| Runtime | Node.js 24 LTS | [D16](DECISIONS.md#d16-version-de-nodejs) |
 | Exécution | Docker compose, en local | [D7](DECISIONS.md#d7-exécution-et-déploiement) |
 | Provider | XposedOrNot (email) ; Snusbase et Dehashed prévus (nom, téléphone) | [D8](DECISIONS.md#d8-sources-de-données-providers) |
 | Modes | `surface` et `deep`, une image, `APP_MODE` à l'exécution | [D10](DECISIONS.md#d10-modes-surface-et-deep) |
