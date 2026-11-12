@@ -306,6 +306,67 @@ Le réglage détaillé du ruleset est dans `ARCHITECTURE.md`, section 8. Le chec
 `gitleaks-scan` est obligatoire. Les push directs de Tiago sur `main` sont
 quand même analysés, car `ci.yml` tourne à chaque push sur `main`.
 
+## D15. Quota d'XposedOrNot
+
+Date : 2026-11-12
+
+Statut : ouverte, à analyser avant les portes ouvertes.
+
+L'API gratuite d'XposedOrNot accepte 2 requêtes par seconde, 25 par heure et
+100 par jour, par adresse IP publique. Au-delà, elle répond 429 jusqu'à la fin
+de l'heure ou de la journée. Une recherche par email consomme une requête.
+Le réseau de l'école sort probablement par une seule adresse IP : le quota
+serait alors partagé avec tout autre poste de l'école qui utilise cette API.
+
+Avec plus de 25 visiteurs par heure, la recherche par email ne fonctionne plus
+pendant le reste de l'heure. En attendant une solution, l'application traite
+un 429 comme une panne du provider : la recherche continue avec les autres
+sources et l'écran l'indique (plan d'implémentation, tâches 8 et 10).
+
+| Piste | Avantages | Inconvénients |
+| --- | --- | --- |
+| Offre payante xonAPI+ | Clé API dédiée, au moins 50 requêtes par minute ; même API, seul le client change. | À partir de 9 dollars par mois : budget à faire accepter (D12, `BUDGET.md`). |
+| Have I Been Pwned avec abonnement | Base de référence, déjà citée comme remplaçant dans D8. | Payant ; prix et limites à vérifier ; un adaptateur de plus à écrire. |
+| Compteur de quota dans l'application | Gratuit ; aucune donnée personnelle (un simple compteur) ; l'écran peut annoncer « service saturé, réessayer à 15 h » au lieu d'une erreur. | Ne donne pas plus de recherches, rend seulement la limite visible. |
+| Profil de démonstration fictif quand le quota est atteint | Le visiteur voit quand même le principe et le plan d'action. | Ce ne sont plus ses propres données ; l'écran doit l'indiquer clairement. |
+| Connexion séparée (partage de connexion 4G) | Adresse IP dédiée au poste. | Ne dépasse pas 100 recherches par jour ; dépend du forfait mobile. |
+| Garder les résultats en cache | Moins de requêtes pour un même email. | Écarté : contraire à l'invariant « zéro stockage » (`ARCHITECTURE.md`, section 2). |
+
+Questions à trancher :
+
+- Nombre de visiteurs attendus par heure et sur la journée.
+- Adresse IP publique partagée ou non sur le réseau de l'école (à demander
+  au service informatique).
+- Contenu exact de la réponse 429 (limite horaire ou journalière, heure de
+  fin), à observer pendant les tests.
+- Budget possible pour une offre payante, à ajouter à `BUDGET.md` si une
+  piste payante est retenue.
+
+## D16. Version de Node.js
+
+Date : 2026-11-12
+
+Node.js exécute Next.js, les tests et le build. La même version majeure est
+utilisée partout : sur les postes des élèves, dans la CI
+(`actions/setup-node`) et dans l'image Docker (`node:24-alpine`, D7). Une
+différence de version peut provoquer des erreurs qui n'apparaissent que dans
+un seul de ces environnements.
+
+| Option | Fin du support | Avantages | Inconvénients |
+| --- | --- | --- | --- |
+| **Node.js 24 LTS (retenu)** | 30 avril 2028 | LTS depuis octobre 2025 : versions déjà testées par tout l'écosystème ; supportée par Next.js 16 et Vitest 5 ; déjà prévue dans D7. | Support plus court que Node.js 26. |
+| Node.js 26 LTS | 30 avril 2029 | Version LTS la plus récente, support le plus long. | LTS depuis le 28 octobre 2026 seulement : certaines dépendances peuvent ne pas encore la supporter. |
+| Node.js 22 LTS | 30 avril 2027 | Très stable. | Plus de correctifs de sécurité un an après le début du projet. |
+| Version impaire (25, 27) | Environ 6 mois | Dernières nouveautés. | Pas de LTS, inadaptée à un projet qui doit durer. |
+
+Node.js 24 est retenu parce que son support couvre toute la durée du projet et
+que l'écosystème l'utilise depuis plus d'un an. Le passage à Node.js 26 pourra
+se faire plus tard, en changeant la version au même moment dans la CI, dans le
+`Dockerfile` et sur les postes.
+
+Installation sur Windows : `winget install OpenJS.NodeJS.LTS --version 24.22.1`.
+Sans `--version`, winget installe la dernière LTS, donc Node.js 26.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -317,7 +378,9 @@ quand même analysés, car `ci.yml` tourne à chaque push sur `main`.
 | Validation | zod | Valibot |
 | Tests | Vitest (+ Playwright plus tard) | Jest |
 | Exécution | Docker compose (local) | `npm run start` |
+| Runtime | Node.js 24 LTS (D16) | Node.js 26 LTS |
 | Premier provider | XposedOrNot | Have I Been Pwned |
+| Quota XposedOrNot | Ouverte (D15) | |
 | Modes | Une image, `APP_MODE` à l'exécution | Deux images |
 | CI | GitHub Actions : gitleaks, markdownlint, lychee (D13) | |
 | CD et image | Ouverte (D11) | |

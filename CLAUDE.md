@@ -31,6 +31,9 @@ n'est souscrit ni intégré avant l'acceptation du budget par l'enseignant.
 retenue devient une décision dans `docs/DECISIONS.md` et est retirée de ce
 fichier.
 
+Next.js 16 change des API connues : avant d'écrire du code Next.js, lire
+les règles de @AGENTS.md (fichier généré par Next.js).
+
 ## Invariants de confidentialité
 
 Ils s'appliquent à tout le code, sans exception. Détail et justification :
@@ -75,7 +78,7 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
 `.claude/settings.json`.
 
 | Tâche | Outil |
-|---|---|
+| --- | --- |
 | Rédiger ou relire un document | Sous-agent `technical-writer` |
 | Préparer une étape de travail | Skill `superpowers:writing-plans` |
 | Provider, mapper, logique du domaine | Skill `superpowers:test-driven-development` |
@@ -103,7 +106,7 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
   `git add`, `git commit` et `git push` avec une suggestion de message, et
   l'élève les lance. Un élève peut autoriser Claude à créer la branche,
   commiter, pousser et ouvrir la pull request avec `gh` en l'indiquant dans son
-  `CLAUDE.local.md`. La relecture est demandée à l'autre membre du binôme.
+  `CLAUDE.local.md`.
 - Messages de commit en anglais, style Conventional Commits. Ni les commits ni
   les pull requests ne mentionnent Claude ou l'IA : l'attribution automatique
   est désactivée dans `.claude/settings.json` (clé `attribution`).
