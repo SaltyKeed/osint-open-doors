@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  checks:
+  app-checks:
     name: app-checks
     runs-on: ubuntu-latest
     steps:
@@ -21,9 +21,18 @@ jobs:
           node-version: 24
           cache: npm
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test
-      # Only the build catches a server-only module imported by a client component.
-      - run: npm run build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint checks
+        run: npm run lint
+
+      - name: Run Typescript type checks
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm test
+
+        # Only the build catches a server-only module imported by a client component.
+      - name: Build
+        run: npm run build
