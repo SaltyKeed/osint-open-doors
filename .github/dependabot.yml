@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Zurich"
+    # Wait before proposing a version: hijacked npm releases are usually pulled within days.
+    # Security updates are not delayed.
+    cooldown:
+      default-days: 7
+    # "chore(deps): ..." for dependencies, "chore(deps-dev): ..." for devDependencies.
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # One PR per week for minor and patch updates; each major update keeps its own PR.
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # @types/node must match the Node.js major version used in the project (D16).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # eslint-config-next 16 depends on plugins (react, jsx-a11y, import) that only support ESLint 9.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    # "/" makes Dependabot read .github/workflows/; it updates the pinned SHA and the version comment.
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Zurich"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]
