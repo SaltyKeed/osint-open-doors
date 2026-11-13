@@ -22,6 +22,14 @@ describe("xposedOrNot provider", () => {
     expect(await xposedOrNot.search(query, new AbortController().signal)).toHaveLength(2);
   });
 
+  it("inspect returns the raw body, the parsed body without extra fields, and the exposures", async () => {
+    stubFetch(200, found);
+    const { raw, parsed, exposures } = await xposedOrNot.inspect(query, new AbortController().signal);
+    expect(raw).toEqual(found);
+    expect(JSON.stringify(parsed)).not.toContain("password_risk");
+    expect(exposures).toHaveLength(2);
+  });
+
   it("returns [] when the body is all null", async () => {
     stubFetch(200, notFound);
     expect(await xposedOrNot.search(query, new AbortController().signal)).toEqual([]);

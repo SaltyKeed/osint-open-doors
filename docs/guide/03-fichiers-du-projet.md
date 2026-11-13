@@ -48,10 +48,17 @@ src/
 │   ├── globals.css
 │   ├── layout.tsx
 │   ├── page.tsx
-│   └── api/search/route.ts
+│   ├── api/search/route.ts
+│   ├── dev/
+│   │   ├── page.tsx
+│   │   └── dev-console.tsx
+│   └── api/dev/search/route.ts
 ├── server/
 │   ├── env.ts
 │   ├── search-service.ts
+│   ├── dev/
+│   │   ├── inspect-providers.ts
+│   │   └── field-paths.ts
 │   ├── domain/
 │   │   ├── types.ts
 │   │   ├── search-query.ts
@@ -85,6 +92,9 @@ src/
   à côté du fichier qu'il teste.
 - `app/api/search/route.ts` reçoit la recherche en `POST`, la valide avec
   zod, interroge les providers et renvoie les fuites trouvées en JSON.
+- `app/dev/` et `app/api/dev/search/` forment la console de test des
+  providers, et `server/dev/` prépare ses données. Elle n'existe qu'avec
+  `npm run dev` (voir [Commandes du projet](02-commandes.md#npm-run-dev)).
 - `server/domain/` contient la logique métier sans réseau : normalisation et
   validation de la saisie, masquage des valeurs, règle anti-homonymes.
 - `server/providers/` contient une source de données par dossier. `registry.ts`

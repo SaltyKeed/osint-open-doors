@@ -61,7 +61,9 @@ ligne dans `registry.ts`.
 src/
 ├── app/                          ← Next.js : UI + routes, aussi léger que possible
 │   ├── page.tsx                  ← formulaire + consentement
-│   └── api/search/route.ts       ← valide l'input, appelle le service, répond
+│   ├── api/search/route.ts       ← valide l'input, appelle le service, répond
+│   ├── dev/                      ← console de test des providers (npm run dev uniquement, D18)
+│   └── api/dev/search/route.ts   ← réponses brutes pour la console (404 en production)
 │
 ├── server/                       ← code serveur uniquement (import "server-only")
 │   ├── providers/
@@ -84,6 +86,7 @@ src/
 │   │   └── actions.ts            ← catégories exposées → plan d'action
 │   │
 │   ├── search-service.ts         ← orchestration (Promise.allSettled + timeout)
+│   ├── dev/                      ← inspection des providers pour la console (D18)
 │   └── env.ts                    ← variables d'environnement validées par zod (APP_MODE)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
@@ -104,12 +107,23 @@ domaine ne dépend pas des providers.
 // src/server/providers/types.ts
 import type { Exposure, QueryKind, SearchQuery } from "@/server/domain/types";
 
+export interface Inspection {
+  raw: unknown;          // réponse de l'API telle quelle
+  parsed: unknown;       // la même après le schéma zod
+  exposures: Exposure[];
+}
+
 export interface BreachProvider {
   id: string;
   supports: readonly QueryKind[];
   search(query: SearchQuery, signal: AbortSignal): Promise<Exposure[]>;
+  inspect(query: SearchQuery, signal: AbortSignal): Promise<Inspection>;
 }
 ```
+
+`inspect` sert uniquement à la console de test (D18). `search` appelle
+`inspect` et ne garde que `exposures` : la réponse brute ne quitte le
+provider que vers la console, jamais vers `/api/search`.
 
 Règles du contrat, vérifiées par les tests de `xposedornot/` :
 
@@ -130,7 +144,7 @@ l'ajouter à `SURFACE_PROVIDERS` ou `DEEP_PROVIDERS` dans `registry.ts`.
 | Principe | Où | Pourquoi |
 | --- | --- | --- |
 | Parse, don't validate (zod aux frontières) | `schema.ts`, `route.ts` | Tout ce qui entre (visiteur, API) est vérifié une seule fois. À l'intérieur de l'application, les types sont fiables. |
-| Le type brut ne sort jamais de l'adaptateur | `mapper.ts` | Le mot de passe est retiré à cet endroit et ne peut donc pas être affiché par erreur plus loin. |
+| Le type brut ne sort jamais de l'adaptateur | `mapper.ts` | Le mot de passe est retiré à cet endroit et ne peut donc pas être affiché par erreur plus loin. Seule exception : la console `/dev`, absente du build de production (D18). |
 | Domaine pur | `domain/` | Le domaine n'utilise pas `fetch` et peut être testé avec Vitest sans réseau. |
 | Défaillance partielle | `search-service.ts` | Avec `Promise.allSettled` et un timeout, les autres providers répondent même si l'un d'eux est en panne. |
 | `server-only` | tout `src/server/` | Le build échoue si du code serveur (et donc une clé) se retrouve dans le bundle client. |

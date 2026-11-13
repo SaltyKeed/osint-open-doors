@@ -397,6 +397,36 @@ pull request. Trivy, hadolint et OWASP ZAP restent dans `IDEES.md`, I2, car ils
 demandent une image Docker ou une application qui tourne. Le détail des
 réglages est dans `DEVSECOPS.md`.
 
+## D18. Console de test des providers
+
+Date : 2026-11-13
+
+Pour régler chaque provider, il faut voir ce que l'API renvoie vraiment et ce
+que le schéma et le mapper en gardent. La route `/api/search` ne renvoie que
+les fuites mappées, et l'interface finale n'existe pas encore.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Commandes PowerShell (`Invoke-RestMethod`) | Aucun code à écrire. | Pas de réponse brute ; un provider à la fois ; email enregistré dans l'historique de PowerShell. |
+| **Page `/dev`, disponible seulement avec `npm run dev` (retenu)** | Réponse brute, champs ignorés par le schéma, choix des providers, durée de chaque appel. | Exception à l'invariant « le type brut ne sort jamais de l'adaptateur » ; code à maintenir. |
+| Script Node.js en ligne de commande | Aucune page à protéger. | Moins lisible pour comparer les réponses de plusieurs providers. |
+
+Limites de l'exception :
+
+- La page `/dev` et la route `/api/dev/search` répondent 404 quand
+  `NODE_ENV` n'est pas `development`, donc dans le build de production lancé
+  sur le poste des portes ouvertes. Vérifié avec `npm run build` puis
+  `npm run start`.
+- La route publique `/api/search` ne change pas : elle renvoie seulement les
+  fuites mappées.
+- Chaque provider a une méthode `inspect` qui renvoie la réponse brute, la
+  réponse filtrée par le schéma et les fuites mappées. `search` utilise
+  `inspect` et ne garde que les fuites mappées.
+- Rien n'est enregistré : ni fichier, ni `localStorage`, ni log de la saisie.
+- Les providers payants (`deep`) peuvent renvoyer des mots de passe ou des
+  hashes. Avant d'en ajouter un, il faut décider comment les masquer dans la
+  réponse brute (D12 : jamais de mot de passe ni de hash affiché).
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -415,5 +445,6 @@ réglages est dans `DEVSECOPS.md`.
 | CI | GitHub Actions : gitleaks, lint, typage, tests, build, markdownlint, lychee (D13) | |
 | DevSecOps | Dependabot, dependency-review-action, CodeQL (D17) | Renovate, Semgrep |
 | CD et image | Ouverte (D11) | |
+| Test des providers | Page `/dev` en développement uniquement (D18) | Commandes PowerShell |
 | Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |

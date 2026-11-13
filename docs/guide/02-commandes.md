@@ -62,6 +62,15 @@ d'un fichier. Pour arrêter le serveur, taper Ctrl+C dans le terminal.
 npm run dev
 ```
 
+En développement, la console de test des providers est disponible sur
+`http://localhost:3000/dev`. Elle permet de choisir les providers, de lancer
+une recherche et de voir pour chacun : le statut et la durée de l'appel, les
+fuites mappées, les champs de la réponse que le schéma ignore et la réponse
+brute de l'API. Elle n'existe pas dans le build de production
+([DECISIONS.md, D18](../DECISIONS.md#d18-console-de-test-des-providers)).
+Chaque recherche réelle compte dans le quota de l'API (100 par jour pour
+XposedOrNot).
+
 ### npm run build
 
 Prépare la version de production de l'application (`next build`) dans le

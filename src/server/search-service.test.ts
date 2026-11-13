@@ -17,6 +17,7 @@ const fake = (id: string, search: BreachProvider["search"], supports: BreachProv
   id,
   supports,
   search: vi.fn(search),
+  inspect: vi.fn(),
 });
 
 const query = { email: "jean@exemple.ch" };
