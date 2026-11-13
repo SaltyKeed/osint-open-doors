@@ -41,4 +41,5 @@ apparaître.
 La vérification des pseudos utilise la liste WhatsMyName
 (github.com/WebBreacher/WhatsMyName), sous licence Creative Commons
 Attribution-ShareAlike 4.0. Les sources interrogées sont décrites dans
-`docs/DECISIONS.md` (D16, D18, D19).
+`docs/DECISIONS.md` (D16, D18, D19, D24). Le registre du commerce vient de la
+Feuille officielle suisse du commerce (SECO, amtsblattportal.ch).

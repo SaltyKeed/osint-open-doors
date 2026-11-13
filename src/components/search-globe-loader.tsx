@@ -16,6 +16,7 @@ export type Destination = { lat: number; lng: number; place: string };
 // (spread all over the world). See DECISIONS.md, D23.
 export const DESTINATIONS = {
   zurich: { lat: 47.37, lng: 8.54, place: "Zurich" },
+  bern: { lat: 46.95, lng: 7.45, place: "Berne" },
   newYork: { lat: 40.71, lng: -74.01, place: "New York" },
   sanFrancisco: { lat: 37.77, lng: -122.42, place: "San Francisco" },
   bethesda: { lat: 38.98, lng: -77.1, place: "Bethesda" },

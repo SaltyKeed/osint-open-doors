@@ -20,6 +20,7 @@ export const CATEGORY_LABELS: Record<DataCategory, string> = {
 
 export const PROVIDER_LABELS: Record<string, string> = {
   xposedornot: "les fuites de données",
+  leakcheck: "les fuites de données (LeakCheck)",
   tavily: "la recherche web",
   searchch: "l'annuaire search.ch",
   github: "GitHub",
@@ -27,8 +28,10 @@ export const PROVIDER_LABELS: Record<string, string> = {
   pgp: "le serveur de clés PGP",
   rdap: "le registre des domaines",
   whatsmyname: "la vérification des pseudos",
+  profiles: "les profils publics (jeux, réseaux, développeurs)",
   orcid: "ORCID",
   wikidata: "Wikidata",
+  shab: "la Feuille officielle suisse du commerce",
   wayback: "les archives du web",
 };
 

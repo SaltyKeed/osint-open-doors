@@ -157,3 +157,44 @@ un deuxième moteur de recherche (Brave, Marginalia).
 
 Protection à prévoir avant le rebond complet : le code de vérification par
 email décrit dans I1.
+
+## I4. Suite de l'inventaire OSINT4ALL
+
+Date : 2026-11-13
+
+Candidats de l'inventaire qui ne sont pas encore intégrés (le premier lot est
+dans `DECISIONS.md`, D24).
+
+### Prochain lot : clé gratuite à créer
+
+| Source | Saisie | Apport | Ce qu'il faut |
+| --- | --- | --- | --- |
+| Twitch Helix | Pseudo | Année de création, type de chaîne | Application gratuite sur dev.twitch.tv |
+| YouTube Data API | Pseudo (@handle) | Année de création, nombre de vidéos | Clé Google Cloud gratuite (10 000 unités par jour) |
+| Disqus | Pseudo | Commentaires publics, sites commentés | Clé gratuite |
+| Last.fm | Pseudo | Année d'inscription, nombre d'écoutes | Clé gratuite, usage non commercial |
+| osu! | Pseudo | Année d'inscription, pays | Application OAuth gratuite |
+| IPQS Dark Web Leak | Email, pseudo | Date de première apparition dans une fuite | Compte (1000 recherches offertes), conditions à relire |
+
+### Autres pistes gratuites
+
+- Maigret (`data.json`, licence MIT) : environ 3000 sites, à fusionner avec
+  WhatsMyName en gardant seulement les vérifications par adresse de profil
+  publique.
+- Domaine personnel du visiteur (après RDAP) : crt.sh (certificats et
+  sous-domaines), Shodan InternetDB (ports ouverts), urlscan.io.
+- OpenAlex et Crossref : publications au même nom, comme ORCID.
+- GDELT : presse mondiale au même nom, à retester depuis un autre réseau.
+- Comparaison des photos de profil déjà récupérées (empreinte d'image), sans
+  reconnaissance faciale.
+
+### Écartés
+
+| Source | Raison |
+| --- | --- |
+| geo.admin.ch, Mapillary (vue aérienne et photos de rue du domicile) | L'adresse est masquée (« Adresse : présente ») et search.ch n'autorise qu'un total par nom ; afficher le domicile sur un poste de portes ouvertes est trop intrusif. |
+| ICIJ Offshore Leaks, OpenSanctions, entscheidsuche.ch | Un homonyme associé aux Panama Papers, à une sanction ou à une décision de justice, affiché devant d'autres visiteurs. |
+| FaceCheck.ID, PimEyes | Reconnaissance faciale : données biométriques sensibles (nLPD). |
+| Flickr (position des photos) | Révèle des lieux de vie à l'écran. |
+| Reddit, EmailRep, Bing Visual Search | Accès fermé (approbation Reddit, plus de clés EmailRep, API Bing retirée). |
+| Datasport | Les conditions générales interdisent les robots. |

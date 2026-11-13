@@ -73,6 +73,7 @@ src/
 │   │   │   ├── schema.ts         ← zod : forme de la réponse brute
 │   │   │   ├── mapper.ts         ← brut → modèle du domaine (liste blanche)
 │   │   │   └── index.ts          ← le provider (client → schema → mapper)
+│   │   ├── leakcheck/            ← fuites par email, total par pseudo (D24)
 │   │   ├── tavily/               ← recherche web (email, téléphone, nom ; searches.ts : thèmes)
 │   │   ├── searchch/             ← annuaire (téléphone, total par nom)
 │   │   ├── github/               ← commits publics signés avec l'email
@@ -81,8 +82,10 @@ src/
 │   │   ├── rdap/                 ← registre du domaine de l'email (domaines perso)
 │   │   ├── whatsmyname/          ← pseudo testé sur ~650 sites (liste WhatsMyName)
 │   │   ├── keybase/              ← comptes prouvés d'un pseudo (rebond)
+│   │   ├── profiles/             ← profils publics par pseudo : jeux, réseaux, dev (D24)
 │   │   ├── orcid/                ← chercheurs au même nom
 │   │   ├── wikidata/             ← personnes connues au même nom
+│   │   ├── shab/                 ← registre du commerce (FOSC) au même nom
 │   │   └── wayback/              ← 2e étape : archives des pages trouvées, page supprimée ou non
 │   │
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
@@ -92,10 +95,11 @@ src/
 │   │   ├── phone.ts              ← normalisation et formats du téléphone
 │   │   ├── handles.ts            ← pseudo lu dans l'adresse d'un profil
 │   │   ├── pivots.ts             ← pseudos à utiliser pour le rebond
+│   │   ├── merge.ts              ← une fuite ou un compte signalé deux fois n'apparaît qu'une fois
 │   │   └── actions.ts            ← résultats → plan d'action
 │   │
 │   ├── env.ts                    ← variables d'environnement validées par zod (APP_MODE, clés)
-│   ├── pivot.ts                  ← rebond : pseudos trouvés → WhatsMyName + archives X
+│   ├── pivot.ts                  ← rebond : pseudos trouvés → WhatsMyName, Keybase, profils publics, archives X
 │   └── search-service.ts         ← orchestration (Promise.allSettled + timeout, puis archives et rebond)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
@@ -182,7 +186,7 @@ correspondante.
 | Tests | Vitest 5 | [D6](DECISIONS.md#d6-tests) |
 | Qualité du code | ESLint (configuration Next.js) | [D15](DECISIONS.md#d15-mise-en-place-du-projet) |
 | Exécution | Docker compose, en local | [D7](DECISIONS.md#d7-exécution-et-déploiement) |
-| Sources `surface` | XposedOrNot, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org, RDAP | [D8](DECISIONS.md#d8-sources-de-données-providers), [D16](DECISIONS.md#d16-sources-du-mode-surface) |
+| Sources `surface` | XposedOrNot, LeakCheck, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org, RDAP, WhatsMyName, profils publics, Keybase, ORCID, Wikidata, FOSC, Wayback Machine | [D8](DECISIONS.md#d8-sources-de-données-providers), [D16](DECISIONS.md#d16-sources-du-mode-surface), [D24](DECISIONS.md#d24-nouvelles-sources-tirées-de-linventaire-osint4all) |
 | Sources `deep` | Services payants, selon le budget | [D12](DECISIONS.md#d12-cadre-validé-par-lenseignant) |
 | Téléphone, XML | libphonenumber-js, fast-xml-parser | [D16](DECISIONS.md#d16-sources-du-mode-surface) |
 | Modes | `surface` et `deep`, une image, `APP_MODE` à l'exécution | [D10](DECISIONS.md#d10-modes-surface-et-deep) |

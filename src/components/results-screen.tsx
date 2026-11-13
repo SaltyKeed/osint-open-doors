@@ -298,7 +298,7 @@ function ProfileTab({ items }: { items: ProfileFinding[] }) {
     <div className="flex flex-col gap-4">
       <p className="text-lg">
         Un compte existe avec ce pseudo sur ces sites. Le même pseudo peut appartenir à quelqu&apos;un d&apos;autre :
-        vérifie toi-même. Liste des sites : WhatsMyName (CC BY-SA 4.0).
+        vérifie toi-même. Liste des sites : WhatsMyName (CC BY-SA 4.0) et API publiques des sites.
       </p>
       {[...groups.values()].map((group) => {
         const first = group[0];
@@ -326,6 +326,7 @@ function ProfileTab({ items }: { items: ProfileFinding[] }) {
                     <span className="font-bold">
                       {item.site} <span className="font-normal text-muted-foreground">({item.category})</span>
                     </span>
+                    {item.details && item.details.length > 0 && <span>{item.details.join(" · ")}</span>}
                     <span className="truncate text-sm text-muted-foreground">{item.url}</span>
                   </p>
                 )}

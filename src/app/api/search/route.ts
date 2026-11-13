@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { buildActionPlan } from "@/server/domain/actions";
 import { maskEmail, maskName, maskPhone } from "@/server/domain/masking";
+import { mergeDuplicates } from "@/server/domain/merge";
 import { normalizePhone } from "@/server/domain/phone";
 import { getEnv } from "@/server/env";
 import { getActiveProviders } from "@/server/providers/registry";
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
 
   const query = input.data;
   const { APP_MODE } = getEnv();
-  const { findings, queriedProviders, failedProviders } = await runSearch(
+  const result = await runSearch(
     query,
     getActiveProviders(APP_MODE),
     12000,
@@ -83,6 +84,9 @@ export async function POST(request: Request) {
     },
     10000,
   );
+  // The same breach or account reported by two sources is shown once (D24).
+  const findings = mergeDuplicates(result.findings);
+  const { queriedProviders, failedProviders } = result;
 
   return Response.json(
     {

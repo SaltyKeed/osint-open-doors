@@ -104,6 +104,9 @@ export type ProfileFinding = FindingBase & {
   // "pseudo": typed by the visitor; otherwise the source of the pivot (e.g. "GitHub").
   origin: string;
   archive?: WebArchiveInfo;
+  // Facts read from the public profile (D24): creation year, country, activity.
+  // Never a display name, bio or city: the account may belong to someone else.
+  details?: string[];
 };
 
 // Results found by name only: probably homonyms, so only a total is shown.

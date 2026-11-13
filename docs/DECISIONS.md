@@ -726,6 +726,59 @@ Destinations des arcs (lieu du siège du service qui reçoit les données) :
 | Fuites de données | XposedOrNot | Aucun arc : pays non trouvé |
 | Environ 650 sites pour les pseudos | Sites du monde entier | Aucun arc : pas de lieu unique |
 
+## D24. Nouvelles sources tirées de l'inventaire OSINT4ALL
+
+Date : 2026-11-13
+
+Statut : appliquée sur la branche `sandbox` (prototype). La page start.me
+OSINT4ALL (environ 1450 liens) a été inventoriée, puis chaque candidat a été
+comparé aux invariants (`ARCHITECTURE.md`, section 2) et testé avec des
+données fictives depuis le poste de développement. Les candidats non retenus
+sont dans `IDEES.md`, I4.
+
+| Source | Saisie | Ce qui est affiché | Clé |
+| --- | --- | --- | --- |
+| LeakCheck, API publique (retenu) | Email | Nom et année de chaque fuite ; une seule liste des types de données exposées, toutes fuites confondues | Aucune |
+| LeakCheck, API publique (retenu) | Pseudo (6 caractères ou plus) | Total des fuites qui contiennent ce pseudo, présenté comme une piste | Aucune |
+| Profils publics (retenu) | Pseudo saisi et pseudos du rebond | Chess.com, Lichess, Steam, Minecraft, Speedrun.com, Bluesky, Codeberg, Hacker News, DEV Community : année de création, pays indiqué, activité, comptes reliés | Aucune |
+| FOSC, amtsblattportal.ch (retenu) | Prénom et nom | Publications du registre du commerce (rubrique HR), comme pages non vérifiées | Aucune |
+| GDELT (presse mondiale) | Nom | Écarté pour le moment : répond 429 même à la première requête depuis ce réseau | Aucune |
+| DNS-over-HTTPS (Google, Cloudflare) | Domaine de l'email | Écarté pour le moment : bloqué par le réseau | Aucune |
+
+Règles appliquées :
+
+- LeakCheck renvoie une liste des types de données pour l'ensemble des
+  fuites, pas fuite par fuite. Chaque fuite LeakCheck porte donc seulement la
+  catégorie « email », et les types sont affichés une fois dans l'onglet
+  Comptes. Aucune valeur n'est lue : l'API publique n'en renvoie pas.
+- Un pseudo peut appartenir à beaucoup de monde : les fuites trouvées par
+  pseudo sont seulement comptées (`CountFinding`), comme les fiches trouvées
+  par nom (D17).
+- Profils publics : seuls des faits sont gardés (année de création, code du
+  pays, nombre de parties ou de publications, nom des comptes reliés). Le nom
+  affiché, la biographie, la ville et la photo ne sont jamais lus, car le
+  compte peut appartenir à quelqu'un d'autre. Les profils restent des pistes
+  (onglet Pseudos).
+- FOSC : seule la rubrique « registre du commerce » (HR) est interrogée. Les
+  faillites, poursuites, successions et l'état civil ne sont jamais affichés
+  devant un poste de portes ouvertes. Le registre écrit les personnes sous la
+  forme « Nom, Prénom » : les deux ordres sont cherchés comme phrases exactes.
+- Doublons : une fuite signalée par XposedOrNot et LeakCheck, ou un compte
+  trouvé par WhatsMyName et par un profil public, est affiché une seule fois
+  (`domain/merge.ts`). La version d'XposedOrNot est gardée, car elle donne les
+  types de données de chaque fuite.
+- Un site de profil qui ne répond pas, ou qui limite le débit (Mojang répond
+  vite 429), est simplement ignoré.
+
+Résultat avec des données fictives (`test@example.com`, pseudo `johndoe`,
+« Hans Muster ») : 106 fuites de plus qu'avec XposedOrNot seul, 9 profils
+publics avec leurs détails, 10 publications de la FOSC.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Sources sans clé d'abord (retenu)** | Rien à souscrire ni à configurer ; testable tout de suite. | Les sources avec clé gratuite (Twitch, YouTube, Disqus) attendent. |
+| Toutes les sources de l'inventaire d'un coup | Plus de résultats. | Clés à créer, conditions à relire, risques (homonymes, données sensibles) plus difficiles à contrôler. |
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
