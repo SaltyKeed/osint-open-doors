@@ -138,6 +138,8 @@ Règles du contrat, vérifiées par les tests de `xposedornot/` :
 Ajouter un provider : créer son dossier dans `providers/` (`schema.ts`,
 `mapper.ts`, `client.ts`, `index.ts`, tests et fixtures inventées), puis
 l'ajouter à `SURFACE_PROVIDERS` ou `DEEP_PROVIDERS` dans `registry.ts`.
+Pour changer ce qu'un provider garde ou affiche, voir le guide
+[Flux des données d'un provider](guide/04-flux-des-donnees.md).
 
 ### Bonnes pratiques appliquées
 

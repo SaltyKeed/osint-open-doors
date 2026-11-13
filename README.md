@@ -27,7 +27,9 @@ Guide, à lire dans l'ordre :
    chaque commande npm.
 3. [Fichiers du projet](docs/guide/03-fichiers-du-projet.md) : rôle de chaque
    fichier et dossier du dépôt.
-4. [Glossaire](docs/guide/glossaire.md) : définition des termes techniques.
+4. [Flux des données d'un provider](docs/guide/04-flux-des-donnees.md) :
+   chemin des données d'une API jusqu'à l'écran et fichier à modifier.
+5. [Glossaire](docs/guide/glossaire.md) : définition des termes techniques.
 
 Documents de référence :
 

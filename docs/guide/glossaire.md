@@ -66,6 +66,13 @@ d'API inventée. Dans le projet, les fixtures ne contiennent jamais de vraies
 données de fuite. Voir
 [ARCHITECTURE.md, section 4](../ARCHITECTURE.md#4-structure-du-code-ports--adapters).
 
+## Liste blanche (whitelist)
+
+Liste des seuls champs gardés ; tout le reste est supprimé. Dans un provider,
+le schéma zod puis le mapper appliquent chacun une liste blanche, ce qui
+empêche un mot de passe ou un hash d'arriver jusqu'à l'écran. Voir
+[Flux des données d'un provider](04-flux-des-donnees.md#deux-listes-blanches).
+
 ## Lockfile
 
 Fichier qui note la version exacte de chaque paquet installé. Pour npm, c'est
