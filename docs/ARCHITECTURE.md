@@ -68,6 +68,7 @@ src/
 │   │   ├── types.ts              ← le port : interface BreachProvider
 │   │   ├── registry.ts           ← providers actifs selon `APP_MODE` (D10)
 │   │   ├── xposedornot/
+│   │   │   ├── index.ts          ← le provider : client, schéma et mapper assemblés
 │   │   │   ├── client.ts         ← appel HTTP (fetch, timeout, clé)
 │   │   │   ├── schema.ts         ← zod : forme de la réponse brute
 │   │   │   └── mapper.ts         ← brut → modèle du domaine (liste blanche)
@@ -109,6 +110,20 @@ export interface BreachProvider {
   search(query: SearchQuery, signal: AbortSignal): Promise<Exposure[]>;
 }
 ```
+
+Règles du contrat, vérifiées par les tests de `xposedornot/` :
+
+- `search` renvoie `[]` si la requête ne contient pas un type qu'il accepte,
+  et `[]` si la personne n'est pas trouvée.
+- Il transmet `signal` à `fetch`. Le service annule tous les providers après
+  8 secondes ; un provider qui ignore `signal` bloquerait la réponse.
+- En cas d'échec, il lève une erreur au message fixe
+  (`xposedornot: HTTP 500`, `xposedornot: invalid response`), sans la saisie
+  du visiteur ni le corps de la réponse.
+
+Ajouter un provider : créer son dossier dans `providers/` (`schema.ts`,
+`mapper.ts`, `client.ts`, `index.ts`, tests et fixtures inventées), puis
+l'ajouter à `SURFACE_PROVIDERS` ou `DEEP_PROVIDERS` dans `registry.ts`.
 
 ### Bonnes pratiques appliquées
 

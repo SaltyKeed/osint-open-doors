@@ -37,8 +37,9 @@ Les dossiers non versionnés sont recréés par les outils : `node_modules/` par
 
 ## Le dossier src aujourd'hui
 
-Le dossier `src/` contient la page par défaut de Next.js et le premier module
-serveur :
+Le dossier `src/` contient la page par défaut de Next.js, la route de
+recherche, le domaine et le premier provider. Les fichiers de test
+(`*.test.ts`) ne sont pas listés : chacun est à côté du fichier qu'il teste.
 
 ```text
 src/
@@ -46,11 +47,26 @@ src/
 │   ├── favicon.ico
 │   ├── globals.css
 │   ├── layout.tsx
-│   └── page.tsx
+│   ├── page.tsx
+│   └── api/search/route.ts
 ├── server/
 │   ├── env.ts
-│   └── env.test.ts
+│   ├── search-service.ts
+│   ├── domain/
+│   │   ├── types.ts
+│   │   ├── search-query.ts
+│   │   ├── masking.ts
+│   │   └── matching.ts
+│   └── providers/
+│       ├── types.ts
+│       ├── registry.ts
+│       └── xposedornot/
+│           ├── index.ts
+│           ├── client.ts
+│           ├── schema.ts
+│           └── mapper.ts
 └── tests/
+    ├── fixtures/xposedornot/
     └── server-only-stub.ts
 ```
 
@@ -67,6 +83,15 @@ src/
   l'application (voir [DECISIONS.md, D10](../DECISIONS.md#d10-modes-surface-et-deep)).
 - `server/env.test.ts` contient les tests de `env.ts`. Chaque test est placé
   à côté du fichier qu'il teste.
+- `app/api/search/route.ts` reçoit la recherche en `POST`, la valide avec
+  zod, interroge les providers et renvoie les fuites trouvées en JSON.
+- `server/domain/` contient la logique métier sans réseau : normalisation et
+  validation de la saisie, masquage des valeurs, règle anti-homonymes.
+- `server/providers/` contient une source de données par dossier. `registry.ts`
+  choisit les sources actives selon `APP_MODE`.
+- `server/search-service.ts` interroge les providers en parallèle et garde les
+  résultats de ceux qui répondent, même si un autre est en panne.
+- `tests/fixtures/` contient des réponses d'API inventées pour les tests.
 - `tests/server-only-stub.ts` est un fichier vide. Dans les tests, il remplace
   le paquet `server-only`, qui lève une erreur hors du serveur Next.js.
 
