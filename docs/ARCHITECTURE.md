@@ -181,7 +181,7 @@ correspondante.
 | Langage | TypeScript 5 (mode strict), Node.js 24 | [D2](DECISIONS.md#d2-langage) |
 | UI | Tailwind CSS 4, shadcn/ui (base Radix) | [D3](DECISIONS.md#d3-ui-et-style), [D15](DECISIONS.md#d15-mise-en-place-du-projet) |
 | Animations | Framer Motion (paquet `motion`, import `motion/react`) | [D4](DECISIONS.md#d4-animations), [D22](DECISIONS.md#d22-révision-de-linterface-par-les-agents-ux-et-ui) |
-| Globe 3D | three.js, three-globe, React Three Fiber 9, drei (composant Aceternity UI) | [D23](DECISIONS.md#d23-globe-3d-pendant-la-recherche) |
+| Globe 3D | three.js 0.182 (version fixée), three-globe, React Three Fiber 9, drei (composant Aceternity UI retravaillé) | [D23](DECISIONS.md#d23-globe-3d-pendant-la-recherche), [D25](DECISIONS.md#d25-globe-3d-retravaillé) |
 | Validation | zod 4 | [D5](DECISIONS.md#d5-validation-des-données) |
 | Tests | Vitest 5 | [D6](DECISIONS.md#d6-tests) |
 | Qualité du code | ESLint (configuration Next.js) | [D15](DECISIONS.md#d15-mise-en-place-du-projet) |

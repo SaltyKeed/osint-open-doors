@@ -1,8 +1,10 @@
 "use client";
 // From Aceternity UI (ui.aceternity.com, "GitHub Globe"), added with the shadcn registry.
-// Adapted to the project's lint and strict typing rules; behavior unchanged (D23).
-import { useEffect, useRef, useState } from "react";
-import { Color, Scene, Fog, PerspectiveCamera, Vector3, type Group } from "three";
+// Adapted to the project's lint and strict typing rules (D23), then reworked (D25):
+// the countries are built once instead of at every new arc, the scene is not recreated
+// at every render, and the camera follows the size of its container.
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Color, Scene, Fog, Vector3, type Group } from "three";
 import ThreeGlobe from "three-globe";
 import { useThree, Canvas, extend } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -18,7 +20,6 @@ declare module "@react-three/fiber" {
 extend({ ThreeGlobe: ThreeGlobe });
 
 const RING_PROPAGATION_SPEED = 3;
-const aspect = 1.2;
 const cameraZ = 300;
 
 type Position = {
@@ -115,7 +116,27 @@ export function Globe({ globeConfig, data }: WorldProps) {
     globeConfig.shininess,
   ]);
 
-  // Build data when globe is initialized or when data changes
+  // Countries and atmosphere: built once. This is the costly part (hexagons computed
+  // from a 417 KB GeoJSON); redoing it at every new arc froze the page (D25).
+  useEffect(() => {
+    if (!globeRef.current || !isInitialized) return;
+    globeRef.current
+      .hexPolygonsData(countries.features)
+      .hexPolygonResolution(3)
+      .hexPolygonMargin(0.7)
+      .showAtmosphere(defaultProps.showAtmosphere)
+      .atmosphereColor(defaultProps.atmosphereColor)
+      .atmosphereAltitude(defaultProps.atmosphereAltitude)
+      .hexPolygonColor(() => defaultProps.polygonColor);
+  }, [
+    isInitialized,
+    defaultProps.showAtmosphere,
+    defaultProps.atmosphereColor,
+    defaultProps.atmosphereAltitude,
+    defaultProps.polygonColor,
+  ]);
+
+  // Arcs and points: rebuilt when data changes (cheap).
   useEffect(() => {
     if (!globeRef.current || !isInitialized || !data) return;
 
@@ -150,15 +171,6 @@ export function Globe({ globeConfig, data }: WorldProps) {
     );
 
     globeRef.current
-      .hexPolygonsData(countries.features)
-      .hexPolygonResolution(3)
-      .hexPolygonMargin(0.7)
-      .showAtmosphere(defaultProps.showAtmosphere)
-      .atmosphereColor(defaultProps.atmosphereColor)
-      .atmosphereAltitude(defaultProps.atmosphereAltitude)
-      .hexPolygonColor(() => defaultProps.polygonColor);
-
-    globeRef.current
       .arcsData(data)
       .arcStartLat((d) => (d as { startLat: number }).startLat * 1)
       .arcStartLng((d) => (d as { startLng: number }).startLng * 1)
@@ -191,9 +203,6 @@ export function Globe({ globeConfig, data }: WorldProps) {
     isInitialized,
     data,
     defaultProps.pointSize,
-    defaultProps.showAtmosphere,
-    defaultProps.atmosphereColor,
-    defaultProps.atmosphereAltitude,
     defaultProps.polygonColor,
     defaultProps.arcLength,
     defaultProps.arcTime,
@@ -237,7 +246,8 @@ export function WebGLRendererConfig() {
   const { gl, size } = useThree();
 
   useEffect(() => {
-    gl.setPixelRatio(window.devicePixelRatio);
+    // Capped at 2: a 4K screen would otherwise draw 4 times more pixels for no visible gain.
+    gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     gl.setSize(size.width, size.height);
     gl.setClearColor(0xffaaff, 0);
   }, [gl, size.width, size.height]);
@@ -247,10 +257,18 @@ export function WebGLRendererConfig() {
 
 export function World(props: WorldProps) {
   const { globeConfig } = props;
-  const scene = new Scene();
-  scene.fog = new Fog(0xffffff, 400, 2000);
+  // Created once: World re-renders at every step of the search.
+  const scene = useMemo(() => {
+    const created = new Scene();
+    created.fog = new Fog(0xffffff, 400, 2000);
+    return created;
+  }, []);
+  // The original component ignored initialPosition: the camera now starts above it.
+  const position = cameraPosition(globeConfig.initialPosition ?? { lat: 0, lng: 0 });
+  // Camera settings instead of a camera object: React Three Fiber then updates the
+  // aspect ratio with the container, so the parent only needs a fixed height.
   return (
-    <Canvas scene={scene} camera={new PerspectiveCamera(50, aspect, 180, 1800)}>
+    <Canvas scene={scene} camera={{ fov: 50, near: 180, far: 1800, position }}>
       <WebGLRendererConfig />
       <ambientLight color={globeConfig.ambientLight} intensity={0.6} />
       <directionalLight
@@ -272,13 +290,25 @@ export function World(props: WorldProps) {
         enableZoom={false}
         minDistance={cameraZ}
         maxDistance={cameraZ}
-        autoRotateSpeed={1}
-        autoRotate={true}
+        autoRotateSpeed={globeConfig.autoRotateSpeed ?? 1}
+        autoRotate={globeConfig.autoRotate ?? true}
         minPolarAngle={Math.PI / 3.5}
         maxPolarAngle={Math.PI - Math.PI / 3}
       />
     </Canvas>
   );
+}
+
+// Camera placed at cameraZ above a latitude and longitude, with the same convention as
+// three-globe (longitude 0 faces +z).
+function cameraPosition({ lat, lng }: { lat: number; lng: number }): [number, number, number] {
+  const phi = ((90 - lat) * Math.PI) / 180;
+  const theta = ((90 - lng) * Math.PI) / 180;
+  return [
+    cameraZ * Math.sin(phi) * Math.cos(theta),
+    cameraZ * Math.cos(phi),
+    cameraZ * Math.sin(phi) * Math.sin(theta),
+  ];
 }
 
 export function hexToRgb(hex: string) {

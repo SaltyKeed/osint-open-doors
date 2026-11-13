@@ -779,6 +779,61 @@ publics avec leurs détails, 10 publications de la FOSC.
 | **Sources sans clé d'abord (retenu)** | Rien à souscrire ni à configurer ; testable tout de suite. | Les sources avec clé gratuite (Twitch, YouTube, Disqus) attendent. |
 | Toutes les sources de l'inventaire d'un coup | Plus de résultats. | Clés à créer, conditions à relire, risques (homonymes, données sensibles) plus difficiles à contrôler. |
 
+## D25. Globe 3D retravaillé
+
+Date : 2026-11-13
+
+Statut : appliquée sur la branche `sandbox` (prototype). Complète D23.
+
+Le globe de D23 fonctionnait, mais un test dans le navigateur a montré trois
+défauts :
+
+- La page se figeait jusqu'à 1,2 seconde à chaque nouvelle étape. Le
+  composant d'Aceternity recalculait les pays en hexagones (GeoJSON de
+  417 Ko) chaque fois qu'un arc s'ajoutait. Il recréait aussi la scène et la
+  caméra à chaque rendu.
+- La console affichait `THREE.Clock: This module has been deprecated`.
+  L'avertissement vient de React Three Fiber 9, qui utilise encore `Clock`,
+  déprécié depuis three 0.183.
+- Les options `initialPosition` et `autoRotateSpeed` de `globeConfig`
+  n'étaient pas lues par le composant : le globe montrait souvent l'autre
+  côté de la Terre, sans les arcs.
+
+Corrections :
+
+| Élément | Avant | Après |
+| --- | --- | --- |
+| Pays en hexagones | Recalculés à chaque arc | Calculés une seule fois, à la création du globe |
+| Scène et caméra | Recréées à chaque rendu | Créées une fois ; la caméra suit la taille du conteneur |
+| three | 0.187 | 0.182.0, version fixée (dernière version sans l'avertissement) |
+| Position de départ | Ignorée | Caméra au-dessus de l'Atlantique nord (latitude 40, longitude -10) : la Suisse et le départ des arcs vers l'Amérique sont visibles |
+| Rotation | Vitesse fixe | Lente (0.3) : les arcs restent à l'écran pendant la recherche |
+| Taille | Cadre 6:5 calculé depuis la largeur | Hauteur fixe : 280 px sur téléphone, 400 px sur tablette, 500 px sur grand écran |
+| Hauteur des arcs | Deux valeurs (proche, loin) | Proportionnelle à la distance |
+| Densité de pixels | Celle de l'écran | Limitée à 2 |
+
+Nouveaux arcs pour l'étape des profils publics (D24), vers le siège des
+services interrogés :
+
+| Service | Lieu |
+| --- | --- |
+| Mojang (Minecraft) | Stockholm |
+| Codeberg | Berlin |
+| Valve (Steam) | Bellevue, près de Seattle |
+| Forem (DEV Community) | New York |
+
+LeakCheck n'a pas d'arc : le pays du service n'a pas été trouvé.
+
+Vérification : build de production, test dans Chromium (Playwright) sur
+grand écran et sur téléphone (390 px de large). Aucune erreur ni aucun
+avertissement dans la console. Il reste un calcul d'environ 1 seconde au
+premier affichage du globe (pays en hexagones).
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Corriger le composant existant (retenu)** | Garde le rendu choisi en D23 ; supprime les blocages. | Le fichier `ui/globe.tsx` s'écarte de la version du registre. |
+| Réinstaller avec `npx shadcn add @aceternity/globe` | Version du registre. | Installe `@react-three/fiber` en version alpha, incompatible avec drei (voir D23) ; remet les défauts. |
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |

@@ -10,7 +10,7 @@ const EXPECTED_SECONDS = 25;
 
 // Steps really run for this input (not a fixed list), with where the data goes.
 export function stepsFor(payload: Payload): GlobeStep[] {
-  const { zurich, bern, newYork, sanFrancisco, bethesda } = DESTINATIONS;
+  const { zurich, bern, newYork, sanFrancisco, bethesda, stockholm, berlin, bellevue } = DESTINATIONS;
   const steps: GlobeStep[] = [];
   if (payload.email) {
     steps.push(
@@ -34,7 +34,7 @@ export function stepsFor(payload: Payload): GlobeStep[] {
   if (payload.username || payload.email) {
     steps.push(
       { label: "environ 650 sites pour les pseudos", destinations: [] },
-      { label: "les profils de jeux, réseaux et développeurs", destinations: [] },
+      { label: "les profils de jeux, réseaux et développeurs", destinations: [stockholm, berlin, bellevue, newYork] },
     );
   }
   steps.push({ label: "les archives d'Internet", destinations: [sanFrancisco] });

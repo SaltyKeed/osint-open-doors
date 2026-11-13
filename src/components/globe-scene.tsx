@@ -35,9 +35,12 @@ const globeConfig: GlobeConfig = {
   arcLength: 0.9,
   rings: 1,
   maxRings: 3,
-  initialPosition: { lat: 46.99, lng: 6.93 },
+  // Starts between Switzerland and the Atlantic: the first arcs (Bern, Zurich, Berlin,
+  // Stockholm) and the departure towards America are visible; a slow rotation keeps
+  // the arcs on screen during the ~25 seconds of the search (D25).
+  initialPosition: { lat: 40, lng: -10 },
   autoRotate: true,
-  autoRotateSpeed: 0.6,
+  autoRotateSpeed: 0.3,
 };
 
 export default function GlobeScene({ arcs }: { arcs: GlobeArc[] }) {
