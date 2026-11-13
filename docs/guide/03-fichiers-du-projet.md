@@ -98,7 +98,8 @@ src/
 - `server/domain/` contient la logique métier sans réseau : normalisation et
   validation de la saisie, masquage des valeurs, règle anti-homonymes.
 - `server/providers/` contient une source de données par dossier. `registry.ts`
-  choisit les sources actives selon `APP_MODE`.
+  choisit les sources actives selon `APP_MODE`. Le chemin des données dans un
+  provider est décrit dans [Flux des données](04-flux-des-donnees.md).
 - `server/search-service.ts` interroge les providers en parallèle et garde les
   résultats de ceux qui répondent, même si un autre est en panne.
 - `tests/fixtures/` contient des réponses d'API inventées pour les tests.
