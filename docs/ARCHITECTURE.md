@@ -75,7 +75,8 @@ src/
 │   │   └── dehashed/             ← même structure
 │   │
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
-│   │   ├── types.ts              ← Exposure, DataCategory, SearchQuery…
+│   │   ├── types.ts              ← Exposure, DataCategory, SearchQuery, QueryKind…
+│   │   ├── search-query.ts       ← normalisation et schéma zod de la saisie
 │   │   ├── matching.ts           ← règle anti-homonymes
 │   │   ├── masking.ts            ← masquage des valeurs
 │   │   ├── severity.ts           ← score d'exposition
@@ -94,11 +95,13 @@ Chaque test est placé à côté du fichier qu'il teste et porte le même nom av
 `.test.ts` (`env.ts` et `env.test.ts`). Vitest est configuré dans
 `vitest.config.mts`.
 
-L'interface commune à tous les providers est la suivante :
+L'interface commune à tous les providers est la suivante. `QueryKind` est
+défini dans `domain/types.ts`, car `queryKinds()` du domaine en a besoin et le
+domaine ne dépend pas des providers.
 
 ```ts
 // src/server/providers/types.ts
-export type QueryKind = "email" | "phone" | "name";
+import type { Exposure, QueryKind, SearchQuery } from "@/server/domain/types";
 
 export interface BreachProvider {
   id: string;
