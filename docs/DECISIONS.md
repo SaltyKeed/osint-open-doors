@@ -345,6 +345,19 @@ Autres choix :
   transmet à ses processus internes, qui la refusent.
 - Vitest lit les chemins `@/` avec son option `resolve.tsconfigPaths`, sans
   plugin supplémentaire.
+- `next.config.ts` charge le fichier d'environnement seulement pour `next
+  dev`, jamais pendant `next build` : les clés ne doivent pas se retrouver dans
+  le build ni dans l'image Docker, et `APP_MODE` reste un choix fait au
+  lancement (D10). Un `ENV_FILE` qui pointe vers un fichier absent arrête le
+  démarrage avec un message clair.
+- Les options `cacheComponents` et `partialPrefetching`, activées par défaut
+  par `create-next-app`, sont retirées : l'application traite des données
+  personnelles, et aucune réponse ne doit être mise en cache ni partagée entre
+  deux visiteurs.
+- Tailwind CSS 4 est compilé par son module pour Turbopack, généré par
+  `create-next-app`. Le projet se construit uniquement avec Turbopack.
+- Le paquet `shadcn` est une dépendance de développement : seule sa feuille de
+  style est utilisée, au moment du build.
 - Framer Motion n'est pas encore installé : il sera ajouté avec la première
   animation.
 

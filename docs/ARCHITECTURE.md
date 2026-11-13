@@ -206,7 +206,11 @@ Le choix de Docker compose en local est expliqué dans
   `env_file: ${ENV_FILE:-.env.surface}`.
 - En développement (`npm run dev`), `next.config.ts` charge le fichier
   désigné par `ENV_FILE` (par défaut `.env.surface`) avec `process.loadEnvFile`,
-  car Next.js ne lit lui-même que `.env` et `.env.local`.
+  car Next.js ne lit lui-même que `.env` et `.env.local`. Ce fichier n'est
+  jamais lu pendant `next build` : aucune clé n'entre dans le build ni dans
+  l'image.
+- Aucune réponse n'est mise en cache par Next.js (`cacheComponents` désactivé,
+  appels HTTP des providers sans cache).
 - Les clés API sont dans `.env.surface` et `.env.deep`, non versionnés. Le
   fichier `.env.example` est versionné et liste toutes les variables attendues,
   sans valeur.
