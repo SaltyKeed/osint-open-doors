@@ -87,6 +87,7 @@ toutes.
 | Messages de commit | `chore(deps):`, `chore(deps-dev):`, `ci:` | Conventional Commits, comme les autres commits. |
 | Version majeure ignorée | `@types/node` | Les types doivent suivre la version de Node.js du projet (D16), pas la dernière. |
 | Version majeure ignorée | `eslint` | `eslint-config-next` 16 utilise des plugins (react, jsx-a11y, import) qui n'acceptent que ESLint 9. |
+| Version majeure ignorée | `typescript` | `typescript` 7 casse le lint, pour la petite ampleur de ce projet deux migrations de TS 6 puis à 7 ne sont pas nécessaires, TS 7 augmente la vitesse de compilation, ce qui ne sera pas un problème dans ce projet |
 
 Pour une action, Dependabot remplace le SHA épinglé et met à jour le
 commentaire de version (`# v7.0.1`).
