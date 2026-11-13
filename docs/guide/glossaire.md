@@ -111,6 +111,13 @@ Demande d'intégrer le travail d'une branche dans `main`. Elle permet de relire
 le code et de lancer la CI avant la fusion. Voir
 [DECISIONS.md, D14](../DECISIONS.md#d14-protection-de-main-et-relecture).
 
+## Registry
+
+Fichier `src/server/providers/registry.ts` qui liste les providers actifs. En
+mode `surface`, seuls les providers gratuits sont utilisés ; en mode `deep`,
+les providers payants s'ajoutent. Voir
+[DECISIONS.md, D10](../DECISIONS.md#d10-modes-surface-et-deep).
+
 ## Route handler
 
 Fichier `route.ts` de l'App Router qui répond à une requête HTTP au lieu
