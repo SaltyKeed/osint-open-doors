@@ -38,6 +38,9 @@ type FindingBase = {
   providerId: string;
   // Visitor data that links this finding to the visitor (anti-homonym rule).
   matchedOn: QueryKind;
+  // Other providers that reported the same thing (merged by merge.ts). Used to see
+  // which providers bring nothing new (D26).
+  alsoFoundBy?: string[];
 };
 
 // The visitor's data appears in a known data breach (metadata only).

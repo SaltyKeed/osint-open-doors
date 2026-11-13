@@ -2,6 +2,7 @@ import { z } from "zod";
 import { buildActionPlan } from "@/server/domain/actions";
 import { maskEmail, maskName, maskPhone } from "@/server/domain/masking";
 import { mergeDuplicates } from "@/server/domain/merge";
+import { providerStats } from "@/server/domain/stats";
 import { normalizePhone } from "@/server/domain/phone";
 import { getEnv } from "@/server/env";
 import { getActiveProviders } from "@/server/providers/registry";
@@ -87,6 +88,10 @@ export async function POST(request: Request) {
   // The same breach or account reported by two sources is shown once (D24).
   const findings = mergeDuplicates(result.findings);
   const { queriedProviders, failedProviders } = result;
+  // The second step always checks the web archive, and Keybase when there is a username
+  // or an email to pivot from: listed so that they show up with 0 results too (D26).
+  const secondStep = ["wayback", ...(query.username || query.email ? ["keybase"] : [])];
+  const stats = providerStats(findings, [...queriedProviders, ...secondStep], failedProviders);
 
   return Response.json(
     {
@@ -101,6 +106,7 @@ export async function POST(request: Request) {
       actions: buildActionPlan(findings),
       queriedProviders,
       failedProviders,
+      providerStats: stats,
     },
     { headers: { "Cache-Control": "no-store" } },
   );

@@ -834,6 +834,40 @@ premier affichage du globe (pays en hexagones).
 | **Corriger le composant existant (retenu)** | Garde le rendu choisi en D23 ; supprime les blocages. | Le fichier `ui/globe.tsx` s'écarte de la version du registre. |
 | Réinstaller avec `npx shadcn add @aceternity/globe` | Version du registre. | Installe `@react-three/fiber` en version alpha, incompatible avec drei (voir D23) ; remet les défauts. |
 
+## D26. Source affichée pour chaque résultat
+
+Date : 2026-11-13
+
+Statut : appliquée sur la branche `sandbox` (prototype).
+
+Avec quinze sources, il faut savoir lesquelles servent vraiment, pour retirer
+celles qui ne trouvent rien ou seulement ce qu'une autre a déjà trouvé.
+
+- Chaque résultat affiche sa source (« Source : XposedOrNot »). Quand
+  plusieurs sources ont trouvé la même chose, le résultat est affiché une
+  fois et indique les autres (« aussi trouvé par LeakCheck »). Le champ
+  `alsoFoundBy` est rempli par `domain/merge.ts`.
+- Sous les onglets, un tableau replié « Détail par source » donne pour chaque
+  source : les résultats affichés sous son nom, ceux qu'elle a aussi trouvés
+  alors qu'une autre source les affiche déjà, et son état (a trouvé, rien
+  trouvé, n'a pas répondu). Le calcul est dans `domain/stats.ts` et la route
+  l'envoie dans `providerStats`.
+- Les archives du web (Wayback Machine) complètent des pages trouvées par
+  d'autres sources : elles sont comptées à part, une fois par page archivée.
+- La source est un identifiant technique, pas une donnée personnelle :
+  l'invariant des logs n'est pas concerné.
+
+Une source qui a « 0 » dans la colonne des résultats affichés sur plusieurs
+recherches réelles est une candidate au retrait. Un seul test ne suffit pas :
+avec des données fictives, plusieurs sources (Gravatar, PGP, RDAP, ORCID,
+Wikidata) ne trouvent rien, alors qu'elles peuvent trouver quelque chose pour
+un vrai visiteur.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Source affichée à l'écran, tableau replié (retenu)** | Visible pendant les tests sans outil ; le visiteur voit aussi d'où vient chaque information. | Un peu plus de texte sous chaque résultat. |
+| Statistiques dans les logs du serveur | Rien à l'écran. | Il faut lire les logs ; un log par recherche donnerait aussi un historique des recherches, contraire à l'esprit « zéro stockage ». |
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |

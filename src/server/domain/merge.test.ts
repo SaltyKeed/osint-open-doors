@@ -40,7 +40,7 @@ describe("mergeDuplicates", () => {
       breach("leakcheck", "StockX.com"),
     ]);
     expect(merged).toHaveLength(2);
-    expect(merged[0]).toMatchObject({ providerId: "xposedornot", categories: ["email", "password"] });
+    expect(merged[0]).toMatchObject({ providerId: "xposedornot", categories: ["email", "password"], alsoFoundBy: ["leakcheck"] });
     expect(merged[1]).toMatchObject({ source: "StockX.com" });
   });
 
@@ -54,7 +54,9 @@ describe("mergeDuplicates", () => {
       profile("https://www.chess.com/member/jdupont"),
       profile("https://chess.com/member/JDupont", { providerId: "profiles", details: ["Compte créé en 2019"] }),
     ]);
-    expect(merged).toEqual([expect.objectContaining({ details: ["Compte créé en 2019"] })]);
+    expect(merged).toEqual([
+      expect.objectContaining({ providerId: "profiles", details: ["Compte créé en 2019"], alsoFoundBy: ["whatsmyname"] }),
+    ]);
   });
 
   it("does not touch the other findings", () => {

@@ -3,7 +3,7 @@
 import { ArchiveX, BadgeCheck, ChevronDown, CircleHelp, KeyRound, UserCheck } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
-import { CATEGORY_LABELS, PROVIDER_LABELS, plural } from "@/components/labels";
+import { CATEGORY_LABELS, PROVIDER_LABELS, plural, sourceName } from "@/components/labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Type-only imports: erased at build time, no server code reaches the browser.
 import type { Action } from "@/server/domain/actions";
+import type { ProviderStat } from "@/server/domain/stats";
 import type {
   AccountFinding,
   BreachFinding,
@@ -29,6 +30,7 @@ export type SearchResponse = {
   actions: Action[];
   queriedProviders: string[];
   failedProviders: string[];
+  providerStats: ProviderStat[];
 };
 
 const VISIBLE = 6;
@@ -55,6 +57,16 @@ function Categories({ categories }: { categories: DataCategory[] }) {
       ))}
     </ul>
   );
+}
+
+// Which provider found this result, and which others found it too (D26).
+function sourceText(item: Pick<Finding, "providerId" | "alsoFoundBy">): string {
+  const also = item.alsoFoundBy ?? [];
+  return `Source : ${sourceName(item.providerId)}${also.length > 0 ? ` (aussi trouvé par ${also.map(sourceName).join(", ")})` : ""}`;
+}
+
+function SourceLine({ item }: { item: Pick<Finding, "providerId" | "alsoFoundBy"> }) {
+  return <p className="text-sm text-muted-foreground">{sourceText(item)}</p>;
 }
 
 // Shows the first items, the others behind "Voir les N autres" (opens with a height animation).
@@ -134,8 +146,9 @@ function BreachCard({ item }: { item: BreachFinding }) {
           {[item.year, item.records && plural(item.records, "compte")].filter(Boolean).join(", ")}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-2">
         <Categories categories={item.categories} />
+        <SourceLine item={item} />
       </CardContent>
     </Card>
   );
@@ -168,6 +181,7 @@ function BreachTab({ items }: { items: BreachFinding[] }) {
                 <span className="text-sm text-muted-foreground">
                   {item.categories.map((c) => (c === "password" ? "Mot de passe exposé" : CATEGORY_LABELS[c])).join(", ")}
                 </span>
+                <span className="text-sm text-muted-foreground">{sourceText(item)}</span>
               </li>
             ))}
           </ul>
@@ -211,13 +225,15 @@ function WebPageItem({ item }: { item: WebFinding }) {
         <span className="font-bold text-foreground">{item.site}</span> {item.url}
       </p>
       {item.snippet && <p className="text-base">{item.snippet}</p>}
+      <SourceLine item={item} />
       {item.archive && (
         <p className="text-sm text-muted-foreground">
           Archivée{" "}
           {item.archive.firstYear === item.archive.lastYear
             ? `en ${item.archive.firstYear}`
             : `de ${item.archive.firstYear} à ${item.archive.lastYear}`}
-          {item.live === "gone" ? ", toujours lisible dans l'archive" : ""} : {item.archive.snapshotUrl}
+          {item.live === "gone" ? ", toujours lisible dans l'archive" : ""} : {item.archive.snapshotUrl}. Source :{" "}
+          {sourceName("wayback")}
         </p>
       )}
     </article>
@@ -250,6 +266,7 @@ function DirectoryTab({ items }: { items: DirectoryFinding[] }) {
             <CardDescription className="text-base">
               Ton inscription rend publics : {item.categories.map((c) => `${CATEGORY_LABELS[c]} : présente`).join(", ")}.
             </CardDescription>
+            <SourceLine item={item} />
             <CardAction>
               {item.noPromo ? (
                 <Badge variant="verified" size="lg">
@@ -278,6 +295,7 @@ function AccountTab({ items }: { items: AccountFinding[] }) {
             <CardHeader>
               <CardTitle>{item.service}</CardTitle>
               <CardDescription className="text-base">{item.summary}</CardDescription>
+              <SourceLine item={item} />
             </CardHeader>
             {item.categories.length > 0 && (
               <CardContent>
@@ -328,6 +346,7 @@ function ProfileTab({ items }: { items: ProfileFinding[] }) {
                     </span>
                     {item.details && item.details.length > 0 && <span>{item.details.join(" · ")}</span>}
                     <span className="truncate text-sm text-muted-foreground">{item.url}</span>
+                    <span className="text-sm text-muted-foreground">{sourceText(item)}</span>
                   </p>
                 )}
               />
@@ -351,11 +370,56 @@ function NameTab({ pages, counts }: { pages: WebFinding[]; counts: CountFinding[
         // search.ch name results stay a total (condition of our API key).
         <p key={count.providerId} className="flex items-baseline gap-3 text-lg">
           <span className="bg-highlight px-2 font-heading text-4xl font-bold">{count.count.toLocaleString("fr-CH")}</span>
-          {count.label}, sans détail. Source : {count.source}.
+          {count.label}, sans détail. {sourceText(count)}.
         </p>
       ))}
       {sorted.length > 0 && <WebList items={sorted} label="page" />}
     </div>
+  );
+}
+
+// What each provider brought to this search (D26): helps spot the useless ones.
+const STATUS_LABELS: Record<ProviderStat["status"], string> = {
+  ok: "A trouvé quelque chose",
+  empty: "Rien trouvé",
+  failed: "N'a pas répondu",
+};
+
+function SourcesPanel({ stats }: { stats: ProviderStat[] }) {
+  const useless = stats.filter((s) => s.shown === 0).length;
+  return (
+    <details className="rounded-xl border bg-card p-4">
+      <summary className="cursor-pointer text-lg font-bold">
+        Détail par source ({plural(stats.length, "source")}
+        {useless > 0 ? `, dont ${useless} sans résultat propre` : ""})
+      </summary>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-left text-base">
+          <thead className="text-sm text-muted-foreground">
+            <tr className="border-b">
+              <th className="py-2 pr-4 font-bold">Source</th>
+              <th className="py-2 pr-4 font-bold">Résultats affichés</th>
+              <th className="py-2 pr-4 font-bold">Aussi trouvés par une autre source</th>
+              <th className="py-2 font-bold">État</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stats.map((stat) => (
+              <tr key={stat.providerId} className={stat.shown === 0 ? "border-b text-muted-foreground" : "border-b"}>
+                <td className="py-2 pr-4 font-bold">{sourceName(stat.providerId)}</td>
+                <td className="py-2 pr-4">{stat.shown.toLocaleString("fr-CH")}</td>
+                <td className="py-2 pr-4">{stat.duplicates.toLocaleString("fr-CH")}</td>
+                <td className="py-2">{STATUS_LABELS[stat.status]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Un résultat trouvé par deux sources est affiché une seule fois, sous la première ; l&apos;autre est comptée dans
+          « aussi trouvés ».
+        </p>
+      </div>
+    </details>
   );
 }
 
@@ -494,6 +558,7 @@ export function ResultsScreen({ result, onReset }: { result: SearchResponse; onR
             ))}
           </Tabs>
         )}
+        {result.providerStats.length > 0 && <SourcesPanel stats={result.providerStats} />}
       </div>
 
       <aside className="flex flex-col gap-4 lg:sticky lg:top-8 lg:col-span-4 lg:self-start" aria-label="Plan d'action">

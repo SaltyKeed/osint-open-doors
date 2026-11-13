@@ -95,7 +95,8 @@ src/
 │   │   ├── phone.ts              ← normalisation et formats du téléphone
 │   │   ├── handles.ts            ← pseudo lu dans l'adresse d'un profil
 │   │   ├── pivots.ts             ← pseudos à utiliser pour le rebond
-│   │   ├── merge.ts              ← une fuite ou un compte signalé deux fois n'apparaît qu'une fois
+│   │   ├── merge.ts              ← une fuite ou un compte signalé deux fois n'apparaît qu'une fois (alsoFoundBy)
+│   │   ├── stats.ts              ← ce que chaque source a apporté à la recherche (D26)
 │   │   └── actions.ts            ← résultats → plan d'action
 │   │
 │   ├── env.ts                    ← variables d'environnement validées par zod (APP_MODE, clés)
