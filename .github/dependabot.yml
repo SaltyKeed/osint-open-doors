@@ -28,6 +28,10 @@ updates:
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
 
+      # typescript-eslint used by eslint-config-next doesn't accept TypeScript 7
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: "github-actions"
     # "/" makes Dependabot read .github/workflows/; it updates the pinned SHA and the version comment.
     directory: "/"
