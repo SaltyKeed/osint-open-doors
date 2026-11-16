@@ -23,66 +23,64 @@ viennent pas de la page officielle et sont à vérifier avant l'achat.
 
 ## 1. Fuites de données
 
-Recensement du 2026-11-16 de tous les services qui donnent accès aux bases
-volées, aux fuites et aux journaux d'infostealers. Ils sont rangés en quatre
-niveaux, selon ce qu'ils renvoient. Le cadre est celui de D12 : on interroge
-des services qui indexent les fuites, on ne télécharge jamais de fuite.
+Toutes les sources accessibles de fuites, de bases volées et de journaux
+d'infostealers ont été recensées le 2026-11-16 (D21), puis comparées pour
+retirer les doublons (D22). Le cadre est celui de D12 : on interroge des
+services qui indexent les fuites, on ne télécharge jamais de fuite.
 
-### 1.1 Fiches complètes
+### 1.1 Sources retenues
 
-Ces services renvoient le contenu de la fiche de la personne dans une fuite
-(H2) : nom, adresse, téléphone, date de naissance, IP, mot de passe. Les mots de
-passe sont gardés seulement pour le champ H3, affiché derrière le bouton « œil »
-(D19).
+| Service | Appel | Entrées | Renvoie | Remplit | Accès et prix | Statut |
+| --- | --- | --- | --- | --- | --- | --- |
+| Snusbase | `POST https://api.snusbase.com/data/search`, en-tête `Auth` ; aussi `tools/combo-lookup` et `tools/hash-lookup` | `email`, `username`, `lastip`, `password`, `hash`, `name`, `_domain`, avec jokers `%` et `?` | Fiches groupées par base, avec les champs de la table (nom, adresse, téléphone, date de naissance, IP, mot de passe en clair ou hash) | A1 A2 A3 B1 B2 B3 H1 H2 H3 H4 | API incluse pour les membres payants, 2048 recherches par 12 heures ; prix non publié (dès 6.49 USD par semaine selon une source tierce) | Retenu |
+| LeakCheck Pro | `GET https://leakcheck.io/api/v2/query/{valeur}?type=…`, en-tête `X-API-Key` | `email`, `username`, `phone`, `keyword`, `domain`, `hash` | Par fiche : `source` (nom, date), `email`, `username`, `first_name`, `last_name`, `dob`, `address`, `zip`, `phone`, `password`, liste `fields` | A1 A2 B1 B2 B3 H1 H2 H3 | Monthly : 9.99 USD par mois, 200 recherches par jour, 3 requêtes par seconde | Retenu |
+| Hudson Rock | `GET https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-email?email=…` et `search-by-username?username=…` | Email, pseudo | Ordinateur infecté : date, système, nombre d'identifiants volés | H5 | Gratuit | Prototype |
+| LeakRadar Starter | API REST | Email, pseudo, domaine | Identifiants volés par un infostealer : identifiant, mot de passe, adresse du site | H3 H5 F2 | 25 EUR par mois (299.99 par an), 10 000 révélations par jour | Retenu |
+| Catalogue HIBP | `GET https://haveibeenpwned.com/api/v3/breaches` | aucune | Titre, date, description, types de données et logo de 1052 fuites | H1 (présentation d'une fuite trouvée par Snusbase ou LeakCheck) | Gratuit | Prototype |
+| ransomware.live | `GET https://api.ransomware.live/v2/searchvictims/{organisation}` | Domaine de l'email ou employeur | Organisation revendiquée par un rançongiciel | H1 (fuite de l'employeur) | Gratuit | Prototype |
 
-| Service | Appel | Entrées | Renvoie | Accès et prix | Statut |
+Snusbase et LeakCheck renvoient des mots de passe en clair. L'adaptateur les
+garde seulement pour le champ H3, affiché derrière le bouton « œil » (D19).
+
+Le catalogue public de Snusbase (`GET https://api.snusbase.com/data/stats`,
+sans clé) comptait le 2026-11-16 2251 bases et 18,5 milliards de lignes : 2018
+bases avec l'email, 1544 avec le pseudo, 790 avec le nom, 399 avec le
+téléphone, 391 avec le mot de passe en clair, 291 avec la date de naissance et
+223 avec l'adresse.
+
+### 1.2 Comparaison et doublons
+
+On ne peut pas mesurer de l'extérieur quelles fuites deux services ont en
+commun. La comparaison porte sur ce qui est vérifiable : ce qu'on peut leur
+envoyer, ce qu'ils renvoient, ce qu'ils ont d'unique et leur prix. Un service
+dont tout l'apport est déjà couvert par un service retenu est un doublon.
+
+| Service | Recherche par | Renvoie | Apport unique | Prix | Verdict |
 | --- | --- | --- | --- | --- | --- |
-| LeakCheck Pro | `GET https://leakcheck.io/api/v2/query/{valeur}?type=…`, en-tête `X-API-Key` | `email`, `username`, `phone`, `domain`, `keyword`, `hash` | Par fiche : `source` (nom, date), `email`, `username`, `first_name`, `last_name`, `dob`, `address`, `zip`, `phone`, `password`, liste `fields` | Monthly : 9.99 USD par mois, 200 recherches par jour, 3 requêtes par seconde | Retenu |
-| Snusbase | `POST https://api.snusbase.com/data/search`, en-tête `Auth` ; aussi `tools/hash-lookup` et `tools/combo-lookup` | `email`, `username`, `lastip`, `password`, `hash`, `name`, `_domain`, avec jokers `%` et `?` | Fiches groupées par base : champs de la table (`username`, `email`, `lastip`, `hash`, `salt`, nom, adresse…) ; mot de passe en clair quand la base le contient | API incluse pour les membres payants : 2048 recherches par 12 heures ; prix non publié | Retenu |
-| DeHashed | `POST https://api.dehashed.com/v2/search`, en-tête `Dehashed-Api-Key` | Email, pseudo, nom, téléphone, adresse, IP, domaine, VIN, hash | Email, pseudo, mot de passe, hash, IP, téléphone, nom, adresse, date de naissance, entreprise, nom de la base | API avec l'offre Professional, 179.99 USD par mois, plus des crédits (source tierce) | Retenu |
-| OathNet | `GET /service/v2/breach/search?q=…` et `/service/v2/stealer/search`, en-tête `x-api-key` | Email, pseudo, IP, identifiants Discord, Steam, Xbox, Roblox | Fiches de fuites (`email`, `password`, `dbname`), journaux d'infostealers, comptes de jeux liés | Prix non publié (page protégée) | Retenu |
-| HackCheck | API REST | Gold : email, pseudo, nom complet, hash, IP. Diamond : en plus téléphone, mot de passe, domaine | Fiches de fuites | Gold : 14.99 USD par mois, 3 requêtes par seconde. Diamond : 39.49 USD par mois, 10 requêtes par seconde. 15 % de réduction avec une adresse scolaire | Retenu |
-| Leak-Lookup | API `search`, `hash`, `stats` | Email, pseudo, IP, téléphone, domaine | Clé publique gratuite : noms des fuites seulement. Clé privée : fiches complètes | Crédits à la recherche ; prix sur la page des offres | Retenu |
-| BreachDirectory | API sur RapidAPI ou sur le site | Email, pseudo, téléphone, IP | Sources, mots de passe partiellement masqués, hash | Recherche web gratuite ; API payante (19.99 à 49.99 EUR par mois selon les sources) | Retenu |
-| ProxyNova COMB | Requête sans clé sur la compilation COMB | Email, pseudo, domaine | Paires identifiant et mot de passe de la compilation COMB (3,2 milliards de lignes, 2021) | Gratuit ; état actuel non confirmé | Retenu |
+| Snusbase | Email, pseudo, nom, IP, mot de passe, hash, domaine, jokers | Fiche complète, mot de passe en clair | Recherche par nom et IP, jokers, plus gros catalogue vérifiable | Non publié | Retenu |
+| LeakCheck Pro | Email, pseudo, téléphone, mot-clé, domaine | Fiche structurée | Recherche par téléphone, absente de Snusbase | 9.99 USD par mois | Retenu |
+| Leak-Lookup | Email, pseudo, IP, téléphone, domaine | Fiche complète | Annonce 4766 fuites, mais la façon de compter n'est pas comparable | Crédits | Doublon |
+| DeHashed | Email, pseudo, nom, téléphone, adresse, IP, VIN | Fiche, évite les mots de passe en clair | Recherche par adresse et VIN, inutile : on ne saisit jamais d'adresse | Environ 180 USD par mois | Doublon |
+| HackCheck | Email, pseudo, nom, IP, téléphone, hash, domaine | Fiche | Aucun | 39.49 USD par mois | Doublon |
+| BreachDirectory | Email, pseudo, téléphone, IP | Mots de passe masqués | Moins de contenu que les services retenus | 20 à 50 EUR par mois | Doublon |
+| ProxyNova COMB | Email, pseudo | Paires email et mot de passe | Compilation COMB, déjà incluse dans Snusbase et LeakCheck | Gratuit | Doublon |
+| OathNet | Email, pseudo, IP, identifiants de jeux | Fiches et infostealers | Comptes de jeux liés (Discord, Xbox, Roblox), apport marginal | Non publié | Doublon |
+| Hudson Rock | Email, pseudo | Résumé de l'infection | Date de l'infection, gratuit | Gratuit | Retenu |
+| LeakRadar Starter | Email, pseudo, domaine | Identifiants volés avec le site | Contenu des journaux d'infostealers | 25 EUR par mois | Retenu |
+| LeakRadar Enterprise | Comme Starter | En plus combolists et dark web | Combolists déjà dans Snusbase (`combo-lookup`) | 58.33 EUR par mois | Doublon de Starter et Snusbase |
+| Revealer Pro | Email, pseudo | Fuites, infostealers (50 par jour), comptes | Son « énumération de comptes » est une technique exclue (`CADRAGE.md`, section 6.4) | 79.99 USD par mois | Doublon |
+| Have I Been Pwned Core 1 | Email | Liste des fuites | Snusbase et LeakCheck donnent déjà la liste des fuites | 4.39 USD par mois | Doublon |
+| XposedOrNot, LeakCheck public, IPQS | Email | Liste des fuites | Idem ; gratuits, mais du code à maintenir pour rien | Gratuit | Doublon |
+| Catalogue XposedOrNot | aucune | Description de 801 fuites | Moins complet que le catalogue HIBP (1052) | Gratuit | Doublon |
 
-### 1.2 Ordinateurs infectés (infostealers)
-
-Un infostealer est un logiciel espion qui vole les mots de passe enregistrés
-dans le navigateur. Ces services disent si un ordinateur de la personne a été
-infecté, quand, et sur quels sites ses identifiants ont été volés (H5).
-
-| Service | Appel | Entrées | Renvoie | Accès et prix | Statut |
-| --- | --- | --- | --- | --- | --- |
-| Hudson Rock | `GET https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-email?email=…` et `search-by-username?username=…` | Email, pseudo | Date de l'infection, système, nombre d'identifiants volés, sites touchés (partiel) | Gratuit | Prototype |
-| XposedOrNot | `GET https://api.xposedornot.com/v1/check-email/{email}`, puis `GET https://api.xposedornot.com/v1/breaches?breach_id=…` | Email | Sources de type « Stealer Logs » parmi les fuites | Gratuit, sans clé | Nouveau |
-| LeakRadar | API REST | Email, pseudo, domaine | Identifiant, mot de passe et adresse du site volé ; combolists dès l'offre Enterprise | Starter : 25 EUR par mois, infostealers seulement, 10 000 révélations par jour. Enterprise : 58.33 EUR par mois, avec les combolists | Retenu |
-| Revealer | API REST | Email, pseudo | Fuites, journaux d'infostealers (50 par jour), comptes trouvés | Pro : 79.99 USD par mois, API 500 requêtes par semaine | Retenu |
-
-### 1.3 Exposition sans contenu
-
-Ces sources disent dans quelles fuites la personne apparaît et quelles données
-ont fui, sans le contenu de la fiche (H1). Elles servent à présenter chaque
-fuite et à recouper les services de la section 1.1.
-
-| Service | Appel | Entrée | Renvoie | Accès et prix | Statut |
-| --- | --- | --- | --- | --- | --- |
-| XposedOrNot | `GET https://api.xposedornot.com/v1/breach-analytics?email=…` | Email | Fuites, dates, types de données exposées, risque du mot de passe | Gratuit | Prototype |
-| Have I Been Pwned | `GET https://haveibeenpwned.com/api/v3/breachedaccount/{email}?truncateResponse=false`, en-tête `hibp-api-key` | Email | Fuites avec titre, date, description, types de données, logo | Core 1 : 4.39 USD par mois, 10 requêtes par minute | Retenu |
-| LeakCheck public | `GET https://leakcheck.io/api/public?check=…` | Email, pseudo | Nom et date des fuites, types de champs présents | Gratuit, sans clé, 1 requête par seconde | Prototype |
-| IPQS Dark Web Leak | API IPQS, clé gratuite | Email, pseudo, mot de passe | Présence dans des fuites, première apparition | 1000 crédits gratuits par mois (à confirmer pour cette API) | Retenu |
-| Catalogue HIBP | `GET https://haveibeenpwned.com/api/v3/breaches` | aucune | Description de toutes les fuites connues | Gratuit | Prototype |
-| Catalogue XposedOrNot | `GET https://api.xposedornot.com/v1/breaches` | aucune | Fuites connues, type (fuite ou infostealer), données exposées | Gratuit | Nouveau |
-| ransomware.live | `GET https://api.ransomware.live/v2/searchvictims/{organisation}` | Domaine de l'email ou employeur | Organisation revendiquée par un rançongiciel | Gratuit | Prototype |
-
-### 1.4 Écartés
+### 1.3 Écartés pour une autre raison
 
 | Service ou méthode | Raison |
 | --- | --- |
-| Intelligence X | L'offre qui donne les fiches (Identity Portal) coûte 10 000 EUR par an ; l'offre gratuite renvoie des fichiers bruts, pas des fiches. |
+| Intelligence X | L'offre qui donne les fiches (Identity Portal) coûte 10 000 EUR par an ; l'offre gratuite renvoie des fichiers bruts. |
 | HEROIC, SpyCloud, Constella, Flare, Recorded Future, Webz.io | Contrat d'entreprise sur devis, réservé à la surveillance d'organisations. |
 | Have I Been Pwned Pro (infostealers) | 379 USD par mois. |
-| IntelBase | Prix et API non publiés ; à revoir s'ils le deviennent. |
+| IntelBase | Prix et API non publiés. |
 | Bots Telegram (LeakOSINT et semblables) | Exploitants inconnus, souvent liés à la cybercriminalité ou situés dans des pays sous sanctions ; les données du volontaire leur seraient envoyées et le paiement financerait ces acteurs. |
 | Téléchargement de fuites (forums, torrents, canaux) | Stocke les données de millions de personnes sur le poste : contraire à l'invariant « zéro stockage » et à D12. |
 | WeLeakInfo, GhostProject, LeakPeek, Scylla, PwnDB | Fermés ou saisis par la justice. |
@@ -218,15 +216,14 @@ Les identifiants des proches ne sont jamais renvoyés dans la boucle d'enquête.
 
 ## 10. Choix faits
 
-Choix d'Enzo du 2026-11-16 (D20 et D21).
+Choix d'Enzo du 2026-11-16 (D20, D21 et D22).
 
 | Choix | Décision | Raison |
 | --- | --- | --- |
-| Fiches complètes | LeakCheck, Snusbase, DeHashed (D20), puis HackCheck Diamond, OathNet, Leak-Lookup, BreachDirectory, ProxyNova COMB (D21) | Couverture maximale : chaque base contient des fuites que les autres n'ont pas. DeHashed et HackCheck cherchent aussi par nom. |
-| Infostealers | Hudson Rock, XposedOrNot (gratuits), LeakRadar Enterprise, Revealer Pro (D21) | Identifiants volés sur l'ordinateur de la personne, avec le site concerné. |
-| Exposition sans contenu | XposedOrNot, Have I Been Pwned Core 1, LeakCheck public, IPQS, catalogues HIBP et XposedOrNot | Présenter chaque fuite et recouper les fiches. |
+| Fiches de fuites | Snusbase et LeakCheck Pro (D22) | Snusbase couvre nom, IP, mot de passe et jokers ; LeakCheck ajoute le téléphone. Les autres services sont des doublons (section 1.2). |
+| Infostealers | Hudson Rock (gratuit) et LeakRadar Starter (D22) | Résumé de l'infection, puis identifiants volés avec le site concerné. |
+| Présentation des fuites | Catalogue HIBP | Description et logo de chaque fuite trouvée. |
 | Moteur de recherche | Tavily et Brave | Deux index différents : Brave trouve des pages que Tavily rate. |
-| Have I Been Pwned | Core 1 | Descriptions fiables des fuites par email. |
 | Géolocalisation d'IP | ip-api.com | Donne la ville approximative, gratuit pour un projet scolaire. |
 | Intelligence X, Google Custom Search | Écartés | Hors budget ; API fermée le 2027-01-01. Autres sources écartées : section 1.4. |
 

@@ -513,6 +513,30 @@ SpyCloud, Constella, Flare, Recorded Future, Webz.io), Have I Been Pwned Pro,
 IntelBase, les bots Telegram, le téléchargement de fuites, et les services
 fermés. Raisons dans `SOURCES.md`, section 1.4.
 
+## D22. Retrait des doublons parmi les sources de fuites
+
+Date : 2026-11-16
+
+Deux sources qui renvoient la même chose ne servent à rien et font monter le
+budget. Les sources de D21 ont été comparées sur ce qu'on peut vérifier : les
+entrées acceptées, le contenu renvoyé, l'apport unique et le prix. On ne peut
+pas mesurer de l'extérieur les fuites que deux services ont en commun.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Garder toutes les sources de D21 | Couverture maximale. | Environ 530 USD ; plusieurs services font exactement la même recherche. |
+| **Garder une source par apport unique (retenu)** | Environ 162 USD ; moins d'adaptateurs à écrire. | Une fuite présente seulement dans une base retirée n'est pas trouvée. |
+
+Retenus : Snusbase (nom, IP, jokers, plus gros catalogue vérifiable), LeakCheck
+Pro (téléphone), Hudson Rock (résumé des infostealers, gratuit), LeakRadar
+Starter (contenu des infostealers), catalogue HIBP (présentation des fuites),
+ransomware.live (employeur).
+
+Retirés comme doublons : DeHashed, HackCheck, Leak-Lookup, BreachDirectory,
+ProxyNova COMB, OathNet, LeakRadar Enterprise, Revealer, Have I Been Pwned
+Core 1, XposedOrNot, LeakCheck public, IPQS et le catalogue XposedOrNot.
+Comparaison détaillée dans `SOURCES.md`, section 1.2.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -536,4 +560,4 @@ fermés. Raisons dans `SOURCES.md`, section 1.4.
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
 | But du projet | Outil d'enquête automatique sur un volontaire consentant (D19, `CADRAGE.md`) | Outil de sensibilisation aux fuites |
 | Sources | Catalogue `SOURCES.md` ; moteurs Tavily et Brave (D20) | Tavily seul |
-| Fuites | Toutes les sources légales accessibles : LeakCheck, Snusbase, DeHashed, HackCheck, OathNet, Leak-Lookup, BreachDirectory, LeakRadar, Revealer et les gratuites (D20, D21) | LeakCheck seul |
+| Fuites | Snusbase, LeakCheck Pro, Hudson Rock, LeakRadar Starter, catalogue HIBP, sans doublon (D22) | Toutes les sources de D21 |
