@@ -1,4 +1,5 @@
 import "server-only";
+import type { Commune } from "@/server/domain/commune";
 import { strongMatch } from "@/server/domain/matching";
 import type {
   CountFinding,
@@ -11,9 +12,19 @@ import type { SearchChFeed } from "./schema";
 export const PROVIDER_ID = "searchch";
 const SOURCE = "search.ch (annuaire)";
 
+// Finds the commune of a zip code and a locality (src/server/geo/communes.ts). Passed
+// as a parameter so that the tests use invented communes.
+export type CommuneResolver = (zip: string | undefined, city: string | undefined) => Commune | undefined;
+
 // Reverse lookup: only listings that really carry the visitor's number are kept.
 // Only the kinds of published data are returned, never the values (whitelist).
-export function toDirectoryFindings(feed: SearchChFeed, query: SearchQuery): DirectoryFinding[] {
+// One exception under review (D27): the commune, found from the zip code and the
+// locality. The street and the number are never read.
+export function toDirectoryFindings(
+  feed: SearchChFeed,
+  query: SearchQuery,
+  resolveCommune?: CommuneResolver,
+): DirectoryFinding[] {
   return (feed.entry ?? [])
     .filter((entry) => strongMatch(entry.phone ?? "", { phone: query.phone }) === "phone")
     .map((entry) => {
@@ -21,6 +32,7 @@ export function toDirectoryFindings(feed: SearchChFeed, query: SearchQuery): Dir
       if (entry.name || entry.firstname) categories.push("name");
       if (entry.street) categories.push("address");
       if (entry.city) categories.push("location");
+      const commune = resolveCommune?.(entry.zip, entry.city);
       return {
         kind: "directory",
         providerId: PROVIDER_ID,
@@ -28,6 +40,7 @@ export function toDirectoryFindings(feed: SearchChFeed, query: SearchQuery): Dir
         categories,
         noPromo: entry.nopromo?.trim() === "*",
         matchedOn: "phone",
+        ...(commune && { commune }),
       };
     });
 }

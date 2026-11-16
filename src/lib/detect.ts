@@ -3,7 +3,7 @@ import { parsePhoneNumberFromString } from "libphonenumber-js";
 // Automatic recognition of what the visitor types in the single search bar.
 // Runs in the browser while typing; the server validates again (route.ts).
 
-export type EntryType = "email" | "phone" | "name" | "username" | "city" | "birthYear";
+export type EntryType = "email" | "phone" | "name" | "username" | "city" | "birthYear" | "birthDate";
 
 export type Detected = {
   type: EntryType;
@@ -14,6 +14,18 @@ export type Detected = {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const YEAR = /^(19|20)\d{2}$/;
+// Swiss way of writing a date: 14.03.2006, 14/03/2006, 14-03-2006 (D28).
+const DATE = /^(\d{1,2})[./-](\d{1,2})[./-]((?:19|20)\d{2})$/;
+
+// "14.03.2006" -> "2006-03-14", or null when the date does not exist (31.02.2006).
+export function toIsoDate(value: string): string | null {
+  const match = DATE.exec(value.trim());
+  if (!match) return null;
+  const [, d = "", m = "", y = ""] = match;
+  const iso = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  const date = new Date(`${iso}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(iso) && date <= new Date() ? iso : null;
+}
 const DIGITS_ONLY = /^[+\d\s./()-]+$/;
 const NAME = /^[\p{L}'’-]+(\s+[\p{L}'’-]+){1,3}$/u;
 const HANDLE = /^[A-Za-z0-9._-]{3,40}$/;
@@ -30,6 +42,8 @@ export function detect(raw: string): Detected | null {
 
   if (EMAIL.test(value)) return { type: "email", value, alternatives: ["email"] };
   if (YEAR.test(value)) return { type: "birthYear", value, alternatives: ["birthYear"] };
+  // Before the phone test: "14.03.2006" is only digits and dots.
+  if (toIsoDate(value)) return { type: "birthDate", value, alternatives: ["birthDate"] };
   // Only digits and signs: a phone number or nothing, never a username (it would be
   // sent to hundreds of sites).
   if (DIGITS_ONLY.test(value)) {

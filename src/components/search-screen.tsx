@@ -48,7 +48,7 @@ export function SearchScreen({
 
   const payload = entriesToPayload(entries);
   const hasName = Boolean(payload.firstName && payload.lastName);
-  const hasContext = Boolean(payload.city || payload.birthYear);
+  const hasContext = Boolean(payload.city || payload.birthYear || payload.birthDate);
   const loneName = entries.find(looksLikeLoneName);
 
   // One help message at a time, the first that applies.
@@ -57,8 +57,8 @@ export function SearchScreen({
     (loneName
       ? `« ${loneName.value} » est pris comme pseudo. Si c'est ta localité, clique sur « Pseudo » pour changer le type. Pour chercher ton nom, tape ton prénom et ton nom ensemble.`
       : hasContext && !hasSearchableInput(payload)
-        ? "La localité et l'année de naissance servent à te distinguer des homonymes. Ajoute aussi ton prénom et ton nom."
-        : "Pour te distinguer des homonymes, ajoute aussi ta localité ou ton année de naissance.");
+        ? "La localité et la date de naissance servent à te distinguer des homonymes et à deviner tes pseudos. Ajoute aussi ton prénom et ton nom."
+        : "Pour te distinguer des homonymes et deviner tes pseudos, ajoute aussi ta localité ou ta date de naissance (14.03.2006).");
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

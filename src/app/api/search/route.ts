@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { buildActionPlan } from "@/server/domain/actions";
+import { groupByCategory } from "@/server/domain/exposure";
 import { maskEmail, maskName, maskPhone } from "@/server/domain/masking";
 import { mergeDuplicates } from "@/server/domain/merge";
 import { providerStats } from "@/server/domain/stats";
 import { normalizePhone } from "@/server/domain/phone";
 import { getEnv } from "@/server/env";
+import { describeBreaches, warmCatalog } from "@/server/providers/hibp";
 import { getActiveProviders } from "@/server/providers/registry";
 import { enrichWithArchive } from "@/server/providers/wayback";
 import { pivot } from "@/server/pivot";
@@ -30,6 +32,8 @@ const inputSchema = z
     ),
     city: optionalText(60),
     birthYear: optionalText(4).pipe(z.string().regex(/^(19|20)\d{2}$/).optional()),
+    // Full birth date, ISO (D28): only used to guess and recognize usernames.
+    birthDate: optionalText(10).pipe(z.iso.date().optional()),
     consent: z.literal(true),
   })
   .transform((input, ctx) => {
@@ -48,7 +52,8 @@ const inputSchema = z
       username: input.username,
       // The context only helps with a name.
       city: hasName ? input.city : undefined,
-      birthYear: hasName ? input.birthYear : undefined,
+      birthYear: hasName ? (input.birthYear ?? input.birthDate?.slice(0, 4)) : undefined,
+      birthDate: hasName ? input.birthDate : undefined,
     };
   })
   .refine((q) => q.email || q.phone || q.firstName || q.username, { message: "empty" });
@@ -71,17 +76,20 @@ export async function POST(request: Request) {
 
   const query = input.data;
   const { APP_MODE } = getEnv();
+  // The public HIBP catalog downloads while the sources answer (D29).
+  warmCatalog();
   const result = await runSearch(
     query,
     getActiveProviders(APP_MODE),
     12000,
     // Second step, in parallel: web archive of the pages found + pivot on usernames.
+    // Then the breaches are completed with the public HIBP catalog (D29).
     async (found, signal) => {
       const [archived, pivoted] = await Promise.all([
         enrichWithArchive(found, signal),
         pivot(found, query, signal),
       ]);
-      return [...archived, ...pivoted];
+      return describeBreaches([...archived, ...pivoted], signal);
     },
     10000,
   );
@@ -104,6 +112,8 @@ export async function POST(request: Request) {
       },
       findings,
       actions: buildActionPlan(findings),
+      // The same results grouped by kind of data (D30).
+      exposure: groupByCategory(findings),
       queriedProviders,
       failedProviders,
       providerStats: stats,

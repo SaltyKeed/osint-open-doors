@@ -8,16 +8,17 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-display);
+  --font-mono: var(--font-hud);
+  --font-heading: var(--font-hud);
   /* Project colors: highlighter for what is found, green for what is verified. */
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
   --color-verified: var(--verified);
   --color-verified-soft: var(--verified-soft);
-  /* Signature: offset highlighter shadow (search bar, main button). */
-  --shadow-marker: 6px 6px 0 0 var(--highlight);
-  --shadow-marker-lg: 8px 8px 0 0 var(--highlight);
+  --color-gold: var(--gold);
+  /* Signature: cyan glow around the search bar and the main button (D28). */
+  --shadow-marker: 0 0 0 1px var(--highlight), 0 0 24px -6px var(--highlight);
+  --shadow-marker-lg: 0 0 0 1px var(--highlight), 0 0 36px -4px var(--highlight);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -56,44 +57,49 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Palette: cool paper, marine ink, highlighter yellow (see search-app.tsx). */
+/* Palette (D28): dark control-room screen inspired by the OSIRIS dashboard.
+   Base for the visual identity the team will redo: change the tokens here, the
+   components only use the token names. Cyan = data found, gold = the HUD labels,
+   green = verified, red = danger. */
 :root {
-  --background: #f3f5f8;
-  --foreground: #1b2a4a;
-  --card: #ffffff;
-  --card-foreground: #1b2a4a;
-  --popover: #ffffff;
-  --popover-foreground: #1b2a4a;
-  --primary: #1b2a4a;
-  --primary-foreground: #ffffff;
-  --secondary: #e6ebf2;
-  --secondary-foreground: #1b2a4a;
-  --muted: #e6ebf2;
-  --muted-foreground: #4f5d72;
-  --accent: #fff3a8;
-  --accent-foreground: #1b2a4a;
-  --destructive: #c8283c;
-  --border: #d5dce6;
-  --input: #7d8aa0;
-  --ring: #1b2a4a;
-  --highlight: #ffe45c;
-  --highlight-foreground: #1b2a4a;
-  --verified: #17784b;
-  --verified-soft: #e3f2ea;
+  --background: #06060c;
+  --foreground: #e8e6e0;
+  --card: #0c0e1a;
+  --card-foreground: #e8e6e0;
+  --popover: #0c0e1a;
+  --popover-foreground: #e8e6e0;
+  --primary: #00e5ff;
+  --primary-foreground: #04040a;
+  --secondary: #121628;
+  --secondary-foreground: #e8e6e0;
+  --muted: #121628;
+  --muted-foreground: #9b978e;
+  --accent: #121628;
+  --accent-foreground: #e8e6e0;
+  --destructive: #ff3d3d;
+  --border: rgba(0, 229, 255, 0.18);
+  --input: rgba(0, 229, 255, 0.45);
+  --ring: #00e5ff;
+  --highlight: #00e5ff;
+  --highlight-foreground: #04040a;
+  --gold: #d4af37;
+  --verified: #00e676;
+  --verified-soft: rgba(0, 230, 118, 0.12);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.5rem;
+  --sidebar: #0c0e1a;
+  --sidebar-foreground: #e8e6e0;
+  --sidebar-primary: #00e5ff;
+  --sidebar-primary-foreground: #04040a;
+  --sidebar-accent: #121628;
+  --sidebar-accent-foreground: #e8e6e0;
+  --sidebar-border: rgba(0, 229, 255, 0.18);
+  --sidebar-ring: #00e5ff;
+  color-scheme: dark;
 }
 
 .dark {
@@ -136,8 +142,48 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Faint grid and vignette, like a radar screen. Pure CSS, no image. */
+    background-image:
+      radial-gradient(ellipse at center, transparent 45%, rgba(4, 4, 10, 0.85) 100%),
+      linear-gradient(rgba(0, 229, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 229, 255, 0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 48px 48px, 48px 48px;
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* HUD building blocks (D28), inspired by OSIRIS. */
+@layer components {
+  /* Small uppercase monospace label: "SOURCE", "COMMUNE", "SCAN". */
+  .hud-label {
+    font-family: var(--font-hud);
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  /* Translucent panel with a thin cyan border. */
+  .hud-panel {
+    position: relative;
+    background: rgba(8, 10, 20, 0.82);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+  }
+  /* Corner brackets of a viewfinder, drawn with four gradients. */
+  .hud-corners {
+    --c: var(--highlight);
+    background:
+      linear-gradient(var(--c), var(--c)) top left / 14px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) top left / 2px 14px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 14px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 2px 14px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 14px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 2px 14px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 14px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 2px 14px no-repeat;
   }
 }

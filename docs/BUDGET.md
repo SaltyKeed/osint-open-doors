@@ -40,7 +40,9 @@ est donc impossible de le budgéter.
 
 - Environ 200 visiteurs pendant les portes ouvertes (à confirmer avec l'école).
 - Jusqu'à 11 crédits Tavily par visiteur qui remplit tous les champs (D18,
-  D20 : email 1, téléphone 2, nom 8 avec la localité), soit environ 2200
+  D20 : email 1, téléphone 2, nom 8 avec la localité), plus un crédit par
+  pseudo deviné (D28, `USERNAME_GUESSES`, 10 par défaut, 60 pour le compte
+  réel testé en D28), soit environ 2200
   crédits pour la journée, plus environ 400 pour les tests : environ 2600
   crédits, dont 1000 gratuits.
 - Les abonnements sont pris uniquement pour la durée nécessaire : un mois de

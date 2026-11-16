@@ -31,6 +31,15 @@ describe("leakcheck mapper", () => {
     expect(JSON.stringify(summary)).not.toContain("unknown_field");
   });
 
+  it("marks the breaches found with the phone number (deep mode, D29)", () => {
+    const findings = toEmailFindings(found, "phone");
+    expect(findings.filter((f) => f.kind === "breach")).toEqual([
+      expect.objectContaining({ categories: ["phone"], matchedOn: "phone" }),
+      expect.objectContaining({ matchedOn: "phone" }),
+    ]);
+    expect(findings.find((f) => f.kind === "account")?.matchedOn).toBe("phone");
+  });
+
   it("returns nothing when the email is not found", () => {
     expect(toEmailFindings({ success: false, error: "Not found" })).toEqual([]);
   });

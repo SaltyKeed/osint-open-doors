@@ -1,8 +1,10 @@
 "use client";
 
-import { ArchiveX, BadgeCheck, ChevronDown, CircleHelp, KeyRound, UserCheck } from "lucide-react";
+import { ArchiveX, BadgeCheck, ChevronDown, CircleHelp, KeyRound, ShieldAlert, UserCheck } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
+import { CommuneReveal } from "@/components/commune-reveal";
+import { ExposureByType } from "@/components/exposure-by-type";
 import { CATEGORY_LABELS, PROVIDER_LABELS, plural, sourceName } from "@/components/labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Type-only imports: erased at build time, no server code reaches the browser.
 import type { Action } from "@/server/domain/actions";
+import { sortCategories } from "@/server/domain/categories";
+import type { Exposure } from "@/server/domain/exposure";
 import type { ProviderStat } from "@/server/domain/stats";
 import type {
   AccountFinding,
@@ -28,6 +32,7 @@ export type SearchResponse = {
   searched: { email?: string; phone?: string; name?: string; username?: string };
   findings: Finding[];
   actions: Action[];
+  exposure: Exposure[];
   queriedProviders: string[];
   failedProviders: string[];
   providerStats: ProviderStat[];
@@ -41,7 +46,7 @@ const ease = [0.2, 0, 0, 1] as const;
 function Categories({ categories }: { categories: DataCategory[] }) {
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label="Données exposées">
-      {categories.map((category) => (
+      {sortCategories(categories).map((category) => (
         <li key={category}>
           {category === "password" ? (
             <Badge variant="danger" size="lg">
@@ -137,17 +142,61 @@ function sortBreaches(items: BreachFinding[]): BreachFinding[] {
   return [...items].sort((a, b) => hasPassword(b) - hasPassword(a) || (b.year ?? "").localeCompare(a.year ?? ""));
 }
 
+// Logo of the breached service (public HIBP asset). Hidden if it fails to load, so a
+// missing logo never leaves a broken image on the kiosk.
+function BreachLogo({ logo }: { logo?: string }) {
+  const [ok, setOk] = useState(true);
+  if (!logo || !ok) {
+    return (
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground" aria-hidden>
+        <ShieldAlert className="size-6" />
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={logo}
+      alt=""
+      width={44}
+      height={44}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => setOk(false)}
+      className="size-11 shrink-0 rounded-lg bg-white object-contain p-1"
+    />
+  );
+}
+
 function BreachCard({ item }: { item: BreachFinding }) {
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>{item.source}</CardTitle>
-        <CardDescription className="text-base">
-          {[item.year, item.records && plural(item.records, "compte")].filter(Boolean).join(", ")}
-        </CardDescription>
+        <div className="flex items-start gap-3">
+          <BreachLogo logo={item.logo} />
+          <div className="flex min-w-0 flex-col gap-1">
+            <CardTitle>{item.title ?? item.source}</CardTitle>
+            <CardDescription className="text-base">
+              {[item.year, item.records && plural(item.records, "compte")].filter(Boolean).join(" · ")}
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        <Categories categories={item.categories} />
+      <CardContent className="flex flex-col gap-3">
+        {item.notes && item.notes.length > 0 && (
+          <p className="flex flex-wrap gap-2 text-sm font-bold text-destructive">
+            {item.notes.map((note) => (
+              <span key={note} className="rounded-full bg-destructive/10 px-2 py-0.5">
+                {note}
+              </span>
+            ))}
+          </p>
+        )}
+        {item.description && <p className="text-base text-muted-foreground">{item.description}</p>}
+        <div className="flex flex-col gap-1.5">
+          <p className="text-sm font-bold">Données exposées dans cette fuite :</p>
+          <Categories categories={item.categories} />
+        </div>
         <SourceLine item={item} />
       </CardContent>
     </Card>
@@ -163,6 +212,12 @@ function BreachTab({ items }: { items: BreachFinding[] }) {
         Ces services ont été piratés et leurs données publiées. Seuls les types de données sont affichés.
         {withPassword > 0 && <strong> Ton mot de passe apparaît dans {plural(withPassword, "fuite")}.</strong>}
       </p>
+      {items.some((b) => b.describedBy === "hibp") && (
+        // Licence CC BY 4.0 of the HIBP catalog: the attribution must stay visible (D29).
+        <p className="text-sm text-muted-foreground">
+          Descriptions des fuites complétées avec le catalogue public de Have I Been Pwned (licence CC BY 4.0).
+        </p>
+      )}
       <MoreList
         items={sorted}
         label="fuite"
@@ -176,10 +231,12 @@ function BreachTab({ items }: { items: BreachFinding[] }) {
           <ul className="flex flex-col" aria-label={`Autres fuites, ${rest.length} éléments`}>
             {rest.map((item) => (
               <li key={`${item.providerId}-${item.source}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b py-2">
-                <span className="font-bold">{item.source}</span>
+                <span className="font-bold">{item.title ?? item.source}</span>
                 {item.year && <span className="text-muted-foreground">{item.year}</span>}
                 <span className="text-sm text-muted-foreground">
-                  {item.categories.map((c) => (c === "password" ? "Mot de passe exposé" : CATEGORY_LABELS[c])).join(", ")}
+                  {sortCategories(item.categories)
+                    .map((c) => (c === "password" ? "Mot de passe exposé" : CATEGORY_LABELS[c]))
+                    .join(", ")}
                 </span>
                 <span className="text-sm text-muted-foreground">{sourceText(item)}</span>
               </li>
@@ -326,7 +383,11 @@ function ProfileTab({ items }: { items: ProfileFinding[] }) {
             <CardHeader>
               <CardTitle>@{first.username}</CardTitle>
               <CardDescription className="text-base">
-                {first.origin === "pseudo" ? "Le pseudo que tu as saisi" : `Rebond : pseudo trouvé grâce à ${first.origin}`}
+                {first.origin === "pseudo"
+                  ? "Le pseudo que tu as saisi"
+                  : first.guessed
+                    ? "Pseudo deviné à partir de ton nom : beaucoup de gens construisent leur pseudo ainsi, ce compte est peut-être celui d'un homonyme"
+                    : `Rebond : pseudo trouvé grâce à ${first.origin}`}
               </CardDescription>
               <CardAction>
                 <Badge variant="unverified" size="lg">
@@ -454,8 +515,12 @@ export function ResultsScreen({ result, onReset }: { result: SearchResponse; onR
   const verifiedPages = webAll.filter((w) => w.verified);
   const namePages = webAll.filter((w) => !w.verified);
   const directory = byKind("directory");
+  // The first listing whose commune was found: shown on the map (D27).
+  const located = directory.find((d) => d.commune);
   const accounts = byKind("account");
   const profiles = byKind("profile");
+  const ownProfiles = profiles.filter((p) => !p.guessed);
+  const guessedProfiles = profiles.filter((p) => p.guessed);
   const counts = byKind("count");
 
   // "Linked to you" counts only proofs; username and name results are leads (D17, D19).
@@ -466,6 +531,14 @@ export function ResultsScreen({ result, onReset }: { result: SearchResponse; onR
   const searched = [result.searched.email, result.searched.phone, result.searched.name, result.searched.username].filter(Boolean);
 
   const tabs: Tab[] = [
+    // First tab: everything found, sorted by kind of data (D30).
+    {
+      id: "types",
+      label: "Par type de donnée",
+      count: result.exposure.length,
+      lead: false,
+      content: <ExposureByType exposure={result.exposure} />,
+    },
     { id: "breaches", label: "Fuites", count: breaches.length, lead: false, content: <BreachTab items={breaches} /> },
     { id: "web", label: "Web vérifié", count: verifiedPages.length, lead: false, content: <WebList items={verifiedPages} label="page" /> },
     { id: "directory", label: "Annuaire", count: directory.length, lead: false, content: <DirectoryTab items={directory} /> },
@@ -478,7 +551,8 @@ export function ResultsScreen({ result, onReset }: { result: SearchResponse; onR
       lead: true,
       content: <NameTab pages={namePages} counts={counts} />,
     },
-  ].filter((t) => t.count > 0);
+    // The "by data type" tab always stays, even empty, so the visitor knows why (D30).
+  ].filter((t) => t.count > 0 || t.id === "types");
   const [tab, setTab] = useState(tabs[0]?.id ?? "");
 
   const summary = [
@@ -488,7 +562,9 @@ export function ResultsScreen({ result, onReset }: { result: SearchResponse; onR
     accounts.length > 0 && plural(accounts.length, "compte ou trace", "comptes ou traces"),
   ].filter(Boolean);
   const leadSummary = [
-    profiles.length > 0 && plural(profiles.length, "compte avec ton pseudo", "comptes avec ton pseudo"),
+    ownProfiles.length > 0 && plural(ownProfiles.length, "compte avec ton pseudo", "comptes avec ton pseudo"),
+    guessedProfiles.length > 0 &&
+      plural(guessedProfiles.length, "compte avec un pseudo deviné depuis ton nom", "comptes avec un pseudo deviné depuis ton nom"),
     namePages.length > 0 && plural(namePages.length, "page avec ton nom", "pages avec ton nom"),
   ].filter(Boolean);
 
@@ -532,10 +608,16 @@ export function ResultsScreen({ result, onReset }: { result: SearchResponse; onR
         )}
       </div>
 
+      {located?.commune && (
+        <div className="lg:col-span-12">
+          <CommuneReveal commune={located.commune} hasAddress={located.categories.includes("address")} />
+        </div>
+      )}
+
       <div className="flex min-w-0 flex-col gap-6 lg:col-span-8">
         {tabs.length > 0 && (
           <Tabs value={tab} onValueChange={setTab} className="gap-6">
-            <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
+            <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0 group-data-horizontal/tabs:h-auto">
               {tabs.map((t, i) => (
                 <span key={t.id} className="flex items-center gap-1">
                   {t.lead && !tabs[i - 1]?.lead && i > 0 && <Separator orientation="vertical" className="mx-2 h-8" />}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detect, explainUnknown, looksLikeLoneName, splitEntries, splitName } from "./detect";
+import { toIsoDate, detect, explainUnknown, looksLikeLoneName, splitEntries, splitName } from "./detect";
 
 describe("detect", () => {
   it("recognizes an email", () => {
@@ -37,6 +37,8 @@ describe("detect", () => {
   it("recognizes a city with accents and a birth year", () => {
     expect(detect("Neuchâtel")?.type).toBe("city");
     expect(detect("2008")?.type).toBe("birthYear");
+    expect(detect("14.03.2006")?.type).toBe("birthDate");
+    expect(detect("2/3/2006")?.type).toBe("birthDate");
   });
 
   it("returns null for empty or unknown input", () => {
@@ -67,5 +69,15 @@ describe("splitEntries", () => {
       "Jean Dupont",
       "jdupont",
     ]);
+  });
+});
+
+describe("toIsoDate", () => {
+  it("converts a Swiss date and rejects dates that do not exist (D28)", () => {
+    expect(toIsoDate("14.03.2006")).toBe("2006-03-14");
+    expect(toIsoDate("2/3/2006")).toBe("2006-03-02");
+    expect(toIsoDate("31.02.2006")).toBeNull();
+    expect(toIsoDate("01.01.2999")).toBeNull();
+    expect(toIsoDate("079 123 45 67")).toBeNull();
   });
 });

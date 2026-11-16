@@ -19,6 +19,23 @@ describe("collectPivots", () => {
     ]);
   });
 
+  it("also pivots on an unverified profile whose username holds the visitor's name and birth date (D28)", () => {
+    const page = (handle: string, usesBirthDate: boolean): Finding => ({
+      kind: "web",
+      providerId: "tavily",
+      verified: false,
+      site: "instagram.com",
+      url: `https://instagram.com/${handle}`,
+      title: "",
+      snippet: "",
+      matchedOn: "name",
+      handleMatch: { handle, explanation: "", usesBirthDate, strong: true },
+    });
+    expect(collectPivots([page("leo.rct14", true), page("lrochat", false)], {})).toEqual([
+      { username: "leo.rct14", origin: "ton profil probable sur instagram.com" },
+    ]);
+  });
+
   it("starts with the part of the email before the @", () => {
     expect(collectPivots(findings, { email: "jean.dupont+news@example.com" })[0]).toEqual({
       username: "jean.dupont",

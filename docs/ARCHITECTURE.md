@@ -47,7 +47,7 @@ ensuite un plan d'action concret.
  │  5. réponse : métadonnées uniquement                         │
  └───────────────────────────┬──────────────────────────────────┘
                              │
-        XposedOrNot  ·  Snusbase  ·  Dehashed  ·  (autres)
+   XposedOrNot · LeakCheck · catalogue HIBP · (deep) Hudson Rock · ransomware.live
 ```
 
 ## 4. Structure du code (Ports & Adapters)
@@ -73,7 +73,11 @@ src/
 │   │   │   ├── schema.ts         ← zod : forme de la réponse brute
 │   │   │   ├── mapper.ts         ← brut → modèle du domaine (liste blanche)
 │   │   │   └── index.ts          ← le provider (client → schema → mapper)
-│   │   ├── leakcheck/            ← fuites par email, total par pseudo (D24)
+│   │   ├── leakcheck/            ← fuites par email, total par pseudo (D24), par téléphone en deep (D29)
+│   │   ├── hibp/                 ← 2e étape : catalogue public des fuites : types, taille, titre, description, logo (D29, D32)
+│   │   ├── hudsonrock/           ← deep : ordinateurs infectés par un infostealer (email, organisation, pseudo)
+│   │   ├── dehashed/             ← deep, payant : bases volées par email, téléphone, nom, pseudo (D31)
+│   │   ├── ransomware/           ← deep : organisation de l'email revendiquée par un rançongiciel
 │   │   ├── tavily/               ← recherche web (email, téléphone, nom ; searches.ts : thèmes)
 │   │   ├── searchch/             ← annuaire (téléphone, total par nom)
 │   │   ├── github/               ← commits publics signés avec l'email
@@ -95,8 +99,12 @@ src/
 │   │   ├── phone.ts              ← normalisation et formats du téléphone
 │   │   ├── handles.ts            ← pseudo lu dans l'adresse d'un profil
 │   │   ├── pivots.ts             ← pseudos à utiliser pour le rebond
+│   │   ├── categories.ts         ← vocabulaire des fuites → types de données, ordre de gravité (D30)
+│   │   ├── exposure.ts           ← résultats regroupés par type de donnée (D30)
+│   │   ├── email-domain.ts       ← domaine propre de l'email (sans gmail.com, bluewin.ch…)
 │   │   ├── merge.ts              ← une fuite ou un compte signalé deux fois n'apparaît qu'une fois (alsoFoundBy)
 │   │   ├── stats.ts              ← ce que chaque source a apporté à la recherche (D26)
+│   │   ├── usernames.ts          ← pseudos devinés et reconnus (nom, date de naissance, D28)
 │   │   └── actions.ts            ← résultats → plan d'action
 │   │
 │   ├── env.ts                    ← variables d'environnement validées par zod (APP_MODE, clés)
@@ -111,6 +119,7 @@ src/
 │   ├── loading-screen.tsx        ← écran d'attente (étapes, globe ou barre de repli)
 │   ├── search-globe-loader.tsx   ← globe 3D : arcs vers les pays des sources (D23)
 │   ├── globe-scene.tsx           ← scène three.js, chargée seulement dans le navigateur
+│   ├── exposure-by-type.tsx      ← onglet « Par type de donnée » : une case par type, liste des fuites du type choisi (D30)
 │   ├── results-screen.tsx        ← résultats : onglets, plan d'action, effacement
 │   ├── inactivity-dialog.tsx     ← avertissement avant l'effacement automatique
 │   ├── labels.ts                 ← libellés affichés (catégories, sources)
@@ -188,7 +197,8 @@ correspondante.
 | Qualité du code | ESLint (configuration Next.js) | [D15](DECISIONS.md#d15-mise-en-place-du-projet) |
 | Exécution | Docker compose, en local | [D7](DECISIONS.md#d7-exécution-et-déploiement) |
 | Sources `surface` | XposedOrNot, LeakCheck, Tavily, search.ch, GitHub, Gravatar, keys.openpgp.org, RDAP, WhatsMyName, profils publics, Keybase, ORCID, Wikidata, FOSC, Wayback Machine | [D8](DECISIONS.md#d8-sources-de-données-providers), [D16](DECISIONS.md#d16-sources-du-mode-surface), [D24](DECISIONS.md#d24-nouvelles-sources-tirées-de-linventaire-osint4all) |
-| Sources `deep` | Services payants, selon le budget | [D12](DECISIONS.md#d12-cadre-validé-par-lenseignant) |
+| Sources `deep` | Hudson Rock (API communautaire), LeakCheck par téléphone, ransomware.live, DeHashed (payant, D31) | [D12](DECISIONS.md#d12-cadre-validé-par-lenseignant), [D29](DECISIONS.md#d29-mode-deep--infostealers-rançongiciels-et-catalogue-hibp) |
+| Catalogue des fuites | Have I Been Pwned, catalogue public (CC BY 4.0), les deux modes | [D29](DECISIONS.md#d29-mode-deep--infostealers-rançongiciels-et-catalogue-hibp) |
 | Téléphone, XML | libphonenumber-js, fast-xml-parser | [D16](DECISIONS.md#d16-sources-du-mode-surface) |
 | Modes | `surface` et `deep`, une image, `APP_MODE` à l'exécution | [D10](DECISIONS.md#d10-modes-surface-et-deep) |
 

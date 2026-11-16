@@ -16,16 +16,22 @@ async function check(value: string, signal: AbortSignal): Promise<unknown> {
 }
 
 // Free public API of LeakCheck (D24): names and dates of the breaches, no password.
-export const leakCheck: BreachProvider = {
-  id: PROVIDER_ID,
-  tier: "surface",
-  supports: ["email", "username"],
-  async search(query, signal) {
-    const findings: Finding[] = [];
-    if (query.email) findings.push(...toEmailFindings(await check(query.email, signal)));
-    if (query.username && query.username.length >= MIN_USERNAME_LENGTH) {
-      findings.push(...toUsernameFindings(await check(query.username, signal), query.username));
-    }
-    return findings;
-  },
-};
+// withPhone (deep mode, D29): the phone number is also checked, digits only.
+export function createLeakCheckProvider(withPhone: boolean): BreachProvider {
+  return {
+    id: PROVIDER_ID,
+    tier: "surface",
+    supports: withPhone ? ["email", "username", "phone"] : ["email", "username"],
+    async search(query, signal) {
+      const findings: Finding[] = [];
+      if (query.email) findings.push(...toEmailFindings(await check(query.email, signal)));
+      if (withPhone && query.phone) {
+        findings.push(...toEmailFindings(await check(query.phone.replace(/\D/g, ""), signal), "phone"));
+      }
+      if (query.username && query.username.length >= MIN_USERNAME_LENGTH) {
+        findings.push(...toUsernameFindings(await check(query.username, signal), query.username));
+      }
+      return findings;
+    },
+  };
+}

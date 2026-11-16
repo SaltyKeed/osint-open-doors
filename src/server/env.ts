@@ -8,6 +8,11 @@ const envSchema = z.object({
   TAVILY_API_KEY: z.string().min(1).optional(),
   // Optional: raises the GitHub search limit from 10 to 30 requests per minute.
   GITHUB_TOKEN: z.string().min(1).optional(),
+  // Usernames guessed from the name and searched on social networks, one Tavily credit
+  // each (D28). 0 turns the search off.
+  // DeHashed (deep mode only, D31): needs a search subscription plus API credits.
+  DEHASHED_API_KEY: z.string().min(1).optional(),
+  USERNAME_GUESSES: z.coerce.number().int().min(0).max(100).default(10),
 });
 
 export type Env = z.infer<typeof envSchema>;

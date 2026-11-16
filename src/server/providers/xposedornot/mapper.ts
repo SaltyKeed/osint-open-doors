@@ -1,37 +1,13 @@
 import "server-only";
+import { categoriesFromLabels } from "@/server/domain/categories";
 import type { AccountFinding, BreachFinding, DataCategory } from "@/server/domain/types";
 import type { BreachAnalyticsResponse } from "./schema";
 
 export const PROVIDER_ID = "xposedornot";
 
-// XposedOrNot vocabulary -> domain categories. Anything unknown becomes "other".
-const CATEGORY_MAP: Record<string, DataCategory> = {
-  "Email addresses": "email",
-  Passwords: "password",
-  Names: "name",
-  "Phone numbers": "phone",
-  "Physical addresses": "address",
-  "Dates of birth": "birthDate",
-  Usernames: "username",
-  "IP addresses": "ipAddress",
-  "Credit card details": "financial",
-  "Partial credit card data": "financial",
-  "Account balances": "financial",
-  "Financial transactions": "financial",
-  "Government IDs": "governmentId",
-  "Government issued IDs": "governmentId",
-  "Partial government issued IDs": "governmentId",
-  "Social security numbers": "governmentId",
-  "Geographic locations": "location",
-};
-
+// XposedOrNot uses the HIBP vocabulary: shared mapping in domain/categories.ts (D30).
 function toCategories(xposedData: string): DataCategory[] {
-  const categories = xposedData
-    .split(";")
-    .map((label) => label.trim())
-    .filter((label) => label.length > 0)
-    .map((label) => CATEGORY_MAP[label] ?? "other");
-  return [...new Set(categories)];
+  return categoriesFromLabels(xposedData.split(";").filter((label) => label.trim().length > 0));
 }
 
 // Whitelist: each domain field is built explicitly; the raw object never leaves this file.

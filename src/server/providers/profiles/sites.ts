@@ -75,6 +75,50 @@ const speedrunSchema = z.object({
 
 const devtoSchema = z.object({ username: z.string(), joined_at: z.string().optional(), github_username: z.string().nullish() });
 
+const githubSchema = z.object({
+  html_url: z.string(),
+  type: z.string().optional(),
+  created_at: z.string().optional(),
+  public_repos: z.number().optional(),
+  followers: z.number().optional(),
+});
+
+const gitlabSchema = z.array(z.object({ username: z.string(), web_url: z.string(), state: z.string().optional() }));
+
+const mastodonSchema = z.object({
+  url: z.string(),
+  created_at: z.string().optional(),
+  statuses_count: z.number().optional(),
+  followers_count: z.number().optional(),
+});
+
+const dockerSchema = z.object({ username: z.string(), date_joined: z.string().optional() });
+
+const scratchSchema = z.object({
+  username: z.string(),
+  history: z.object({ joined: z.string().optional() }).optional(),
+  profile: z.object({ country: z.string().optional() }).optional(),
+});
+
+const redditSchema = z.object({
+  data: z.object({
+    created_utc: z.number().optional(),
+    link_karma: z.number().optional(),
+    comment_karma: z.number().optional(),
+    is_suspended: z.boolean().optional(),
+  }),
+});
+
+const wikipediaSchema = z.object({
+  query: z.object({
+    users: z.array(
+      z.object({ name: z.string(), missing: z.string().optional(), registration: z.string().nullish(), editcount: z.number().optional() }),
+    ),
+  }),
+});
+
+const discogsSchema = z.object({ username: z.string(), registered: z.string().optional(), num_lists: z.number().optional() });
+
 const steamSchema = z.object({
   profile: z
     .object({
@@ -222,6 +266,113 @@ export const PROFILE_SITES: ProfileSite[] = [
         url: `https://dev.to/${encodeURIComponent(p.username)}`,
         details: [...created(yearOf(p.joined_at)), ...(p.github_username ? ["Relié à : GitHub"] : [])],
       };
+    },
+  },
+  {
+    site: "GitHub",
+    category: "coding",
+    apiUrl: (u) => `https://api.github.com/users/${encodeURIComponent(u)}`,
+    format: "json",
+    read: (raw) => {
+      const p = parse(githubSchema, raw);
+      if (!p || (p.type && p.type !== "User")) return null;
+      return {
+        url: p.html_url,
+        details: [...created(yearOf(p.created_at)), ...amount(p.public_repos, "dépôt public", "dépôts publics"), ...amount(p.followers, "abonné", "abonnés")],
+      };
+    },
+  },
+  {
+    site: "GitLab",
+    category: "coding",
+    apiUrl: (u) => `https://gitlab.com/api/v4/users?username=${encodeURIComponent(u)}`,
+    format: "json",
+    read: (raw, u) => {
+      const list = parse(gitlabSchema, raw);
+      const p = list?.find((x) => x.username.toLowerCase() === u.toLowerCase());
+      if (!p) return null;
+      return { url: p.web_url, details: ["Compte GitLab avec ce pseudo"] };
+    },
+  },
+  {
+    site: "Mastodon (mastodon.social)",
+    category: "social",
+    apiUrl: (u) => `https://mastodon.social/api/v1/accounts/lookup?acct=${encodeURIComponent(u)}`,
+    format: "json",
+    read: (raw) => {
+      const p = parse(mastodonSchema, raw);
+      if (!p) return null;
+      return {
+        url: p.url,
+        details: [...created(yearOf(p.created_at)), ...amount(p.statuses_count, "publication", "publications"), ...amount(p.followers_count, "abonné", "abonnés")],
+      };
+    },
+  },
+  {
+    site: "Docker Hub",
+    category: "coding",
+    apiUrl: (u) => `https://hub.docker.com/v2/users/${encodeURIComponent(u.toLowerCase())}/`,
+    format: "json",
+    read: (raw, u) => {
+      const p = parse(dockerSchema, raw);
+      if (!p) return null;
+      return { url: `https://hub.docker.com/u/${encodeURIComponent(u.toLowerCase())}`, details: created(yearOf(p.date_joined)) };
+    },
+  },
+  {
+    site: "Scratch",
+    category: "gaming",
+    apiUrl: (u) => `https://api.scratch.mit.edu/users/${encodeURIComponent(u)}`,
+    format: "json",
+    read: (raw, u) => {
+      const p = parse(scratchSchema, raw);
+      if (!p) return null;
+      const place = p.profile?.country;
+      return {
+        url: `https://scratch.mit.edu/users/${encodeURIComponent(u)}`,
+        details: [...created(yearOf(p.history?.joined)), ...(place ? [`Pays indiqué : ${place}`] : [])],
+      };
+    },
+  },
+  {
+    site: "Reddit",
+    category: "social",
+    apiUrl: (u) => `https://www.reddit.com/user/${encodeURIComponent(u)}/about.json`,
+    format: "json",
+    read: (raw, u) => {
+      const p = parse(redditSchema, raw)?.data;
+      if (!p || p.is_suspended) return null;
+      const karma = (p.link_karma ?? 0) + (p.comment_karma ?? 0);
+      return {
+        url: `https://www.reddit.com/user/${encodeURIComponent(u)}`,
+        details: [...created(yearOf(p.created_utc, "s")), ...amount(karma, "point de karma", "points de karma")],
+      };
+    },
+  },
+  {
+    site: "Wikipédia",
+    category: "social",
+    apiUrl: (u) =>
+      `https://fr.wikipedia.org/w/api.php?action=query&list=users&ususers=${encodeURIComponent(u)}&usprop=registration%7Ceditcount&format=json`,
+    format: "json",
+    read: (raw, u) => {
+      const p = parse(wikipediaSchema, raw)?.query.users[0];
+      if (!p || p.missing !== undefined || (p.editcount ?? 0) === 0) return null;
+      return {
+        url: `https://fr.wikipedia.org/wiki/Utilisateur:${encodeURIComponent(u)}`,
+        details: [...created(yearOf(p.registration)), ...amount(p.editcount, "modification", "modifications")],
+      };
+    },
+  },
+  {
+    site: "Discogs",
+    category: "music",
+    apiUrl: (u) => `https://api.discogs.com/users/${encodeURIComponent(u)}`,
+    format: "json",
+    read: (raw, u) => {
+      const p = parse(discogsSchema, raw);
+      if (!p) return null;
+      return { url: `https://www.discogs.com/user/${encodeURIComponent(u)}`, details: created(yearOf(p.registered)) };
     },
   },
 ];

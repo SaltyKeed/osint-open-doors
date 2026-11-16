@@ -1,7 +1,9 @@
 import "server-only";
 import { maskContacts } from "@/server/domain/masking";
+import { handleFromProfileUrl } from "@/server/domain/handles";
 import { containsNameOrInitial, contextMatch, strongMatch } from "@/server/domain/matching";
 import type { QueryKind, SearchQuery, WebFinding } from "@/server/domain/types";
+import { recognizeHandle } from "@/server/domain/usernames";
 import type { TavilyResult } from "./schema";
 
 export const PROVIDER_ID = "tavily";
@@ -37,7 +39,10 @@ function snippetOf(content: string): string {
 // - it contains one of them: verified, it is about the visitor;
 // - name search: kept as "not verified" (D17) only if the full name appears
 //   together (first + last name), otherwise dropped;
-// - email or phone search without such a link: dropped (the engine matched something else).
+// - email or phone search without such a link: dropped (the engine matched something else);
+// - a profile page whose username is built from the visitor's name and birth date
+//   ("leo.rct14") is kept as "probable", with the explanation (D28). Only such pages
+//   are kept from the searches on guessed usernames.
 // Emails and phone numbers inside titles and snippets are always masked.
 export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFinding[] {
   const byUrl = new Map<string, WebFinding>();
@@ -47,11 +52,15 @@ export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFindi
       // The full page text is checked too: the short snippet often misses the name.
       const text = `${result.title} ${result.content} ${result.raw_content ?? ""}`;
       const match = strongMatch(text, query);
-      if (!match) {
+      const handle = handleFromProfileUrl(result.url);
+      // Only strong matches count: "leor" (first name + one letter) is anyone's.
+      const recognized = handle ? recognizeHandle(handle, query) : null;
+      const handleMatch = recognized?.strong ? recognized : null;
+      if (!match && !handleMatch) {
         if (searchedOn !== "name" || !query.firstName || !query.lastName) continue;
         if (!containsNameOrInitial(text, query.firstName, query.lastName)) continue;
       }
-      const context = match ? null : contextMatch(text, query);
+      const context = match ? null : handleMatch ? `ton pseudo = ${handleMatch.explanation}` : contextMatch(text, query);
 
       const existing = byUrl.get(result.url);
       if (existing?.verified) continue;
@@ -67,6 +76,7 @@ export function toFindings(batches: TavilyBatch[], query: SearchQuery): WebFindi
         title: maskContacts(plainText(result.title) || siteOf(result.url)),
         snippet: maskContacts(snippetOf(result.content)),
         matchedOn: match ?? "name",
+        ...(handleMatch ? { handleMatch } : {}),
       });
     }
   }

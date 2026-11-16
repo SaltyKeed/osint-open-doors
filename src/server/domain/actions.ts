@@ -29,6 +29,15 @@ function withCategory(findings: Finding[], ...categories: DataCategory[]): numbe
 // Ordered by priority: the first actions are the most urgent.
 const RULES: Rule[] = [
   {
+    // Infostealer (deep mode, D29): changing passwords on an infected computer is useless,
+    // the malware sends the new ones too. Cleaning comes first.
+    id: "infected-device",
+    count: (f) => f.filter((x) => x.kind === "account" && x.providerId === "hudsonrock" && x.matchedOn === "email" && x.service.startsWith("Ordinateur infecté")).length,
+    title: () => "Nettoyer l'ordinateur infecté, puis changer tous les mots de passe",
+    detail:
+      "Un logiciel espion a copié les mots de passe enregistrés dans un navigateur. Fais analyser ou réinstaller l'ordinateur, puis change depuis un appareil sain les mots de passe de tous les comptes enregistrés et déconnecte les sessions ouvertes.",
+  },
+  {
     id: "change-passwords",
     count: (f) => f.filter((x) => x.kind === "breach" && x.categories.includes("password")).length,
     title: (n) => `Changer les mots de passe concernés (${plural(n, "fuite")})`,
@@ -70,7 +79,9 @@ const RULES: Rule[] = [
   },
   {
     id: "old-accounts",
-    count: (f) => f.filter((x) => x.kind === "profile").length,
+    // Accounts found with a username guessed from the name are not counted (D28):
+    // they may all belong to other people.
+    count: (f) => f.filter((x) => x.kind === "profile" && !x.guessed).length,
     title: (n) => `Faire le tri dans tes comptes (${plural(n, "compte")} avec ce pseudo)`,
     detail:
       "Ferme les comptes que tu n'utilises plus et vérifie ce que montrent les autres. Utiliser le même pseudo partout permet de relier tous tes comptes entre eux.",

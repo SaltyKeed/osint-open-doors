@@ -3,10 +3,12 @@
 // Adapted to the project's lint and strict typing rules (D23), then reworked (D25):
 // the countries are built once instead of at every new arc, the scene is not recreated
 // at every render, and the camera follows the size of its container.
+// D28: the camera can turn and zoom towards a place (focus), and rings ("pings") mark
+// the places given by the parent instead of random arc starts.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Color, Scene, Fog, Vector3, type Group } from "three";
+import { Color, Scene, Fog, Quaternion, Vector3, type Group } from "three";
 import ThreeGlobe from "three-globe";
-import { useThree, Canvas, extend } from "@react-three/fiber";
+import { useThree, useFrame, Canvas, extend } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import countries from "@/data/globe.json";
 declare module "@react-three/fiber" {
@@ -20,6 +22,7 @@ declare module "@react-three/fiber" {
 extend({ ThreeGlobe: ThreeGlobe });
 
 const RING_PROPAGATION_SPEED = 3;
+// Distance of the camera from the center of the globe (the globe radius is 100).
 const cameraZ = 300;
 
 type Position = {
@@ -32,6 +35,8 @@ type Position = {
   color: string;
 };
 
+export type LatLng = { lat: number; lng: number };
+
 export type GlobeConfig = {
   pointSize?: number;
   globeColor?: string;
@@ -42,6 +47,8 @@ export type GlobeConfig = {
   emissiveIntensity?: number;
   shininess?: number;
   polygonColor?: string;
+  ringColor?: string; // hex color of the pings
+  backgroundColor?: string; // hex color of the page behind the globe (fog)
   ambientLight?: string;
   directionalLeftLight?: string;
   directionalTopLight?: string;
@@ -61,9 +68,15 @@ export type GlobeConfig = {
 interface WorldProps {
   globeConfig: GlobeConfig;
   data: Position[];
+  // Places marked with expanding rings (the sources being searched, a commune).
+  pings?: LatLng[];
+  // When set, the camera turns towards this place and stops rotating.
+  focus?: LatLng | null;
+  // Distance of the camera when focused: 300 shows the whole globe, 112 a country.
+  distance?: number;
 }
 
-export function Globe({ globeConfig, data }: WorldProps) {
+export function Globe({ globeConfig, data, pings = [] }: WorldProps) {
   const globeRef = useRef<ThreeGlobe | null>(null);
   const groupRef = useRef<Group>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -74,6 +87,7 @@ export function Globe({ globeConfig, data }: WorldProps) {
     showAtmosphere: true,
     atmosphereAltitude: 0.1,
     polygonColor: "rgba(255,255,255,0.7)",
+    ringColor: "#ffffff",
     globeColor: "#1d072e",
     emissive: "#000000",
     emissiveIntensity: 0.1,
@@ -190,54 +204,35 @@ export function Globe({ globeConfig, data }: WorldProps) {
       .pointsMerge(true)
       .pointAltitude(0.0)
       .pointRadius(2);
-
-    globeRef.current
-      .ringsData([])
-      .ringColor(() => defaultProps.polygonColor)
-      .ringMaxRadius(defaultProps.maxRings)
-      .ringPropagationSpeed(RING_PROPAGATION_SPEED)
-      .ringRepeatPeriod(
-        (defaultProps.arcTime * defaultProps.arcLength) / defaultProps.rings,
-      );
   }, [
     isInitialized,
     data,
     defaultProps.pointSize,
-    defaultProps.polygonColor,
     defaultProps.arcLength,
     defaultProps.arcTime,
-    defaultProps.rings,
-    defaultProps.maxRings,
   ]);
 
-  // Handle rings animation with cleanup
+  // Pings: rings that expand and fade out, repeated, on the places given by the parent.
+  const rgb = hexToRgb(defaultProps.ringColor) ?? { r: 255, g: 255, b: 255 };
   useEffect(() => {
-    if (!globeRef.current || !isInitialized || !data) return;
-
-    const interval = setInterval(() => {
-      if (!globeRef.current) return;
-
-      const newNumbersOfRings = genRandomNumbers(
-        0,
-        data.length,
-        Math.floor((data.length * 4) / 5),
-      );
-
-      const ringsData = data
-        .filter((d, i) => newNumbersOfRings.includes(i))
-        .map((d) => ({
-          lat: d.startLat,
-          lng: d.startLng,
-          color: d.color,
-        }));
-
-      globeRef.current.ringsData(ringsData);
-    }, 2000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [isInitialized, data]);
+    if (!globeRef.current || !isInitialized) return;
+    globeRef.current
+      .ringsData(pings)
+      .ringColor(() => (t: number) => `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${1 - t})`)
+      .ringMaxRadius(defaultProps.maxRings)
+      .ringPropagationSpeed(RING_PROPAGATION_SPEED)
+      .ringRepeatPeriod((defaultProps.arcTime * defaultProps.arcLength) / defaultProps.rings);
+  }, [
+    isInitialized,
+    pings,
+    rgb.r,
+    rgb.g,
+    rgb.b,
+    defaultProps.maxRings,
+    defaultProps.arcTime,
+    defaultProps.arcLength,
+    defaultProps.rings,
+  ]);
 
   return <group ref={groupRef} />;
 }
@@ -255,20 +250,44 @@ export function WebGLRendererConfig() {
   return null;
 }
 
+// Turns the camera towards `focus` and brings it to `distance`, a bit at each frame.
+// The direction turns along the surface (quaternion slerp) instead of a straight line,
+// which would cross the globe when the target is on the other side.
+function CameraRig({ focus, distance }: { focus?: LatLng | null; distance: number }) {
+  const { camera } = useThree();
+  const goal = useMemo(
+    () => (focus ? new Vector3(...cameraPosition(focus, 1)) : null),
+    [focus],
+  );
+  useFrame((_, delta) => {
+    if (!goal) return;
+    // Same speed on a 60 Hz or a 144 Hz screen: the step depends on the time elapsed.
+    const t = 1 - Math.exp(-delta * 1.8);
+    const radius = camera.position.length();
+    const direction = camera.position.clone().normalize();
+    const turn = new Quaternion().slerp(new Quaternion().setFromUnitVectors(direction, goal), t);
+    direction.applyQuaternion(turn);
+    camera.position.copy(direction.multiplyScalar(radius + (distance - radius) * t));
+    camera.lookAt(0, 0, 0);
+  });
+  return null;
+}
+
 export function World(props: WorldProps) {
-  const { globeConfig } = props;
+  const { globeConfig, focus, distance = cameraZ } = props;
   // Created once: World re-renders at every step of the search.
   const scene = useMemo(() => {
     const created = new Scene();
-    created.fog = new Fog(0xffffff, 400, 2000);
+    created.fog = new Fog(globeConfig.backgroundColor ?? 0xffffff, 400, 2000);
     return created;
-  }, []);
+  }, [globeConfig.backgroundColor]);
   // The original component ignored initialPosition: the camera now starts above it.
-  const position = cameraPosition(globeConfig.initialPosition ?? { lat: 0, lng: 0 });
+  const position = cameraPosition(globeConfig.initialPosition ?? { lat: 0, lng: 0 }, cameraZ);
   // Camera settings instead of a camera object: React Three Fiber then updates the
   // aspect ratio with the container, so the parent only needs a fixed height.
+  // near = 1 (instead of 180): the camera can come close to the surface (D28).
   return (
-    <Canvas scene={scene} camera={{ fov: 50, near: 180, far: 1800, position }}>
+    <Canvas scene={scene} camera={{ fov: 50, near: 1, far: 1800, position }}>
       <WebGLRendererConfig />
       <ambientLight color={globeConfig.ambientLight} intensity={0.6} />
       <directionalLight
@@ -285,29 +304,33 @@ export function World(props: WorldProps) {
         intensity={0.8}
       />
       <Globe {...props} />
+      <CameraRig focus={focus} distance={distance} />
       <OrbitControls
         enablePan={false}
         enableZoom={false}
-        minDistance={cameraZ}
+        // Kiosk: the visitor watches, the camera is driven by the search.
+        enableRotate={false}
+        minDistance={105}
         maxDistance={cameraZ}
         autoRotateSpeed={globeConfig.autoRotateSpeed ?? 1}
-        autoRotate={globeConfig.autoRotate ?? true}
-        minPolarAngle={Math.PI / 3.5}
-        maxPolarAngle={Math.PI - Math.PI / 3}
+        autoRotate={(globeConfig.autoRotate ?? true) && !focus}
+        // Wide enough to look at Switzerland (latitude 47) from above.
+        minPolarAngle={0.35}
+        maxPolarAngle={Math.PI - 0.35}
       />
     </Canvas>
   );
 }
 
-// Camera placed at cameraZ above a latitude and longitude, with the same convention as
-// three-globe (longitude 0 faces +z).
-function cameraPosition({ lat, lng }: { lat: number; lng: number }): [number, number, number] {
+// Camera placed at `distance` above a latitude and longitude, with the same convention
+// as three-globe (longitude 0 faces +z).
+function cameraPosition({ lat, lng }: LatLng, distance: number): [number, number, number] {
   const phi = ((90 - lat) * Math.PI) / 180;
   const theta = ((90 - lng) * Math.PI) / 180;
   return [
-    cameraZ * Math.sin(phi) * Math.cos(theta),
-    cameraZ * Math.cos(phi),
-    cameraZ * Math.sin(phi) * Math.sin(theta),
+    distance * Math.sin(phi) * Math.cos(theta),
+    distance * Math.cos(phi),
+    distance * Math.sin(phi) * Math.sin(theta),
   ];
 }
 
@@ -324,14 +347,3 @@ export function hexToRgb(hex: string) {
       }
     : null;
 }
-
-export function genRandomNumbers(min: number, max: number, count: number) {
-  const arr = [];
-  while (arr.length < count) {
-    const r = Math.floor(Math.random() * (max - min)) + min;
-    if (arr.indexOf(r) === -1) arr.push(r);
-  }
-
-  return arr;
-}
-

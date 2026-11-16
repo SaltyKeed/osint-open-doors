@@ -868,6 +868,250 @@ un vrai visiteur.
 | **Source affichée à l'écran, tableau replié (retenu)** | Visible pendant les tests sans outil ; le visiteur voit aussi d'où vient chaque information. | Un peu plus de texte sous chaque résultat. |
 | Statistiques dans les logs du serveur | Rien à l'écran. | Il faut lire les logs ; un log par recherche donnerait aussi un historique des recherches, contraire à l'esprit « zéro stockage ». |
 
+## D28. Pseudos devinés à partir du nom et de la date de naissance
+
+Date : 2026-11-13
+
+Statut : appliquée sur la branche `sandbox` (prototype). Le numéro D27 est
+réservé au travail en cours sur la commune de l'annuaire.
+
+Beaucoup de gens construisent leur pseudo avec des morceaux de leur identité :
+le prénom, une abréviation du nom, un morceau de la date de naissance, reliés
+par un point ou un tiret bas. Exemple inventé : Léo Rochat, né le 14.03.2006, pourrait avoir le compte
+`leo.rct14`. La méthode a été vérifiée sur un vrai compte de ce type, avec
+l'accord de son propriétaire, qui n'est pas cité ici (dépôt public).
+L'application devine ces pseudos, les cherche sur les réseaux sociaux et
+explique au visiteur comment son pseudo a été retrouvé.
+
+### Génération (`domain/usernames.ts`)
+
+| Morceau | Formes pour Léo Rochat, 14.03.2006 |
+| --- | --- |
+| Prénom | `leo`, initiale `l` |
+| Nom | `pachoud` ; abrégé : consonnes sans h `rct`, consonnes `rcht`, trois premières lettres `roc`, première et dernière `rt`, initiale `r` |
+| Date | `06`, `14`, `2006`, `1403`, `140306`, `0314`, `03` (ou seulement `06` et `2006` avec l'année seule) |
+| Séparateur | rien, `.`, `_` ; le nombre peut aussi avoir son séparateur (`leo_rochat_2006`) |
+| Ordre | prénom puis nom, ou nom puis prénom |
+
+- Le prénom entier ou le nom entier doit être présent : `dtj` ou `e.pd05` ne
+  disent rien sur une personne.
+- Chaque morceau a un poids estimé (un séparateur absent est plus courant
+  qu'un tiret bas, le nom entier plus courant qu'une abréviation). Le score
+  d'un pseudo est le produit des poids. Les poids sont des estimations, pas
+  des mesures. Pour un prénom et un nom avec une date complète, environ 600
+  pseudos ; sur le compte réel testé, le bon pseudo était au rang 53.
+- Le pseudo saisi et la partie de l'email avant le @ ne sont pas répétés.
+
+### Recherche
+
+Chaque pseudo deviné est cherché avec Tavily, seul et sans guillemets, sur
+12 réseaux sociaux à la fois (Instagram, TikTok, X, Threads, YouTube, Twitch,
+Pinterest, Snapchat, SoundCloud, Reddit, GitHub). Essais du 2026-11-13 sur le
+compte réel (noté ici avec l'exemple inventé) :
+
+| Requête | Résultat |
+| --- | --- |
+| 20 pseudos reliés par OR, 12 réseaux | Raté |
+| 5 ou 10 pseudos reliés par OR, Instagram seul | Raté |
+| Morceaux (`leo rct`, `leo rct 14`) | Raté |
+| `"leo.rct14"` entre guillemets, 12 réseaux | Raté |
+| `leo.rct14` sans guillemets, 12 réseaux | Trouvé |
+
+Il faut donc une requête, soit un crédit Tavily, par pseudo. Le nombre de
+pseudos cherchés est réglé par `USERNAME_GUESSES` (10 par défaut, 0 pour
+désactiver). Avec 60, le compte réel a été trouvé en 15 secondes environ.
+
+Le test direct des profils (une requête vers Instagram par pseudo) est
+écarté : Instagram bloque vite les requêtes sans connexion, ses conditions
+interdisent l'accès automatisé en masse, et environ 300 requêtes par visiteur
+partiraient du réseau de l'école. Une petite partie des pseudos (6) est quand
+même testée sur la catégorie « social » de WhatsMyName et sur les API de
+profils publics (D24).
+
+### Reconnaissance et affichage
+
+- Une page de profil trouvée par Tavily dont l'adresse contient un pseudo
+  construit avec l'identité du visiteur est gardée, même si le nom n'apparaît
+  pas dans la page. Elle est marquée « probablement toi », avec l'explication :
+  « ton pseudo = ton prénom (leo) + ton nom abrégé (rct) + ton jour de
+  naissance (14) ».
+- Seules les correspondances fortes comptent : un morceau de la date de
+  naissance, ou le prénom et le nom entiers. `leor` (prénom et une lettre)
+  peut appartenir à n'importe qui et n'est pas retenu.
+- Exception à la règle du rebond (D17, D19) : un pseudo fort qui contient un
+  morceau de la date de naissance sert de point de départ au rebond. Sur le
+  compte réel testé, le rebond a trouvé le même pseudo sur deux autres sites.
+- Les comptes trouvés avec un pseudo deviné restent des pistes : ils ne
+  déclenchent pas l'action « Faire le tri dans tes comptes » et sont comptés à
+  part dans le résumé.
+
+### Saisie
+
+La barre reconnaît une date de naissance complète (`14.03.2006`, `14/03/2006`,
+`2-3-2006`) ; une date qui n'existe pas ou dans le futur est refusée. Elle
+est envoyée au serveur au format `2006-03-14`, sert seulement à deviner et
+reconnaître les pseudos, et n'est ni affichée dans les résultats ni envoyée
+telle quelle à une source. L'année sert aussi de contexte (D20).
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Recherche web par pseudo, reconnaissance forte (retenu)** | Aucune requête vers les réseaux sociaux eux-mêmes ; chaque résultat est expliqué au visiteur. | Un crédit Tavily par pseudo ; le moteur ne connaît pas tous les profils. |
+| Test direct des profils en masse | Ne dépend pas d'un moteur de recherche. | Blocage par Instagram, conditions d'utilisation, charge sur le réseau de l'école. |
+| Ne rien deviner | Aucun coût, aucun risque d'homonyme. | Le visiteur ne voit pas qu'on retrouve ses comptes sans son pseudo. |
+
+## D29. Mode deep : infostealers, rançongiciels et catalogue HIBP
+
+Date : 2026-11-14
+
+Statut : appliquée sur la branche `sandbox` (prototype). Une cartographie des
+fournisseurs de données de compromission a été faite (environ 150 services :
+fournisseurs d'identifiants, plateformes CTI, infostealers, catalogues
+d'incidents, CERT). Presque tous sont réservés aux entreprises, sous contrat,
+avec vérification du domaine. Seules les sources gratuites, sans clé et
+compatibles avec les invariants sont ajoutées ici. Aucun service payant n'est
+souscrit (`BUDGET.md`).
+
+| Source | Mode | Saisie envoyée | Ce qui est affiché |
+| --- | --- | --- | --- |
+| Hudson Rock, API communautaire (retenu) | `deep` | Email | Nombre d'ordinateurs infectés par un infostealer qui contenaient l'email, mois de la dernière infection, famille du logiciel, nombre de comptes copiés |
+| Hudson Rock, API communautaire (retenu) | `deep` | Domaine de l'email (organisation) | Totaux d'ordinateurs infectés liés à l'organisation (membres et utilisateurs) |
+| Hudson Rock, API communautaire (retenu) | `deep` | Pseudo (6 caractères ou plus) | Total seulement, présenté comme une piste |
+| LeakCheck, API publique (retenu) | `deep` | Téléphone, chiffres seuls | Nom et année des fuites qui contiennent le numéro ; types de données, toutes fuites confondues |
+| ransomware.live, API v2 (retenu) | `deep` | Domaine de l'email (organisation) | Organisation revendiquée comme victime : groupe et mois |
+| Have I Been Pwned, catalogue public (retenu) | Les deux | Rien (catalogue téléchargé une fois par jour) | Types de données, taille et date des fuites trouvées par les autres sources ; avertissements (fuite non confirmée, inventée, liste de spam) |
+| ProxyNova COMB | Écarté | Email | Recherche approximative : renvoie les mots de passe en clair d'autres personnes |
+| HIBP, recherche par email ; SpyCloud ; Flare ; Intelligence X | Écarté pour le moment | | Payants, sous contrat ou avec domaine vérifié ; les conditions de HIBP interdisent aussi de construire un moteur de recherche de fuites |
+
+Règles appliquées :
+
+- Hudson Rock renvoie aussi des mots de passe et identifiants partiellement
+  masqués, une adresse IP et le nom de l'ordinateur. Le schéma zod ne garde
+  pas ces champs : ils n'atteignent jamais le mapper. Un test le vérifie.
+- La recherche par domaine n'est faite que pour un domaine propre
+  (organisation, site personnel), jamais pour gmail.com, bluewin.ch, etc.
+  La liste des messageries partagées est dans `domain/email-domain.ts`,
+  utilisée aussi par RDAP.
+- ransomware.live cherche par mot-clé et renvoie des victimes sans rapport :
+  seules les victimes dont le site est exactement le domaine de l'email sont
+  gardées. Le texte de la revendication et le lien vers le site de fuite ne
+  sont jamais lus.
+- Le catalogue HIBP ne dit pas si le visiteur est dans une fuite. Il complète
+  seulement les fuites trouvées par XposedOrNot et LeakCheck (par exemple, une
+  fuite LeakCheck qui n'avait que la catégorie « email »). Il est téléchargé
+  dès le début de la recherche, en parallèle, et gardé un jour en mémoire :
+  c'est une liste publique sans donnée personnelle. La licence CC BY 4.0
+  impose l'attribution, affichée dans l'onglet des fuites.
+- Un ordinateur infecté passe avant le changement des mots de passe dans le
+  plan d'action : sur un ordinateur infecté, le logiciel espion copie aussi
+  les nouveaux mots de passe.
+
+Résultat avec des données fictives : 17 fuites trouvées par le téléphone,
+dont 12 complétées par le catalogue HIBP, et les totaux d'ordinateurs
+infectés pour le domaine d'une organisation.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Sources gratuites sans clé en `deep` (retenu)** | Rien à souscrire ; les invariants restent vérifiables par des tests. | Pas de détail par fuite pour le téléphone ; dépend d'API communautaires qui peuvent changer. |
+| Fournisseurs professionnels (SpyCloud, Flare, Hudson Rock Cavalier) | Données plus complètes, journaux d'infostealers détaillés. | Contrat d'entreprise, domaine vérifié, prix non publics ou de plusieurs milliers de dollars par an. |
+
+## D30. Résultats classés par type de donnée
+
+Date : 2026-11-14
+
+Statut : appliquée sur la branche `sandbox` (prototype).
+
+Les fuites, l'annuaire et les comptes étaient affichés source par source. Le
+visiteur devait ouvrir chaque fuite pour savoir si son mot de passe ou son
+adresse avait fuité. Un premier onglet « Par type » montre maintenant les
+mêmes résultats dans l'autre sens : pour chaque type de donnée, le nombre de
+fuites et de sources qui l'exposent, l'année la plus récente, le risque en une
+phrase et la liste des sources.
+
+- Une case par type de donnée (mot de passe, téléphone, adresse…), avec le
+  nombre de fuites et de sources en gros chiffres, les plus graves en
+  premier. Les types graves (mot de passe, données bancaires, pièce
+  d'identité, santé, vie privée, messages privés) portent le mot « Grave ».
+- Un clic sur une case affiche en dessous la liste des fuites qui contiennent
+  ce type (nom, année, comment elle a été trouvée), le risque et l'action à
+  faire en une phrase. Une première version en cartes classées en trois
+  niveaux a été jugée trop chargée.
+- La catégorie « Autre » regroupait des dizaines de types du vocabulaire HIBP
+  et XposedOrNot. Sept catégories sont ajoutées (santé, messages privés, vie
+  privée, travail et études, appareil, réseaux sociaux, achats et activité).
+  La correspondance est commune aux deux sources (`domain/categories.ts`).
+- Seuls les résultats sûrement liés au visiteur sont classés (fuites,
+  annuaire, comptes). Les pages trouvées par le nom et les profils trouvés par
+  pseudo restent des pistes (D17, D19).
+- Le regroupement est calculé côté serveur dans le domaine
+  (`domain/exposure.ts`, testé) et envoyé avec la réponse, comme le plan
+  d'action. Seul le type est connu, jamais la valeur.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Onglet par type, ouvert par défaut (retenu)** | Le visiteur voit d'abord ce qui est grave, quelle que soit la source. | Une même fuite apparaît sous plusieurs types. |
+| Filtre par type dans l'onglet des fuites | Une seule liste. | L'annuaire et les comptes ne sont pas concernés ; moins lisible. |
+
+## D31. DeHashed en mode deep
+
+Date : 2026-11-14
+
+Statut : appliquée sur la branche `sandbox` (prototype). Le code est prêt,
+mais l'API répond 401 tant que le compte n'a pas d'abonnement « search » :
+les crédits API seuls ne suffisent pas.
+
+DeHashed cherche dans les bases de données volées par email, téléphone, nom
+et pseudo, et renvoie les fiches complètes (mot de passe, adresse, IP…). C'est
+la source qui couvre le plus de fuites parmi celles du budget (`BUDGET.md`,
+scénario C).
+
+Règles appliquées :
+
+- La clé est seulement dans `.env.deep` (non versionné). Le provider n'est
+  enregistré qu'en mode `deep` et seulement si la clé existe ; un test vérifie
+  qu'il n'est jamais actif en `surface`, même avec la clé.
+- Le schéma zod garde les valeurs le temps de savoir quels champs sont
+  remplis. Le mapper ne produit que le nom de la base et les types de données
+  (mot de passe, adresse, IP…), jamais une valeur. Un test le vérifie.
+- Une recherche coûte un crédit : au plus quatre par visiteur (email,
+  téléphone, nom, pseudo de 6 caractères ou plus).
+- Recherche par nom : une fiche n'est détaillée que si elle contient aussi
+  l'email ou le téléphone du visiteur ; les autres sont seulement comptées
+  (règle anti-homonymes). Recherche par pseudo : total des bases seulement.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **DeHashed, abonnement et crédits (retenu)** | Recherche par nom, téléphone et adresse ; fiches complètes. | Payant ; zone grise : le service ne vérifie pas qui cherche. |
+| LeakCheck Pro | Moins cher, détail par fuite. | Pas de recherche par nom. |
+
+## D32. Affichage enrichi des fuites (logo, titre, description)
+
+Date : 2026-11-14
+
+Statut : appliquée sur la branche `sandbox` (prototype).
+
+Chaque fuite n'affichait qu'un nom et une rangée de badges. Le catalogue public
+de Have I Been Pwned, déjà téléchargé pour compléter les fuites (D29), contient
+aussi pour chacune un titre propre, une description de ce qui s'est passé et un
+logo. Ces trois champs sont désormais récupérés et affichés.
+
+- La description du catalogue est en HTML (liens, balises) et en anglais.
+  `toPlainText` retire les balises et décode les entités avant l'affichage :
+  aucune balise n'atteint l'écran (testé). Aucun lien n'est cliquable sur le
+  poste. La description reste en anglais, langue du catalogue HIBP ; elle est
+  affichée en texte secondaire sous le titre.
+- Le logo est une image publique servie par HIBP en HTTPS (aucune donnée
+  personnelle). Si elle ne se charge pas, une icône de repli s'affiche, jamais
+  une image cassée.
+- Les avertissements de qualité (fuite non confirmée, inventée, liste de spam)
+  passent en étiquettes rouges.
+- Les types de données sont précédés de « Données exposées dans cette fuite »
+  et triés par gravité (D30).
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Réutiliser le catalogue HIBP déjà chargé (retenu)** | Aucune requête de plus ; description réelle de chaque fuite ; logos. | Descriptions en anglais ; seules les fuites connues du catalogue sont enrichies. |
+| Traduire les descriptions | Tout en français. | Pas de traduction fiable hors ligne ; coût d'une API par fuite. |
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -885,4 +1129,5 @@ un vrai visiteur.
 | CD et image | Ouverte (D11) | |
 | Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
+| Mode deep | Infostealers, rançongiciels, téléphone, catalogue HIBP, sources gratuites (D29) | Fournisseurs sous contrat |
 | Qualité du code | ESLint (configuration Next.js) | Aucun |

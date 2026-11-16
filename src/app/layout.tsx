@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Atkinson_Hyperlegible, Bricolage_Grotesque, Geist_Mono } from "next/font/google";
+import { Atkinson_Hyperlegible, JetBrains_Mono } from "next/font/google";
+import { HudBar } from "@/components/hud-bar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -14,17 +15,12 @@ const body = Atkinson_Hyperlegible({
   weight: ["400", "700"],
 });
 
-// Titles: Bricolage Grotesque, a variable grotesque; the optical size axis
-// refines large titles.
-const display = Bricolage_Grotesque({
-  variable: "--font-display",
+// Titles, labels and figures: JetBrains Mono, the monospace font of the OSIRIS
+// dashboard (D28). Figures keep the same width, so counters do not shake.
+const hud = JetBrains_Mono({
+  variable: "--font-hud",
   subsets: ["latin"],
-  axes: ["opsz"],
-});
-
-const mono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -34,9 +30,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fr" className={`${body.variable} ${display.variable} ${mono.variable} h-full antialiased`}>
+    <html lang="fr" className={`${body.variable} ${hud.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          <HudBar />
+          {children}
+        </TooltipProvider>
       </body>
     </html>
   );

@@ -5,7 +5,7 @@ import { PROVIDER_ID, type TavilyBatch, toFindings } from "./mapper";
 import { tavilyResponseSchema } from "./schema";
 import { plannedSearches } from "./searches";
 
-export function createTavilyProvider(apiKey: string | undefined): BreachProvider {
+export function createTavilyProvider(apiKey: string | undefined, usernameGuesses = 10): BreachProvider {
   return {
     id: PROVIDER_ID,
     tier: "surface",
@@ -14,7 +14,7 @@ export function createTavilyProvider(apiKey: string | undefined): BreachProvider
       if (!apiKey) throw new ProviderError(PROVIDER_ID, "missing-key");
       // All searches run in parallel; one failing search does not lose the others.
       const settled = await Promise.allSettled(
-        plannedSearches(query).map(async ({ searchedOn, text, options }): Promise<TavilyBatch> => {
+        plannedSearches(query, usernameGuesses).map(async ({ searchedOn, text, options }): Promise<TavilyBatch> => {
           const parsed = tavilyResponseSchema.safeParse(await tavilySearch(apiKey, text, options, signal));
           if (!parsed.success) throw new ProviderError(PROVIDER_ID, "invalid-response");
           return { searchedOn, results: parsed.data.results };

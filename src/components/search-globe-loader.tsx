@@ -4,10 +4,14 @@ import { motion } from "motion/react";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import type { GlobeArc } from "@/components/globe-scene";
+import type { LatLng } from "@/components/ui/globe";
 
 // The visitor's kiosk (Neuchâtel, Switzerland): every arc starts here.
-const ORIGIN = { lat: 46.99, lng: 6.93 };
-const ARC_COLOR = "#ffe45c";
+export const ORIGIN = { lat: 46.99, lng: 6.93 };
+// Same value as --highlight in globals.css (three.js needs the value, D28).
+const ARC_COLOR = "#00e5ff";
+// Camera distance while it looks at a source: a little closer than the whole globe.
+const FOCUS_DISTANCE = 250;
 
 export type Destination = { lat: number; lng: number; place: string };
 
@@ -39,7 +43,7 @@ function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: numb
 
 // three.js only runs in the browser; the module is also preloaded while typing.
 const loadScene = () => import("@/components/globe-scene");
-const GlobeScene = dynamic(loadScene, { ssr: false, loading: () => null });
+export const GlobeScene = dynamic(loadScene, { ssr: false, loading: () => null });
 
 export function preloadGlobe() {
   void loadScene();
@@ -55,14 +59,22 @@ export function supportsWebGL(): boolean {
   }
 }
 
+// "+00:07": time since the start of the search, like the log of a scanner.
+function stamp(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds));
+  return `+${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+}
+
 export function SearchGlobeLoader({
   steps,
   index,
   percent,
+  expectedSeconds,
 }: {
   steps: GlobeStep[];
   index: number; // current step
   percent: number; // time-based estimate, 0-100
+  expectedSeconds: number;
 }) {
   // One arc per destination of the steps already reached: a new arc appears at each step.
   const arcs = useMemo<GlobeArc[]>(() => {
@@ -88,6 +100,16 @@ export function SearchGlobeLoader({
   }, [steps, index]);
 
   const current = steps[index];
+  // The camera turns towards the source of the current step and a ring marks it (D28).
+  // Steps without a single place (data breaches, 650 sites) let the globe rotate.
+  const focus = useMemo<LatLng | null>(() => {
+    const first = current?.destinations[0];
+    return first ? { lat: first.lat, lng: first.lng } : null;
+  }, [current]);
+  const pings = useMemo<LatLng[]>(
+    () => current?.destinations.map((d) => ({ lat: d.lat, lng: d.lng })) ?? [],
+    [current],
+  );
   const places = [...new Set(steps.slice(0, index + 1).flatMap((s) => s.destinations.map((d) => d.place)))];
 
   return (
@@ -96,21 +118,50 @@ export function SearchGlobeLoader({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className="flex w-full flex-col items-center gap-4"
+      className="grid w-full grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]"
     >
-      {/* Decorative: the steps are also given as text below. The canvas needs a fixed
-          height (it takes the size of its parent); smaller on phones (D25). */}
-      <div className="h-[280px] w-full max-w-[600px] sm:h-[400px] lg:h-[500px]" aria-hidden>
-        <GlobeScene arcs={arcs} />
+      {/* Decorative: the steps are also given as text. The canvas needs a fixed height
+          (it takes the size of its parent); smaller on phones (D25). */}
+      <div className="hud-panel hud-corners relative h-[300px] overflow-hidden sm:h-[440px] lg:h-[540px]" aria-hidden>
+        <GlobeScene arcs={arcs} pings={pings} focus={focus} distance={FOCUS_DISTANCE} />
+        <div className="pointer-events-none absolute top-3 left-4 flex flex-col gap-1">
+          <span className="hud-label">Scan en cours</span>
+          <span className="font-mono text-3xl font-bold text-primary tabular-nums">{Math.round(percent)} %</span>
+          <span className="font-mono text-xs text-muted-foreground uppercase">estimation</span>
+        </div>
+        <div className="pointer-events-none absolute right-4 bottom-3 font-mono text-xs text-muted-foreground uppercase">
+          Origine · Neuchâtel {ORIGIN.lat.toFixed(2)}° N {ORIGIN.lng.toFixed(2)}° E
+        </div>
       </div>
-      <div className="flex flex-col items-center gap-1 text-center">
-        <p className="text-xl font-bold" aria-live="polite">
-          Recherche dans {current?.label ?? "les sources"}…
-        </p>
-        <p className="text-base text-muted-foreground">
-          Environ {Math.round(percent)} % (estimation).
-          {places.length > 0 && <> Tes données sont parties vers {places.join(", ")}.</>}
-        </p>
+
+      <div className="hud-panel flex flex-col gap-3 p-4">
+        <span className="hud-label">Journal</span>
+        <ol className="flex flex-col gap-2 font-mono text-sm" aria-hidden>
+          {steps.slice(0, index + 1).map((step, i) => (
+            <motion.li
+              key={step.label}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25 }}
+              className={i === index ? "text-foreground" : "text-muted-foreground"}
+            >
+              <span className="text-gold tabular-nums">{stamp((i / steps.length) * expectedSeconds)}</span>{" "}
+              {step.label}
+              {step.destinations.length > 0 && (
+                <span className="text-primary"> → {step.destinations.map((d) => d.place).join(", ")}</span>
+              )}
+              {i === index && <span className="ml-1 inline-block animate-pulse text-primary">▮</span>}
+            </motion.li>
+          ))}
+        </ol>
+        <div className="mt-auto flex flex-col gap-1 border-t border-border pt-3">
+          <p className="text-lg font-bold" aria-live="polite">
+            Recherche dans {current?.label ?? "les sources"}…
+          </p>
+          {places.length > 0 && (
+            <p className="text-base text-muted-foreground">Tes données sont parties vers {places.join(", ")}.</p>
+          )}
+        </div>
       </div>
     </motion.div>
   );

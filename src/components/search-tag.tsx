@@ -25,9 +25,10 @@ export const TYPE_INFO: Record<EntryType, { label: string; Icon: typeof Mail }> 
   username: { label: "Pseudo", Icon: AtSign },
   city: { label: "Localité", Icon: MapPin },
   birthYear: { label: "Année de naissance", Icon: Calendar },
+  birthDate: { label: "Date de naissance", Icon: Calendar },
 };
 
-const isContext = (type: EntryType) => type === "city" || type === "birthYear";
+const isContext = (type: EntryType) => type === "city" || type === "birthYear" || type === "birthDate";
 
 // Search values on the highlighter; context values (city, year) in dashed outline:
 // they only help to tell the visitor apart from homonyms.

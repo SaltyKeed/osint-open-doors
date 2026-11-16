@@ -70,6 +70,39 @@ describe("profile sites", () => {
     expect(site("Hacker News").read(null, "x")).toBeNull();
     expect(site("Speedrun.com").read({ data: [] }, "x")).toBeNull();
     expect(site("Bluesky").read({ error: "InvalidRequest" }, "x")).toBeNull();
+    expect(site("GitHub").read({ message: "Not Found" }, "x")).toBeNull();
+    expect(site("GitLab").read([], "x")).toBeNull();
+    expect(site("Reddit").read({ data: { is_suspended: true } }, "x")).toBeNull();
+    expect(site("Wikipédia").read({ query: { users: [{ name: "x", missing: "" }] } }, "x")).toBeNull();
+  });
+
+  it("reads the new official profile APIs and keeps only facts", () => {
+    expect(site("GitHub").read({ html_url: "https://github.com/jd", type: "User", created_at: "2015-01-02T00:00:00Z", public_repos: 12, followers: 3 }, "jd")?.details).toEqual([
+      "Compte créé en 2015",
+      "12 dépôts publics",
+      "3 abonnés",
+    ]);
+    // An organization, not a person, is skipped.
+    expect(site("GitHub").read({ html_url: "u", type: "Organization" }, "x")).toBeNull();
+    expect(site("GitLab").read([{ username: "JDupont", web_url: "https://gitlab.com/JDupont", state: "active" }], "jdupont")?.url).toBe(
+      "https://gitlab.com/JDupont",
+    );
+    expect(site("Mastodon (mastodon.social)").read({ url: "https://mastodon.social/@jd", created_at: "2019-03-01T00:00:00Z", statuses_count: 40 }, "jd")?.details).toEqual([
+      "Compte créé en 2019",
+      "40 publications",
+    ]);
+    expect(site("Scratch").read({ username: "jd", history: { joined: "2016-09-01T00:00:00Z" }, profile: { country: "Switzerland" } }, "jd")?.details).toEqual([
+      "Compte créé en 2016",
+      "Pays indiqué : Switzerland",
+    ]);
+    expect(site("Reddit").read({ data: { created_utc: 1561939200, link_karma: 10, comment_karma: 5 } }, "jd")?.details).toEqual([
+      "Compte créé en 2019",
+      "15 points de karma",
+    ]);
+    expect(site("Wikipédia").read({ query: { users: [{ name: "JD", registration: "2014-05-01T00:00:00Z", editcount: 7 }] } }, "jd")?.details).toEqual([
+      "Compte créé en 2014",
+      "7 modifications",
+    ]);
   });
 
   it("says which other accounts a Speedrun.com profile links, without their address", () => {

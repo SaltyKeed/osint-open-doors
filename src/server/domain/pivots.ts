@@ -39,6 +39,10 @@ export function collectPivots(findings: Finding[], query: SearchQuery, limit = 3
     } else if (finding.kind === "web" && finding.verified) {
       const handle = handleFromProfileUrl(finding.url);
       if (handle) add(handle, finding.site);
+    } else if (finding.kind === "web" && finding.handleMatch?.usesBirthDate) {
+      // Exception to the rule above (D28): the username holds the visitor's name AND a
+      // piece of their birth date, a homonym is unlikely.
+      add(finding.handleMatch.handle, `ton profil probable sur ${finding.site}`);
     }
   }
 

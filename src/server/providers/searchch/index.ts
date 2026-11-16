@@ -1,6 +1,7 @@
 import "server-only";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import type { Finding } from "@/server/domain/types";
+import { resolveCommune } from "@/server/geo/communes";
 import { type BreachProvider, ProviderError } from "../types";
 import { searchChQuery } from "./client";
 import { PROVIDER_ID, toDirectoryFindings, toNameCount } from "./mapper";
@@ -24,7 +25,7 @@ export function createSearchChProvider(apiKey: string | undefined): BreachProvid
         const national = parsePhoneNumberFromString(query.phone)?.formatNational().replace(/\D/g, "");
         tasks.push(
           feed({ was: national ?? query.phone, maxnum: "10" }, signal).then((f) =>
-            toDirectoryFindings(f, query),
+            toDirectoryFindings(f, query, resolveCommune),
           ),
         );
       }

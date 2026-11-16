@@ -1,5 +1,8 @@
 // Domain model: what the rest of the app knows about a search and its results.
-// No provider-specific field and no unmasked personal value ever appear here.
+// No provider-specific field and no unmasked personal value ever appear here
+// (one exception under review: the commune of a directory listing, D27).
+
+import type { Commune } from "./commune";
 
 export type QueryKind = "email" | "phone" | "name" | "username";
 
@@ -13,6 +16,9 @@ export type SearchQuery = {
   // Optional context to tell the visitor apart from homonyms (D20).
   city?: string;
   birthYear?: string;
+  // Full birth date when the visitor gives it, ISO "2006-03-14" (D28). Only used to
+  // guess and recognize usernames; never displayed nor sent to a source as such.
+  birthDate?: string;
 };
 
 // Kinds of exposed data. Only the category is kept, never the value.
@@ -29,6 +35,14 @@ export const DATA_CATEGORIES = [
   "financial",
   "governmentId",
   "location",
+  // Finer categories for the "by data type" view (D30).
+  "health",
+  "messages",
+  "privateLife",
+  "work",
+  "device",
+  "social",
+  "activity",
   "other",
 ] as const;
 
@@ -51,6 +65,14 @@ export type BreachFinding = FindingBase & {
   year?: string;
   records?: number;
   categories: DataCategory[];
+  // The breach was completed with the public HIBP catalog (D29): clean title, plain-text
+  // description of what happened, and the service logo (D32).
+  describedBy?: "hibp";
+  title?: string;
+  description?: string;
+  logo?: string;
+  // Quality warnings from the catalog: unconfirmed, fabricated, spam list (D29).
+  notes?: string[];
 };
 
 // A public web page found with the visitor's data.
@@ -70,6 +92,8 @@ export type WebFinding = FindingBase & {
   archive?: WebArchiveInfo;
   // "gone": the site answers 404/410, the page was deleted.
   live?: "online" | "gone" | "unknown";
+  // Profile page whose username is built from the visitor's name (and birth date), D28.
+  handleMatch?: { handle: string; explanation: string; usesBirthDate: boolean; strong: boolean };
 };
 
 export type WebArchiveInfo = {
@@ -84,6 +108,8 @@ export type DirectoryFinding = FindingBase & {
   source: string;
   categories: DataCategory[]; // which data the listing makes public
   noPromo: boolean; // "*" in the directory: no advertising calls
+  // Commune of the listing, shown on a map (D27). Never the street nor the number.
+  commune?: Commune;
 };
 
 // A public account or record is linked to the visitor's email.
@@ -110,6 +136,8 @@ export type ProfileFinding = FindingBase & {
   // Facts read from the public profile (D24): creation year, country, activity.
   // Never a display name, bio or city: the account may belong to someone else.
   details?: string[];
+  // The username was guessed from the visitor's name, not found or typed (D28).
+  guessed?: boolean;
 };
 
 // Results found by name only: probably homonyms, so only a total is shown.

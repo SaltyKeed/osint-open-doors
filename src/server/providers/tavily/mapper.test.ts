@@ -82,4 +82,24 @@ describe("tavily mapper", () => {
     expect(findings.map((f) => f.url)).not.toContain("https://spam.example/x");
     expect(findings.filter((f) => f.url === "https://www.forum.example/u/42")).toHaveLength(1);
   });
+
+  it("keeps a profile whose username is built from the name and birth date, and explains it (D28)", () => {
+    const visitor = { firstName: "Jean", lastName: "Dupont", birthDate: "2001-03-14" };
+    const batch = {
+      searchedOn: "username" as const,
+      results: [
+        { url: "https://www.instagram.com/jean.dup14/", title: "Jean (@jean.dup14)", content: "Photos et vidéos" },
+        { url: "https://www.instagram.com/jean.dup15/", title: "Jean (@jean.dup15)", content: "Un autre compte" },
+        { url: "https://news.example/jean-dup14", title: "jean.dup14", content: "Pas un profil" },
+      ],
+    };
+    const [page, ...rest] = toFindings([batch], visitor);
+    expect(rest).toEqual([]);
+    expect(page).toMatchObject({
+      verified: false,
+      probable: true,
+      probableBecause: "ton pseudo = ton prénom (jean) + ton nom abrégé (dup) + ton jour de naissance (14)",
+      handleMatch: { handle: "jean.dup14", usesBirthDate: true },
+    });
+  });
 });

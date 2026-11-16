@@ -48,13 +48,16 @@ async function checkSite(site: WmnSite, username: string, signal: AbortSignal): 
 
 // Checks usernames on every site, all in one queue. Stops when the signal ends and
 // returns the accounts found so far (partial result rather than nothing).
+// A target can be limited to some categories (e.g. "social" for guessed usernames, D28).
 export async function checkUsernames(
-  targets: { username: string; origin: string }[],
+  targets: { username: string; origin: string; categories?: string[]; guessed?: boolean }[],
   signal: AbortSignal,
 ): Promise<ProfileFinding[]> {
   if (targets.length === 0) return [];
   const sites = await loadSites();
-  const jobs = targets.flatMap((target) => sites.map((site) => ({ ...target, site })));
+  const jobs = targets.flatMap((target) =>
+    sites.filter((site) => !target.categories || target.categories.includes(site.cat)).map((site) => ({ ...target, site })),
+  );
   const found: ProfileFinding[] = [];
   let next = 0;
 
@@ -72,6 +75,7 @@ export async function checkUsernames(
           username: job.username,
           origin: job.origin,
           matchedOn: "username",
+          ...(job.guessed ? { guessed: true } : {}),
         });
       }
     }

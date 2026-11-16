@@ -43,3 +43,11 @@ La vérification des pseudos utilise la liste WhatsMyName
 Attribution-ShareAlike 4.0. Les sources interrogées sont décrites dans
 `docs/DECISIONS.md` (D16, D18, D19, D24). Le registre du commerce vient de la
 Feuille officielle suisse du commerce (SECO, amtsblattportal.ch).
+
+Les descriptions des fuites (types de données, taille, date) viennent du
+catalogue public de Have I Been Pwned (haveibeenpwned.com), sous licence
+Creative Commons Attribution 4.0 ; l'attribution est affichée dans l'onglet
+des fuites. En mode `deep`, les ordinateurs infectés viennent de l'API
+communautaire gratuite de Hudson Rock et les attaques par rançongiciel de
+ransomware.live (usage personnel et non commercial). Voir
+`docs/DECISIONS.md`, D29.

@@ -29,6 +29,7 @@ export function stepsFor(payload: Payload): GlobeStep[] {
       { label: "le web, la presse et les réseaux sociaux", destinations: [newYork] },
       { label: "Wikidata et ORCID", destinations: [sanFrancisco, bethesda] },
       { label: "le registre du commerce (FOSC)", destinations: [bern] },
+      { label: "des pseudos devinés à partir de ton nom", destinations: [] },
     );
   }
   if (payload.username || payload.email) {
@@ -61,7 +62,8 @@ export function LoadingScreen({ payload, onCancel }: { payload: Payload; onCance
   const remainingText = remaining > 0 ? `Environ ${remaining} secondes restantes` : "Encore un instant…";
 
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-8">
+    // Wider with the globe: the globe and the log sit side by side on a large screen (D28).
+    <div className={`flex w-full flex-col gap-8 ${showGlobe ? "max-w-6xl" : "max-w-3xl"}`}>
       <div className="flex flex-col gap-4">
         <h1 id="screen-title" tabIndex={-1} className="font-heading text-5xl leading-[1.05] font-bold tracking-tight outline-none sm:text-6xl">
           Recherche en cours…
@@ -70,7 +72,7 @@ export function LoadingScreen({ payload, onCancel }: { payload: Payload; onCance
       </div>
 
       {showGlobe ? (
-        <SearchGlobeLoader steps={steps} index={index} percent={progress * 100} />
+        <SearchGlobeLoader steps={steps} index={index} percent={progress * 100} expectedSeconds={EXPECTED_SECONDS} />
       ) : (
         // Fallback (reduced motion or no WebGL): the list with the highlighter marker.
         <ul className="flex flex-col gap-2 text-2xl" aria-hidden>

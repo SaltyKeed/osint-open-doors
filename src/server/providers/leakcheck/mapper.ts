@@ -42,6 +42,10 @@ const CATEGORY_MAP: Record<string, DataCategory> = {
   middle_name: "name",
   name: "name",
   ssn: "governmentId",
+  gender: "privateLife",
+  company: "work",
+  job_title: "work",
+  user_agent: "device",
 };
 
 function toCategories(fields: string[]): DataCategory[] {
@@ -49,7 +53,12 @@ function toCategories(fields: string[]): DataCategory[] {
 }
 
 // Whitelist: name and year of each source; the exposed data types as categories only.
-export function toEmailFindings(raw: unknown): (BreachFinding | AccountFinding)[] {
+// matchedOn "phone": same public API asked with the phone number (deep mode, D29).
+export function toEmailFindings(
+  raw: unknown,
+  matchedOn: "email" | "phone" = "email",
+): (BreachFinding | AccountFinding)[] {
+  const what = matchedOn === "phone" ? "ton numéro" : "ton email";
   const parsed = publicSchema.safeParse(raw);
   if (!parsed.success || !parsed.data.success || parsed.data.sources.length === 0) return [];
   const { sources, fields } = parsed.data;
@@ -58,9 +67,9 @@ export function toEmailFindings(raw: unknown): (BreachFinding | AccountFinding)[
     providerId: PROVIDER_ID,
     source: s.name,
     year: /^\d{4}/.test(s.date) ? s.date.slice(0, 4) : undefined,
-    // Per source, only the email is sure: "fields" mixes all the sources.
-    categories: ["email"],
-    matchedOn: "email",
+    // Per source, only the searched value is sure: "fields" mixes all the sources.
+    categories: [matchedOn],
+    matchedOn,
   }));
   const categories = toCategories(fields);
   if (categories.length === 0) return breaches;
@@ -69,12 +78,12 @@ export function toEmailFindings(raw: unknown): (BreachFinding | AccountFinding)[
     {
       kind: "account",
       providerId: PROVIDER_ID,
-      service: "LeakCheck : données exposées",
+      service: matchedOn === "phone" ? "LeakCheck : données exposées avec ton numéro" : "LeakCheck : données exposées",
       summary:
-        `Dans les fuites qui contiennent ton email, LeakCheck a trouvé ${categories.length} types de données. ` +
+        `Dans les fuites qui contiennent ${what}, LeakCheck a trouvé ${categories.length} types de données. ` +
         "Seul le type est affiché, jamais la valeur.",
       categories,
-      matchedOn: "email",
+      matchedOn,
     },
   ];
 }

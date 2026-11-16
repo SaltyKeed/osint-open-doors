@@ -3,7 +3,7 @@
 import { AnimatePresence } from "motion/react";
 import { useRef, useState } from "react";
 import { type Entry, SearchTag, TYPE_INFO } from "@/components/search-tag";
-import { detect, explainUnknown, splitEntries, splitName } from "@/lib/detect";
+import { detect, explainUnknown, splitEntries, splitName, toIsoDate } from "@/lib/detect";
 
 export type { Entry } from "@/components/search-tag";
 
@@ -31,6 +31,8 @@ export function entriesToPayload(entries: Entry[]) {
   const find = (type: Entry["type"]) => entries.find((e) => e.type === type);
   const name = find("name");
   const split = name ? splitName(name.value, name.split) : undefined;
+  const dateEntry = find("birthDate");
+  const birthDate = dateEntry ? toIsoDate(dateEntry.value) : null;
   return {
     email: find("email")?.value,
     phone: find("phone")?.value,
@@ -38,7 +40,9 @@ export function entriesToPayload(entries: Entry[]) {
     lastName: split?.lastName,
     username: find("username")?.value,
     city: find("city")?.value,
-    birthYear: find("birthYear")?.value,
+    // The full date helps to guess usernames (D28); its year also serves as context.
+    birthDate: birthDate ?? undefined,
+    birthYear: find("birthYear")?.value ?? birthDate?.slice(0, 4),
   };
 }
 
@@ -148,7 +152,7 @@ export function SearchBar({
             key={entry.id}
             entry={entry}
             armed={armedId === entry.id}
-            contextIgnored={contextIgnored && (entry.type === "city" || entry.type === "birthYear")}
+            contextIgnored={contextIgnored && (entry.type === "city" || entry.type === "birthYear" || entry.type === "birthDate")}
             disabled={disabled}
             onSwitchType={() => switchType(entry)}
             onSwapName={() => updateSplit(entry, (s) => ({ ...s, lastFirst: !s.lastFirst }))}

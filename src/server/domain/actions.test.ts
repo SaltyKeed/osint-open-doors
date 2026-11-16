@@ -31,6 +31,19 @@ describe("buildActionPlan", () => {
     expect(plan.map((a) => a.id)).not.toContain("unique-passwords");
   });
 
+  it("puts the cleaning of an infected computer before the passwords (D29)", () => {
+    const infected: Finding = {
+      kind: "account",
+      providerId: "hudsonrock",
+      service: "Ordinateur infecté par un voleur de mots de passe",
+      summary: "résumé",
+      categories: ["email", "password"],
+      matchedOn: "email",
+    };
+    const plan = buildActionPlan([infected, breach(["password"])]);
+    expect(plan.map((a) => a.id).slice(0, 2)).toEqual(["infected-device", "change-passwords"]);
+  });
+
   it("does not repeat an action for several findings", () => {
     const plan = buildActionPlan([breach(["password"]), breach(["password"])]);
     expect(plan.filter((a) => a.id === "change-passwords")).toHaveLength(1);
@@ -53,5 +66,22 @@ describe("buildActionPlan", () => {
       { kind: "web", providerId: "tavily", verified: false, site: "news.example", url: "https://news.example", title: "", snippet: "", matchedOn: "name" },
     ]);
     expect(plan.map((a) => a.id)).toEqual(PREVENTION);
+  });
+
+  it("does not count accounts found with a username guessed from the name (D28)", () => {
+    const profile = (guessed: boolean): Finding => ({
+      kind: "profile",
+      providerId: "whatsmyname",
+      site: "Site",
+      category: "social",
+      url: "https://site.example/jeandupont",
+      username: "jeandupont",
+      origin: guessed ? "deviné à partir de ton nom" : "pseudo",
+      matchedOn: "username",
+      ...(guessed ? { guessed: true } : {}),
+    });
+    expect(buildActionPlan([breach(["email"]), profile(true)]).some((a) => a.id === "old-accounts")).toBe(false);
+    const plan = buildActionPlan([breach(["email"]), profile(false), profile(true)]);
+    expect(plan.find((a) => a.id === "old-accounts")?.title).toContain("1 compte");
   });
 });

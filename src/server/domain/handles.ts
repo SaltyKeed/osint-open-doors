@@ -25,6 +25,10 @@ const PATTERNS: Pattern[] = [
   { host: /(^|\.)facebook\.com$/, read: (s) => (s[0] && !s[0].includes(".php") ? s[0] : undefined) },
   { host: /(^|\.)twitch\.tv$/, read: (s) => s[0] },
   { host: /(^|\.)medium\.com$/, read: (s) => (s[0]?.startsWith("@") ? s[0].slice(1) : undefined) },
+  // Added with the username search of D28.
+  { host: /(^|\.)threads\.(net|com)$/, read: (s) => (s[0]?.startsWith("@") ? s[0].slice(1) : undefined) },
+  { host: /(^|\.)snapchat\.com$/, read: (s) => (s[0] === "add" ? s[1] : s[0]?.startsWith("@") ? s[0].slice(1) : undefined) },
+  { host: /(^|\.)(pinterest\.[a-z.]+|soundcloud\.com)$/, read: (s) => s[0] },
 ];
 
 export function handleFromProfileUrl(url: string): string | null {

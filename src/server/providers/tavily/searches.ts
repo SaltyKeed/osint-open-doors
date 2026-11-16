@@ -1,6 +1,7 @@
 import "server-only";
 import { phoneSearchVariants } from "@/server/domain/phone";
 import type { QueryKind, SearchQuery } from "@/server/domain/types";
+import { generateUsernames } from "@/server/domain/usernames";
 import type { TavilyOptions } from "./client";
 
 export type PlannedSearch = { searchedOn: QueryKind; text: string; options: TavilyOptions };
@@ -27,8 +28,17 @@ const SPORT_AND_CLUBS = [
   "fftt.com", "chess-results.com", "speedhive.mylaps.com",
 ];
 
+// Social networks where people use a username built from their name (D28).
+const PROFILE_SITES = [
+  "instagram.com", "tiktok.com", "x.com", "twitter.com", "threads.net", "youtube.com", "twitch.tv",
+  "pinterest.com", "snapchat.com", "soundcloud.com", "reddit.com", "github.com",
+];
+// Each guessed username is searched alone, without quotes, on all these sites at once:
+// tested on 2026-11-13, a group of usernames joined by OR (even 5) or a search on the
+// pieces ("leo rct") misses the profile, the username alone finds it. One credit each.
+
 // Every search for the visitor. The name is always searched as a whole ("First Last").
-export function plannedSearches(query: SearchQuery): PlannedSearch[] {
+export function plannedSearches(query: SearchQuery, usernameGuesses = 10): PlannedSearch[] {
   const searches: PlannedSearch[] = [];
 
   if (query.email) {
@@ -60,6 +70,9 @@ export function plannedSearches(query: SearchQuery): PlannedSearch[] {
     );
     if (query.city) {
       searches.push({ searchedOn: "name", text: `${name} "${query.city}"`, options: { maxResults: 20, depth: "basic" } });
+    }
+    for (const guess of generateUsernames(query, usernameGuesses)) {
+      searches.push({ searchedOn: "username", text: guess, options: { maxResults: 10, depth: "basic", includeDomains: PROFILE_SITES } });
     }
   }
 

@@ -17,6 +17,7 @@ const entrySchema = z.object({
   name: z.string().optional(),
   firstname: z.string().optional(),
   street: z.string().optional(),
+  zip: z.string().optional(),
   city: z.string().optional(),
   phone: z.string().optional(),
   nopromo: z.string().optional(),

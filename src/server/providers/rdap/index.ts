@@ -1,19 +1,10 @@
 import "server-only";
 import { z } from "zod";
+import { ownDomain } from "@/server/domain/email-domain";
 import { providerFetch } from "../http";
 import { type BreachProvider, ProviderError } from "../types";
 
 const PROVIDER_ID = "rdap";
-
-// Shared mailbox providers: their domain says nothing about the visitor.
-const SHARED_DOMAINS = new Set([
-  "gmail.com", "googlemail.com", "hotmail.com", "hotmail.fr", "hotmail.ch", "outlook.com",
-  "outlook.fr", "live.com", "live.fr", "msn.com", "yahoo.com", "yahoo.fr", "icloud.com",
-  "me.com", "mac.com", "proton.me", "protonmail.com", "protonmail.ch", "gmx.ch", "gmx.net",
-  "gmx.de", "gmx.fr", "bluewin.ch", "sunrise.ch", "hispeed.ch", "netplus.ch", "romandie.com",
-  "orange.fr", "free.fr", "laposte.net", "aol.com", "yandex.com", "mail.com", "tutanota.com",
-  "example.com", "example.org", "example.net",
-]);
 
 // Registries differ a lot: the schema is tolerant and the vCard is read by hand.
 const rdapSchema = z.object({
@@ -39,8 +30,8 @@ export const rdap: BreachProvider = {
   tier: "surface",
   supports: ["email"],
   async search(query, signal) {
-    const domain = query.email?.split("@")[1]?.toLowerCase();
-    if (!domain || SHARED_DOMAINS.has(domain)) return [];
+    const domain = ownDomain(query.email);
+    if (!domain) return [];
 
     // rdap.org refuses requests without a User-Agent (403).
     const headers = { "User-Agent": "osint-open-doors (school awareness project)", Accept: "application/rdap+json" };
