@@ -566,6 +566,38 @@ Corrections de D22 :
 Si Leak-Lookup refuse le devis, Snusbase et LeakCheck restent les services à
 fiches.
 
+## D24. Fuites récentes et dark web
+
+Date : 2026-11-16
+
+Enzo veut couvrir pratiquement toutes les fuites, y compris celles de 2023 à
+2026 qui circulent sur le dark web et sur Telegram. L'outil ne va pas lui-même
+sur le dark web (accès à des sites criminels, recel, stockage : contraire à
+D12) ; la recherche a porté sur les services qui indexent ces fuites.
+
+Mesure : le catalogue public de LeakCheck (1471 sources) a été ajouté à la
+comparaison de D23. LeakCheck est le plus à jour : 52 des 92 fuites de 2026
+connues de HIBP. Les trois services à fiches réunis couvrent 59 % des fuites
+de 2023 à 2026 (`SOURCES.md`, section 1.2).
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| S'arrêter aux services mesurés | Aucun achat à l'aveugle. | Combolists Telegram et certaines fuites d'entreprises manquantes. |
+| **Ajouter LeakRadar Enterprise et HackCheck Diamond (retenu)** | Combolists Telegram de 2024 à 2026 ; chance de couvrir des fuites récentes manquantes. | Budget d'environ 322 USD ; HackCheck ne publie pas sa liste, son apport n'est pas vérifiable. |
+| Demander leur liste à DeHashed, OathNet et HackCheck avant d'acheter | Achat vérifié. | Délai ; réponse incertaine. |
+
+Retenus : LeakCheck Pro, Leak-Lookup (API privée), Snusbase, HackCheck Diamond,
+Have I Been Pwned Core 1, LeakRadar Enterprise, Hudson Rock, catalogue HIBP,
+ransomware.live.
+
+Écartés : LeakedSource (vitrine de HEROIC, sans API), les plateformes de
+surveillance du dark web sur devis (HEROIC, Breachsense, DarkOwl), DeHashed et
+OathNet (liste non publiée), les forums et marchés du dark web.
+
+Limite : une partie des fuites récentes reste introuvable légalement. Les
+données saisies par la police (Operation Endgame, Genesis Market) ne sont
+disponibles que dans HIBP, qui donne leur présence sans le contenu.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -589,4 +621,4 @@ fiches.
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
 | But du projet | Outil d'enquête automatique sur un volontaire consentant (D19, `CADRAGE.md`) | Outil de sensibilisation aux fuites |
 | Sources | Catalogue `SOURCES.md` ; moteurs Tavily et Brave (D20) | Tavily seul |
-| Fuites | Leak-Lookup, Snusbase, LeakCheck Pro, HIBP Core, Hudson Rock, LeakRadar Starter, catalogue HIBP (D23) | Snusbase et LeakCheck si Leak-Lookup refuse |
+| Fuites | LeakCheck Pro, Leak-Lookup, Snusbase, HackCheck, HIBP Core, LeakRadar Enterprise, Hudson Rock, catalogue HIBP (D24) | Sans Leak-Lookup s'il refuse le devis |

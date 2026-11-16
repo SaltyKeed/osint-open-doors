@@ -207,21 +207,21 @@ Statuts :
 | --- | --- | --- | --- | --- | --- |
 | `EMAIL` | Fiches de fuites (`SOURCES.md`, section 1.1) | A1 A2 A3 B2 B3 H1 H2 H3 H4 | `TEL` `PSEUDO` `NOM` `IP` `EMAIL` | Payant | Retenu |
 | `EMAIL` | Have I Been Pwned Core 1, catalogue HIBP | H1 | aucun | Abonnement et gratuit | Retenu |
-| `EMAIL` | Infostealers : Hudson Rock, LeakRadar Starter | H3 H5 | `DOMAINE` `PROFIL` | Gratuit et payant | Prototype et retenu |
+| `EMAIL` | Infostealers et combolists : Hudson Rock, LeakRadar Enterprise | H3 H5 | `DOMAINE` `PROFIL` | Gratuit et payant | Prototype et retenu |
 | `EMAIL` | Gravatar, Libravatar | A1 A5 F2 | `PSEUDO` `PROFIL` | Gratuit | Prototype |
 | `EMAIL` | GitHub (utilisateurs et commits) | A1 C1 E1 E3 F2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Prototype |
 | `EMAIL` | Serveurs de clés PGP | A1 B1 | `EMAIL` | Gratuit | Prototype |
 | `EMAIL` | Moteur de recherche (valeur exacte) | I1 I3 | `PROFIL` | Clé gratuite | Prototype |
 | `EMAIL` | Domaine de l'email (hors webmail) | E1 | `ORGA` `DOMAINE` | Gratuit | Nouveau |
 | `EMAIL` | Partie avant le @ | aucun | `PSEUDO` (confiance « possible ») | Local | Prototype |
-| `TEL` | Fiches de fuites : Leak-Lookup, LeakCheck Pro | A1 A2 B1 B3 C1 E1 H1 H2 H3 | `EMAIL` `NOM` `PSEUDO` | Payant | Retenu |
+| `TEL` | Fiches de fuites : LeakCheck Pro, Leak-Lookup, HackCheck | A1 A2 B1 B3 C1 E1 H1 H2 H3 | `EMAIL` `NOM` `PSEUDO` | Payant | Retenu |
 | `TEL` | Annuaire search.ch | A1 B3 C1 | `NOM` | Gratuit, quota | Prototype |
 | `TEL` | Analyse locale du numéro | pays, type de ligne, opérateur d'origine | aucun | Local | Prototype |
 | `TEL` | Moteur de recherche (plusieurs formats) | I1 I3 | `PROFIL` | Clé gratuite | Prototype |
 | `PSEUDO` | Base de sites (WhatsMyName et Maigret, figée dans le dépôt) | F1 F2 | `PROFIL` | Gratuit | À refaire |
 | `PSEUDO` | Fiches de fuites (`SOURCES.md`, section 1.1) | A1 B1 B2 B3 H1 H2 H3 | `EMAIL` `TEL` | Payant | Retenu |
-| `NOM` | Fiches de fuites : Leak-Lookup, Snusbase | A2 B1 B2 B3 H1 H2 | `EMAIL` `TEL` (seulement si la fiche est « confirmé ») | Payant | Retenu |
-| `IP` | Fiches de fuites : Leak-Lookup, Snusbase | H2 | `EMAIL` | Payant | Retenu |
+| `NOM` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | A2 B1 B2 B3 H1 H2 | `EMAIL` `TEL` (seulement si la fiche est « confirmé ») | Payant | Retenu |
+| `IP` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | H2 | `EMAIL` | Payant | Retenu |
 | `PSEUDO` | Moteur de recherche | I1 | `PROFIL` | Clé gratuite | Prototype |
 | `PROFIL` | API publique du site (GitHub, GitLab, Mastodon, YouTube, Twitch, Steam, Chess.com...) | A1 A5 C1 E1 F2 G2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Partiel |
 | `PROFIL` | Listes publiques d'abonnés, d'amis et mentions | J1 | aucun (identifiants de tiers, jamais relancés) | Gratuit | Nouveau |
