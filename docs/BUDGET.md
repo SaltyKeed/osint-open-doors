@@ -19,7 +19,7 @@ peut pas savoir si son numéro de téléphone ou son pseudo apparaît dans une
 fuite, ni quelles données précises ont été exposées. C'est pourtant ce qui
 montre le mieux le risque réel.
 
-## Services payants retenus (D20)
+## Services payants retenus (D20, D21)
 
 Les prix ont été relevés le 2026-11-16 (`SOURCES.md`). Ils sont en dollars
 américains et doivent être vérifiés sur la page officielle le jour de l'achat.
@@ -29,6 +29,12 @@ américains et doivent être vérifiés sur la page officielle le jour de l'acha
 | LeakCheck (Monthly) | Fiches de fuites par email, pseudo, téléphone ; 200 recherches par jour | 9.99 par mois | Page officielle |
 | Snusbase | Fiches de fuites par email, nom, pseudo, IP, téléphone ; API jusqu'à 2048 requêtes par jour | Non publié, à relever à la création du compte | Page officielle |
 | DeHashed (Professional) | Fiches de fuites par email, nom, adresse, téléphone, IP ; seule offre avec l'API | 179.99 par mois, plus environ 0.02 par requête | Source tierce (OSINTBench, 2026-04-02) |
+| HackCheck (Diamond) | Fiches de fuites par email, pseudo, nom, IP, téléphone, mot de passe, domaine | 39.49 par mois ; 15 % de réduction avec une adresse scolaire | Page officielle |
+| OathNet | Fiches de fuites, infostealers, comptes de jeux liés | Non publié, à relever à la création du compte | Page protégée |
+| Leak-Lookup | Fiches de fuites par email, pseudo, IP, téléphone, domaine | Crédits à la recherche, prix à relever | Page officielle |
+| BreachDirectory | Fuites avec mots de passe partiellement masqués | 19.99 à 49.99 EUR par mois | Sources contradictoires |
+| LeakRadar (Enterprise) | Infostealers et combolists : identifiant, mot de passe, site | 58.33 EUR par mois (699.99 par an) | Page officielle |
+| Revealer (Pro) | Fuites, infostealers, comptes trouvés ; API 500 requêtes par semaine | 79.99 par mois | Page officielle |
 | Have I Been Pwned (Core 1) | Fuites par email avec description fiable | 4.39 par mois (facturation annuelle) | Page officielle |
 | Brave Search API | Second moteur de recherche | 5 par 1000 requêtes, 5 offerts par mois | Page officielle |
 | Tavily (au-delà du gratuit) | Moteur de recherche principal | 0.008 par crédit ; 1000 crédits gratuits par mois ; gratuit pour les étudiants sur demande | Page officielle |
@@ -41,9 +47,10 @@ américains et doivent être vérifiés sur la page officielle le jour de l'acha
   requêtes par visiteur est estimé à environ 15 recherches web.
 - LeakCheck, Snusbase et Have I Been Pwned : 2 mois (décembre pour le
   développement, janvier pour la démo).
-- DeHashed : 1 mois seulement (janvier), à cause de son prix. Son adaptateur
-  est écrit en décembre d'après la documentation, puis vérifié au début de
-  janvier.
+- Services à plus de 45 par mois (DeHashed, Revealer, LeakRadar,
+  BreachDirectory) : 1 mois seulement (janvier). Leur adaptateur est écrit en
+  décembre d'après la documentation, puis vérifié au début de janvier.
+- HackCheck : 2 mois, comme LeakCheck.
 - Les abonnements sont résiliés après l'événement.
 
 ## Budget demandé
@@ -54,20 +61,30 @@ américains et doivent être vérifiés sur la page officielle le jour de l'acha
 | Snusbase | 2 mois x prix à relever | à relever |
 | DeHashed, abonnement | 1 mois x 179.99 | 179.99 |
 | DeHashed, crédits API | environ 1000 requêtes x 0.02 | 20.00 |
+| HackCheck | 2 mois x 39.49 (avant réduction scolaire) | 78.98 |
+| OathNet | prix à relever | à relever |
+| Leak-Lookup | crédits, prix à relever | à relever |
+| Revealer | 1 mois x 79.99 | 79.99 |
+| BreachDirectory | 1 mois x 49.99 EUR (borne haute) | environ 54 |
+| LeakRadar | 1 mois x 58.33 EUR | environ 63 |
 | Have I Been Pwned | 2 mois x 4.39 | 8.78 |
 | Brave Search API | environ 3000 requêtes x 0.005, moins 5 offerts | 10.00 |
 | Tavily | environ 2000 crédits au-delà du gratuit x 0.008 (0 si l'offre étudiante est accordée) | 16.00 |
-| Total sans Snusbase | | environ 255 |
+| Total sans Snusbase, OathNet ni Leak-Lookup | | environ 530 |
 
-Une marge d'environ 10 % est à prévoir pour le taux de change et la TVA. Le
-total dépasse 150 CHF, comme validé en D19 ; il est à faire accepter par
+Les montants en euros sont convertis à environ 1.08 USD pour 1 EUR. Une
+marge d'environ 10 % est à prévoir pour le taux de change et la TVA. Le total
+dépasse 150 CHF, comme validé en D19 ; il est à faire accepter par
 l'enseignant avant tout achat.
 
 ## Pourquoi ces services
 
 - Les fiches de fuites sont la seule source du contenu des fuites (adresse,
-  téléphone, date de naissance, mot de passe). Trois bases différentes
-  trouvent plus de fuites qu'une seule.
+  téléphone, date de naissance, mot de passe). Chaque base contient des fuites
+  que les autres n'ont pas : le but est de couvrir toutes les fuites
+  accessibles (D21).
+- LeakRadar et Revealer donnent les identifiants volés par un infostealer,
+  avec le site concerné : Hudson Rock, gratuit, ne donne qu'un résumé.
 - DeHashed est le seul à chercher par nom et par adresse ; c'est le poste le
   plus cher, il n'est donc pris que pour le mois de la démo.
 - Brave a un index différent de Tavily : il trouve des pages (LinkedIn, presse,

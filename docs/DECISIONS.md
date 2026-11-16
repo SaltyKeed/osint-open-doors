@@ -489,6 +489,30 @@ est légale et si elle est décrite dans `SOURCES.md`. Le budget correspondant
 est dans `BUDGET.md`. Aucun service n'est souscrit avant son acceptation par
 l'enseignant.
 
+## D21. Recensement des sources de fuites
+
+Date : 2026-11-16
+
+Enzo veut que l'outil interroge toutes les sources accessibles de fuites, de
+bases volées et de journaux d'infostealers. Un recensement a été fait le
+2026-11-16 ; le résultat est dans `SOURCES.md`, section 1, en quatre niveaux :
+fiches complètes, infostealers, exposition sans contenu, écartés.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Garder les trois services de D20 | Budget plus faible. | Des fuites présentes dans d'autres bases ne sont pas trouvées. |
+| **Ajouter tous les services légaux accessibles à un particulier (retenu)** | Couverture maximale des fuites et des infostealers. | Budget d'environ 530 USD, plus trois services au prix non publié ; plus d'adaptateurs à écrire. |
+| Ajouter aussi les bots Telegram et le téléchargement de fuites | Encore plus de données. | Exploitants criminels ou sous sanctions ; stockage de données de millions de personnes (contraire à D12). |
+
+Ajoutés : HackCheck Diamond, OathNet, Leak-Lookup, BreachDirectory, ProxyNova
+COMB, LeakRadar Enterprise, Revealer Pro, et les sources gratuites
+XposedOrNot (infostealers et catalogue) et IPQS Dark Web Leak.
+
+Écartés : Intelligence X, les plateformes d'entreprise sur devis (HEROIC,
+SpyCloud, Constella, Flare, Recorded Future, Webz.io), Have I Been Pwned Pro,
+IntelBase, les bots Telegram, le téléchargement de fuites, et les services
+fermés. Raisons dans `SOURCES.md`, section 1.4.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -511,4 +535,5 @@ l'enseignant.
 | Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
 | But du projet | Outil d'enquête automatique sur un volontaire consentant (D19, `CADRAGE.md`) | Outil de sensibilisation aux fuites |
-| Sources | Catalogue `SOURCES.md` ; fiches de fuites LeakCheck, Snusbase, DeHashed ; moteurs Tavily et Brave (D20) | LeakCheck seul ; Tavily seul |
+| Sources | Catalogue `SOURCES.md` ; moteurs Tavily et Brave (D20) | Tavily seul |
+| Fuites | Toutes les sources légales accessibles : LeakCheck, Snusbase, DeHashed, HackCheck, OathNet, Leak-Lookup, BreachDirectory, LeakRadar, Revealer et les gratuites (D20, D21) | LeakCheck seul |
