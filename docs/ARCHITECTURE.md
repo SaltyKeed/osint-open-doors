@@ -20,7 +20,8 @@ ensuite un plan d'action concret.
 
 | Invariant | Mise en œuvre |
 | --- | --- |
-| Liste blanche de champs | Les mappers des providers construisent les champs de la fiche de vie (`CADRAGE.md`, section 5). Le type brut ne sort jamais de l'adaptateur. |
+| Liste blanche de champs | Les mappers des sources construisent les champs de la fiche de vie (`CADRAGE.md`, section 5). Le type brut ne sort jamais de l'adaptateur. Les colonnes inconnues d'une fuite sont gardées sous « autres données de la fuite », masquées par défaut (D25). |
+| Plan d'action sans donnée personnelle | L'API Anthropic reçoit seulement les types de constats, jamais leurs valeurs (D25). |
 | Niveaux de confiance (homonymes) | Chaque information est « confirmé », « probable », « possible » ou « homonyme probable » (`CADRAGE.md`, section 7). Seuls les deux premiers niveaux sont détaillés et servent au rebond ; les autres donnent un total. Un nom seul ne sert jamais de rebond. |
 | Valeurs masquées par défaut | Toute valeur, mots de passe compris, est masquée (`+41 79 ••• •• 42`) et visible avec un bouton « œil » (D19). |
 | Entourage sans enquête | Les proches sont affichés, mais leurs identifiants ne sont jamais renvoyés dans la boucle d'enquête. |

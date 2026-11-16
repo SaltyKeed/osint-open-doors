@@ -51,8 +51,12 @@ les règles de @AGENTS.md (fichier généré par Next.js).
 Ils s'appliquent à tout le code, sans exception. Détail et justification :
 `docs/ARCHITECTURE.md`, section 2.
 
-- Les mappers des providers construisent les objets du domaine à partir d'une
-  liste blanche de champs. La réponse brute reste dans le dossier du provider.
+- Les mappers des sources construisent les champs de la fiche à partir d'une
+  liste blanche. La réponse brute reste dans le dossier de la source. Seule
+  exception : les colonnes inconnues d'une fuite sont gardées sous « autres
+  données de la fuite », masquées par défaut (D25).
+- Le plan d'action est rédigé par l'API Anthropic à partir des types de
+  constats seulement : aucune valeur ne lui est envoyée (D25).
 - Chaque information a un niveau de confiance (`docs/CADRAGE.md`, section 7).
   Seules les informations « confirmé » et « probable » sont détaillées et
   servent au rebond ; un nom seul ne sert jamais de rebond.

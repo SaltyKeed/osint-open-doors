@@ -297,7 +297,8 @@ fin : quand aucun nouvel identifiant fiable n'apparaît
 Il n'y a pas de limite de profondeur ni de durée (décision du 2026-11-16).
 L'enquête s'arrête d'elle-même quand les rebonds ne donnent plus rien de
 nouveau. La fiche se remplit en direct pendant ce temps. La seule limite est
-le quota de chaque source.
+le quota de chaque source : une source dont le quota est atteint est sautée
+et l'écran l'indique (D25).
 
 ### Rattachement et niveaux de confiance
 
@@ -364,6 +365,7 @@ Règles :
 | Date de la démo | Portes ouvertes de janvier 2027 |
 | Base de code | Repartir de zéro sur `sandbox`, à partir de `main` et des règles de Tiago, pour pouvoir fusionner dans `main` |
 | Ancien prototype | Archivé dans une branche `sandbox-v1` avant de repartir |
+| Conception du moteur, de l'interface et du plan d'action | Décidée en D25 (`DECISIONS.md`) |
 
 ### Validé par l'enseignant (oralement, 2026-11-16)
 
@@ -428,6 +430,12 @@ Les portes ouvertes ont lieu en janvier 2027.
 3. Préparer le budget dans `BUDGET.md` et le faire accepter par l'enseignant.
 4. (Fait le 2026-11-16.) Prototype archivé dans `sandbox-v1` ; `sandbox`
    repart de `main`.
-5. Écrire le modèle de données (identifiant, constat, chemin, confiance, champs
-   de la fiche) et ses tests.
-6. Construire le moteur d'enquête, puis l'interface.
+5. (Fait le 2026-11-16.) Décisions de conception (D25).
+6. Fin novembre : écrire le modèle de données (identifiant, constat, chemin,
+   confiance, champs de la fiche) et ses tests.
+7. 1 au 15 décembre : moteur d'enquête avec GitHub, Gravatar et Hudson Rock,
+   puis les autres sources gratuites ; test du réseau de l'école.
+8. 16 au 31 décembre : sources payantes (après acceptation du budget) et
+   interface.
+9. 1 au 15 janvier : essais sur volontaires et corrections ; pull request vers
+   `main`.

@@ -598,6 +598,84 @@ Limite : une partie des fuites récentes reste introuvable légalement. Les
 données saisies par la police (Operation Endgame, Genesis Market) ne sont
 disponibles que dans HIBP, qui donne leur présence sans le contenu.
 
+## D25. Conception avant le développement
+
+Date : 2026-11-16
+
+Décisions prises par Enzo, par questionnaire, avant d'écrire le code de la
+nouvelle base. Chaque ligne donne l'option retenue ; les autres options
+proposées sont indiquées entre parenthèses.
+
+### Socle repris de main
+
+| Sujet | Retenu | Autres options |
+| --- | --- | --- |
+| Modes `surface` et `deep` (D10) | Un seul mode : toutes les sources du catalogue ; une source sans clé configurée est sautée | Garder les deux modes |
+| Structure des sources | Port générique `Source` : un identifiant en entrée, des constats et de nouveaux identifiants en sortie | Un port par famille de sources |
+| Adaptateur XposedOrNot du socle | Supprimé (doublon, D22) | Le garder comme modèle ; le réactiver |
+| Console `/dev` (D18) | Gardée et adaptée au port `Source` | La supprimer |
+
+### Moteur d'enquête
+
+| Sujet | Retenu | Autres options |
+| --- | --- | --- |
+| Résultats en direct | Streaming SSE (Server-Sent Events) | Interrogation régulière ; WebSocket |
+| Enquêtes simultanées | Une seule : une nouvelle enquête efface la précédente | Plusieurs, isolées par identifiant |
+| Quota atteint ou source muette | La source est sautée et l'écran l'indique ; file d'attente par source pour respecter son débit | Attendre et réessayer |
+| Niveau de confiance | Règles fixes (`CADRAGE.md`, section 7) | Score pondéré |
+
+### Règles de rattachement
+
+| Sujet | Retenu | Autres options |
+| --- | --- | --- |
+| Pseudo rare | Au moins 6 caractères, pas un prénom ni un mot du dictionnaire seul, et pas trouvé sur un nombre anormal de sites | Règles seules ; nombre de sites seul |
+| Même information trouvée plusieurs fois | Une valeur, avec la liste de ses sources ; deux sources indépendantes renforcent la confiance | Une ligne par source |
+| Valeurs contradictoires | Toutes affichées, chacune avec sa source et sa confiance | Garder la plus sûre |
+| Rebond sur une information « probable » | Oui, sur un niveau : ce qu'elle trouve ne relance pas sauf si c'est confirmé | Sans limite ; jamais |
+
+### Fuites, entourage, construction, réseau
+
+| Sujet | Retenu | Autres options |
+| --- | --- | --- |
+| Colonnes des fuites | Dictionnaire de noms de colonnes vers les champs de la fiche ; les colonnes inconnues sont affichées sous « autres données de la fuite », masquées avec l'œil | Colonnes inconnues ignorées |
+| Entourage (J1) | Liste par proche : nom ou pseudo masqué, lien supposé, source | Dans le graphe ; les deux |
+| Ordre de construction | Moteur complet avec 3 sources gratuites (GitHub, Gravatar, Hudson Rock) et une fiche simple ; puis les autres sources gratuites ; puis les payantes après le budget ; interface en parallèle | Toutes les sources gratuites d'abord ; interface d'abord |
+| Réseau de l'école | Script qui teste l'accès à chaque source depuis le poste des portes ouvertes dès décembre ; demande d'ouverture à l'informatique de l'école | Partage de connexion mobile ; les deux |
+
+### Interface
+
+| Sujet | Retenu | Autres options |
+| --- | --- | --- |
+| Parcours | Écrans séparés : saisie et consentement, enquête en direct (graphe), fiche complète, plan d'action | Une page qui évolue |
+| Fiche de vie | Cartes par catégorie avec taux de remplissage ; chaque valeur masquée, avec l'œil, sa source, sa confiance et son chemin | Chronologie ; dossier d'enquête |
+| Graphe des rebonds | React Flow | Cytoscape.js ; pas de graphe |
+| Identité visuelle | Nouvelle, avec les sous-agents `ux-architect` et `ui-designer` | Style du prototype ; prototype sans globe |
+| Consentement | Résumé et liste dépliable des services qui reçoivent les données, au-dessus de la case | Liste complète visible |
+
+### Plan d'action
+
+| Sujet | Retenu | Autres options |
+| --- | --- | --- |
+| Rédaction | Générée par Claude Haiku 5.5 (API Anthropic) | Règles écrites à l'avance ; Claude Opus 5.5 ; Claude Sonnet 5.5 |
+| Données envoyées à l'IA | Types de constats seulement, sans aucune valeur (« mot de passe exposé dans 3 fuites dont Pandabuy, adresse présente ») | La fiche complète |
+
+L'API Anthropic est un service tiers de plus : elle figure dans la liste du
+consentement et dans `BUDGET.md`. Ses conditions de conservation des données
+sont à lire avant l'utilisation.
+
+### Organisation
+
+| Sujet | Retenu | Autres options |
+| --- | --- | --- |
+| Fusion dans `main` | Une seule pull request à la fin, relue par Tiago | Une pull request par étape |
+| Exécution le jour J | Docker (lecture seule) et navigateur en mode kiosque (D7) | `npm run start` ; ordinateur personnel |
+| Comptes des services | Adresse email scolaire (réduction HackCheck, offre étudiante Tavily) | Adresse dédiée ; adresse personnelle |
+| Planning | Fin novembre : décisions et modèle de données. 1 au 15 décembre : moteur et sources gratuites. 16 au 31 décembre : sources payantes et interface. 1 au 15 janvier : essais sur volontaires et corrections | Plus serré ; plus large |
+
+Conséquences : D10 (modes) est remplacé ; D18 (console `/dev`) est adapté ;
+l'invariant de liste blanche accepte les colonnes inconnues des fuites, masquées
+par défaut.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -612,7 +690,7 @@ disponibles que dans HIBP, qui donne leur présence sans le contenu.
 | Runtime | Node.js 24 LTS (D16) | Node.js 26 LTS |
 | Premier provider | XposedOrNot | Have I Been Pwned |
 | Quota XposedOrNot | Ouverte (D15) | |
-| Modes | Une image, `APP_MODE` à l'exécution | Deux images |
+| Modes | Un seul mode, toutes les sources du catalogue (D25, remplace D10) | Deux modes |
 | CI | GitHub Actions : gitleaks, lint, typage, tests, build, markdownlint, lychee (D13) | |
 | DevSecOps | Dependabot, dependency-review-action, CodeQL (D17) | Renovate, Semgrep |
 | CD et image | Ouverte (D11) | |
@@ -622,3 +700,6 @@ disponibles que dans HIBP, qui donne leur présence sans le contenu.
 | But du projet | Outil d'enquête automatique sur un volontaire consentant (D19, `CADRAGE.md`) | Outil de sensibilisation aux fuites |
 | Sources | Catalogue `SOURCES.md` ; moteurs Tavily et Brave (D20) | Tavily seul |
 | Fuites | LeakCheck Pro, Leak-Lookup, Snusbase, HackCheck, HIBP Core, LeakRadar Enterprise, Hudson Rock, catalogue HIBP (D24) | Sans Leak-Lookup s'il refuse le devis |
+| Moteur d'enquête | Port `Source`, streaming SSE, une enquête à la fois, règles de confiance fixes (D25) | Score pondéré, interrogation régulière |
+| Interface | Écrans séparés, cartes par catégorie, graphe React Flow (D25) | Une page, Cytoscape.js |
+| Plan d'action | Claude Haiku 5.5, types de constats sans valeur (D25) | Règles écrites à l'avance |
