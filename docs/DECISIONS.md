@@ -537,6 +537,35 @@ ProxyNova COMB, OathNet, LeakRadar Enterprise, Revealer, Have I Been Pwned
 Core 1, XposedOrNot, LeakCheck public, IPQS et le catalogue XposedOrNot.
 Comparaison détaillée dans `SOURCES.md`, section 1.2.
 
+## D23. Couverture mesurée des sources de fuites
+
+Date : 2026-11-16
+
+D22 avait retenu Snusbase comme service principal, en le supposant le plus
+complet. La mesure de la couverture a montré que c'était faux : Pandabuy,
+l'exemple de départ du projet, n'est pas dans Snusbase.
+
+Méthode : les catalogues publics de Snusbase (2251 bases) et de Leak-Lookup
+(4776 bases) ont été comparés, par nom de site, au catalogue de Have I Been
+Pwned (1052 fuites). Résultats dans `SOURCES.md`, section 1.2. LeakCheck ne
+publie pas sa liste.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Garder D22 (Snusbase et LeakCheck) | Pas de devis à demander. | Couverture plus faible ; pas de Pandabuy ; fuites récentes manquantes. |
+| **Leak-Lookup, Snusbase, LeakCheck et HIBP Core (retenu)** | Plus grande couverture mesurée ; Leak-Lookup et Snusbase se complètent ; HIBP signale les fuites récentes qu'aucun service à fiches n'a. | L'API privée de Leak-Lookup est sur devis et accordée au cas par cas. |
+
+Corrections de D22 :
+
+- Leak-Lookup n'est pas un doublon : il couvre le plus de fuites, y compris
+  récentes, et cherche par téléphone et par nom complet.
+- Have I Been Pwned Core 1 n'est pas un doublon : plus de la moitié des fuites
+  de 2023 à 2026 ne sont dans aucun service à fiches.
+- LeakCheck est gardé par choix d'Enzo, bien que sa couverture soit inconnue.
+
+Si Leak-Lookup refuse le devis, Snusbase et LeakCheck restent les services à
+fiches.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -560,4 +589,4 @@ Comparaison détaillée dans `SOURCES.md`, section 1.2.
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
 | But du projet | Outil d'enquête automatique sur un volontaire consentant (D19, `CADRAGE.md`) | Outil de sensibilisation aux fuites |
 | Sources | Catalogue `SOURCES.md` ; moteurs Tavily et Brave (D20) | Tavily seul |
-| Fuites | Snusbase, LeakCheck Pro, Hudson Rock, LeakRadar Starter, catalogue HIBP, sans doublon (D22) | Toutes les sources de D21 |
+| Fuites | Leak-Lookup, Snusbase, LeakCheck Pro, HIBP Core, Hudson Rock, LeakRadar Starter, catalogue HIBP (D23) | Snusbase et LeakCheck si Leak-Lookup refuse |
