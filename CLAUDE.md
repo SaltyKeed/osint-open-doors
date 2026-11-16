@@ -1,8 +1,15 @@
 # OSINT Open Doors
 
-Outil de sensibilisation pour les portes ouvertes du CPNE. Un visiteur teste ses
-propres informations (email, téléphone, nom et prénom) sur un PC de l'école et
-voit les métadonnées des fuites où il apparaît, avec un plan d'action.
+Outil d'enquête OSINT pour les portes ouvertes du CPNE. Un volontaire saisit ses
+propres informations (email, téléphone, pseudo, nom et prénom) sur un PC de
+l'école. L'outil rebondit automatiquement d'une information à l'autre et
+reconstitue sa fiche de vie à partir de tout ce qui est public et légal, avec
+un plan d'action.
+
+`docs/CADRAGE.md` définit la cible (fiche de vie), le plan (matrice de rebond),
+la méthode (niveaux de confiance) et la règle d'ajout d'une source. Le lire
+avant tout travail sur le moteur d'enquête, une source ou l'affichage. Validé
+en D19.
 
 Projet scolaire mené par deux élèves qui veulent apprendre : en codant, explique
 le pourquoi de chaque choix (pattern, bibliothèque, structure) en quelques
@@ -42,9 +49,13 @@ Ils s'appliquent à tout le code, sans exception. Détail et justification :
 
 - Les mappers des providers construisent les objets du domaine à partir d'une
   liste blanche de champs. La réponse brute reste dans le dossier du provider.
-- Une fiche trouvée par nom est détaillée seulement si elle contient aussi le
-  téléphone ou l'email saisi par le visiteur. Sinon, seul un total est affiché.
-- Les valeurs affichées sont masquées (`+41 79 ••• •• 42`).
+- Chaque information a un niveau de confiance (`docs/CADRAGE.md`, section 7).
+  Seules les informations « confirmé » et « probable » sont détaillées et
+  servent au rebond ; un nom seul ne sert jamais de rebond.
+- Les valeurs sont masquées par défaut (`+41 79 ••• •• 42`) et visibles avec
+  un bouton « œil », mots de passe compris (D19).
+- Les proches (entourage) sont affichés mais ne sont jamais renvoyés dans la
+  boucle d'enquête.
 - Les données personnelles vivent uniquement en mémoire, le temps de la
   requête. Pas de base de données, de fichier, de cookie ni de `localStorage`.
 - Les logs et messages d'erreur contiennent des identifiants techniques
@@ -116,7 +127,7 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
 - Tâches suivies dans les GitHub Issues, avec un responsable assigné, et
   dans le projet GitHub `OSINT-Open-Doors`. Le champ `Status` (Backlog,
   Ready, In progress, In review, Done) donne l'avancement.
-- Le prototype d'Enzo sert à tester des idées. Ses issues ont le statut
-  `Prototyping` et ses pull requests ne sont jamais fusionnées dans `main`.
-  Une idée retenue est refaite dans le socle, avec sa propre issue.
+- La branche `sandbox` est la branche de test d'Enzo. Depuis D19, elle part de
+  `main`, suit ses règles et peut y être fusionnée par une pull request. Le
+  premier prototype est archivé dans `sandbox-v1`, en lecture seule.
 - Préférences personnelles dans `CLAUDE.local.md` (non versionné).

@@ -1,8 +1,10 @@
 # Architecture de OSINT Open Doors
 
-OSINT Open Doors est un outil de sensibilisation prévu pour les portes ouvertes
-du CPNE. Un visiteur teste ses propres informations (email, téléphone, nom et
-prénom) et voit dans quelles fuites de données elles apparaissent. Il reçoit
+OSINT Open Doors est un outil d'enquête OSINT prévu pour les portes ouvertes du
+CPNE. Un volontaire saisit ses propres informations (email, téléphone, pseudo,
+nom et prénom) et l'outil reconstitue sa fiche de vie à partir de tout ce qui
+est public et légal (D19, `CADRAGE.md`). Le code décrit plus bas est celui du
+socle, avant la construction du moteur d'enquête. Le volontaire reçoit
 ensuite un plan d'action concret.
 
 ## 1. Contexte d'utilisation
@@ -18,9 +20,10 @@ ensuite un plan d'action concret.
 
 | Invariant | Mise en œuvre |
 | --- | --- |
-| Jamais de mot de passe ni de hash affiché | Les mappers des providers appliquent une liste blanche de champs. Le type brut ne sort jamais de l'adaptateur. |
-| Pas d'exposition de tiers (homonymes) | Une fiche trouvée par nom n'est détaillée que si elle contient aussi un autre identifiant saisi par le visiteur (téléphone ou email). Sinon, seul un agrégat est affiché (« N fiches portent ce nom »). |
-| Valeurs masquées | Les fiches correspondantes sont aussi masquées : `+41 79 ••• •• 42`, « Adresse : présente ». |
+| Liste blanche de champs | Les mappers des providers construisent les champs de la fiche de vie (`CADRAGE.md`, section 5). Le type brut ne sort jamais de l'adaptateur. |
+| Niveaux de confiance (homonymes) | Chaque information est « confirmé », « probable », « possible » ou « homonyme probable » (`CADRAGE.md`, section 7). Seuls les deux premiers niveaux sont détaillés et servent au rebond ; les autres donnent un total. Un nom seul ne sert jamais de rebond. |
+| Valeurs masquées par défaut | Toute valeur, mots de passe compris, est masquée (`+41 79 ••• •• 42`) et visible avec un bouton « œil » (D19). |
+| Entourage sans enquête | Les proches sont affichés, mais leurs identifiants ne sont jamais renvoyés dans la boucle d'enquête. |
 | Zéro stockage | Pas de base de données, pas de fichier, pas de `localStorage` ni de cookie contenant des données personnelles. Le conteneur est en `read_only`. |
 | Aucun log de données personnelles | Aucun `console.log` d'un input ou d'une réponse d'API. Les messages d'erreur n'incluent pas le corps des réponses. |
 | Données personnelles jamais dans l'URL | La recherche se fait uniquement en `POST`. |

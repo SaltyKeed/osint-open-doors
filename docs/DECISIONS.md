@@ -427,6 +427,39 @@ Limites de l'exception :
   hashes. Avant d'en ajouter un, il faut décider comment les masquer dans la
   réponse brute (D12 : jamais de mot de passe ni de hash affiché).
 
+## D19. Nouvelle direction : outil d'enquête
+
+Date : 2026-11-16
+
+Le premier prototype d'Enzo a ajouté des sources une par une sans définir ce
+que l'outil doit trouver ni comment. Il trouvait trop peu, sans démarche
+d'enquête, avec beaucoup d'homonymes. Le projet est recadré dans
+`docs/CADRAGE.md`.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Garder l'outil de sensibilisation (métadonnées des fuites) | Cadre déjà validé (D12) ; invariants simples. | Ne montre pas ce qu'un enquêteur peut vraiment retrouver. |
+| **Outil d'enquête automatique sur un volontaire consentant (retenu)** | Fiche de vie complète, rebond d'une information à l'autre, niveau de confiance par information. | Affiche des données sensibles (fiches de fuites, mots de passe, entourage) ; sources payantes. |
+
+Ce qui change :
+
+- La cible est une fiche de vie à champs codés et une matrice de rebond
+  (`CADRAGE.md`, sections 5 et 6). Une source n'est ajoutée que si elle remplit
+  un champ ou ouvre un rebond, et après un test manuel.
+- Pas de limite de durée ni de profondeur de rebond.
+- Tout est affiché, masqué par défaut, visible avec un bouton « œil » :
+  contenu des fiches de fuites, mots de passe, entourage.
+- La règle « fiche trouvée par nom » est remplacée par quatre niveaux de
+  confiance ; un nom seul ne sert jamais de rebond.
+- Consentement par case à cocher.
+- Budget de plus de 150 CHF, à détailler dans `BUDGET.md` après les tests.
+- Le prototype est archivé dans la branche `sandbox-v1`. La branche `sandbox`
+  repart de `main`, suit ses règles et peut y être fusionnée.
+
+Validation : Tiago (2026-11-16) ; enseignant, oralement le 2026-11-16, à
+confirmer par écrit. Les risques présentés pour chaque point sont dans
+`CADRAGE.md`, section 10.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -448,3 +481,4 @@ Limites de l'exception :
 | Test des providers | Page `/dev` en développement uniquement (D18) | Commandes PowerShell |
 | Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
+| But du projet | Outil d'enquête automatique sur un volontaire consentant (D19, `CADRAGE.md`) | Outil de sensibilisation aux fuites |
