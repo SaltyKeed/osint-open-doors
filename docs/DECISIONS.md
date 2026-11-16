@@ -460,6 +460,35 @@ Validation : Tiago (2026-11-16) ; enseignant, oralement le 2026-11-16, à
 confirmer par écrit. Les risques présentés pour chaque point sont dans
 `CADRAGE.md`, section 10.
 
+## D20. Catalogue des sources
+
+Date : 2026-11-16
+
+Chaque ligne de la matrice de rebond (`CADRAGE.md`, section 6) doit dire
+exactement sur quoi l'outil tape. Le détail est dans `docs/SOURCES.md` :
+adresse appelée, entrées, champs renvoyés, champs de la fiche remplis,
+rebonds, accès et prix.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Enquête manuelle sur nos propres données avant de choisir | Ce que chaque source renvoie vraiment est connu avant de coder. | Long ; refusé par Enzo. |
+| **Sources définies d'après leur documentation et le prototype (retenu)** | Rapide ; les adaptateurs du prototype (`sandbox-v1`) ont déjà répondu. | La forme exacte des réponses des sources nouvelles est relevée en codant l'adaptateur (console `/dev`, D18). |
+
+Choix des sources payantes et à options :
+
+| Choix | Options | Retenu |
+| --- | --- | --- |
+| Fiches de fuites | LeakCheck ; Snusbase ; DeHashed ; Intelligence X | LeakCheck, Snusbase et DeHashed. Intelligence X est écarté : l'offre qui donne les fiches coûte 10 000 EUR par an. |
+| Moteur de recherche | Tavily ; Brave ; Google Custom Search | Tavily et Brave. Google Custom Search est fermé aux nouveaux clients et s'arrête le 2027-01-01. |
+| Liste des fuites par email | Have I Been Pwned Core 1 ; XposedOrNot seul | Have I Been Pwned Core 1, avec XposedOrNot. |
+| Géolocalisation d'IP | ip-api.com ; ipinfo Lite | ip-api.com : donne la ville, gratuit pour un usage non commercial. |
+
+La règle d'ajout d'une source (`CADRAGE.md`, section 6.3) n'exige plus de test
+manuel : une source entre si elle remplit un champ ou ouvre un rebond, si elle
+est légale et si elle est décrite dans `SOURCES.md`. Le budget correspondant
+est dans `BUDGET.md`. Aucun service n'est souscrit avant son acceptation par
+l'enseignant.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -482,3 +511,4 @@ confirmer par écrit. Les risques présentés pour chaque point sont dans
 | Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
 | But du projet | Outil d'enquête automatique sur un volontaire consentant (D19, `CADRAGE.md`) | Outil de sensibilisation aux fuites |
+| Sources | Catalogue `SOURCES.md` ; fiches de fuites LeakCheck, Snusbase, DeHashed ; moteurs Tavily et Brave (D20) | LeakCheck seul ; Tavily seul |

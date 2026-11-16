@@ -19,86 +19,74 @@ peut pas savoir si son numéro de téléphone ou son pseudo apparaît dans une
 fuite, ni quelles données précises ont été exposées. C'est pourtant ce qui
 montre le mieux le risque réel.
 
-## Services payants envisagés
+## Services payants retenus (D20)
 
-Les prix viennent des pages des services ou de comparatifs consultés le
-2026-11-11. Ils sont en dollars américains et doivent être vérifiés sur la page
-officielle le jour de la demande.
+Les prix ont été relevés le 2026-11-16 (`SOURCES.md`). Ils sont en dollars
+américains et doivent être vérifiés sur la page officielle le jour de l'achat.
 
 | Service | Ce qu'il apporte | Prix | Source du prix |
 | --- | --- | --- | --- |
-| Have I Been Pwned (Pwned 1) | Fuites par email, base de référence, plus complète que XposedOrNot | Environ 4 à 5.30 par mois | Comparatifs tiers |
-| LeakCheck (Monthly) | Fuites par email, pseudo et téléphone, 200 recherches par jour | 9.99 par mois | Page officielle |
-| Dehashed | Fuites par email, nom, téléphone, pseudo, adresse | 21.99 par mois, plus environ 0.02 par requête API | Comparatifs tiers |
-| Snusbase | Même usage que Dehashed | Prix non publié (estimé 5 à 16 par mois) | Comparatifs tiers |
-| Tavily (au-delà du gratuit) | Recherches web supplémentaires | 0.008 par crédit | Page officielle |
-
-Snusbase n'est pas retenu dans les scénarios : son prix n'est pas public, il
-est donc impossible de le budgéter.
+| LeakCheck (Monthly) | Fiches de fuites par email, pseudo, téléphone ; 200 recherches par jour | 9.99 par mois | Page officielle |
+| Snusbase | Fiches de fuites par email, nom, pseudo, IP, téléphone ; API jusqu'à 2048 requêtes par jour | Non publié, à relever à la création du compte | Page officielle |
+| DeHashed (Professional) | Fiches de fuites par email, nom, adresse, téléphone, IP ; seule offre avec l'API | 179.99 par mois, plus environ 0.02 par requête | Source tierce (OSINTBench, 2026-04-02) |
+| Have I Been Pwned (Core 1) | Fuites par email avec description fiable | 4.39 par mois (facturation annuelle) | Page officielle |
+| Brave Search API | Second moteur de recherche | 5 par 1000 requêtes, 5 offerts par mois | Page officielle |
+| Tavily (au-delà du gratuit) | Moteur de recherche principal | 0.008 par crédit ; 1000 crédits gratuits par mois ; gratuit pour les étudiants sur demande | Page officielle |
 
 ## Hypothèses
 
-- Environ 200 visiteurs pendant les portes ouvertes (à confirmer avec l'école).
-- Environ 5 recherches web par visiteur, soit environ 1000 crédits Tavily.
-- Les abonnements sont pris uniquement pour la durée nécessaire : un mois de
-  développement et de tests, puis le mois des portes ouvertes.
+- Portes ouvertes en janvier 2027, environ 200 visiteurs (à confirmer avec
+  l'école).
+- L'enquête n'a pas de limite de durée ni de profondeur (D19) : le nombre de
+  requêtes par visiteur est estimé à environ 15 recherches web.
+- LeakCheck, Snusbase et Have I Been Pwned : 2 mois (décembre pour le
+  développement, janvier pour la démo).
+- DeHashed : 1 mois seulement (janvier), à cause de son prix. Son adaptateur
+  est écrit en décembre d'après la documentation, puis vérifié au début de
+  janvier.
 - Les abonnements sont résiliés après l'événement.
 
-## Scénarios
+## Budget demandé
 
-| Scénario | Contenu | Coût estimé |
+| Poste | Calcul | Montant (USD) |
 | --- | --- | --- |
-| A. Gratuit | XposedOrNot, search.ch, Tavily gratuit | 0 |
-| B. Recommandé | A, plus Have I Been Pwned et LeakCheck pendant 2 mois, plus une réserve Tavily | Environ 40 |
-| C. Complet | B, plus Dehashed pendant 1 mois avec des crédits API | Environ 81 |
-
-Détail du scénario B :
-
-| Poste | Calcul | Montant |
-| --- | --- | --- |
-| Have I Been Pwned | 2 mois x 5.30 | 10.60 |
 | LeakCheck | 2 mois x 9.99 | 19.98 |
-| Réserve Tavily | environ 1000 crédits x 0.008 | 8.00 |
-| Total | | environ 39 |
+| Snusbase | 2 mois x prix à relever | à relever |
+| DeHashed, abonnement | 1 mois x 179.99 | 179.99 |
+| DeHashed, crédits API | environ 1000 requêtes x 0.02 | 20.00 |
+| Have I Been Pwned | 2 mois x 4.39 | 8.78 |
+| Brave Search API | environ 3000 requêtes x 0.005, moins 5 offerts | 10.00 |
+| Tavily | environ 2000 crédits au-delà du gratuit x 0.008 (0 si l'offre étudiante est accordée) | 16.00 |
+| Total sans Snusbase | | environ 255 |
 
-Détail du scénario C :
+Une marge d'environ 10 % est à prévoir pour le taux de change et la TVA. Le
+total dépasse 150 CHF, comme validé en D19 ; il est à faire accepter par
+l'enseignant avant tout achat.
 
-| Poste | Calcul | Montant |
-| --- | --- | --- |
-| Scénario B | | 39 |
-| Dehashed, abonnement | 1 mois x 21.99 | 21.99 |
-| Dehashed, crédits API | environ 1000 requêtes x 0.02 | 20.00 |
-| Total | | environ 81 |
+## Pourquoi ces services
 
-Une marge d'environ 10 % est à prévoir pour le taux de change et la TVA.
-
-## Pourquoi le scénario B
-
-- Il couvre les trois saisies du formulaire (email, téléphone, nom) et ajoute
-  la recherche par pseudo.
-- LeakCheck a un prix public, un nombre de recherches suffisant (200 par jour)
-  et accepte le téléphone et le pseudo.
-- Have I Been Pwned est la référence pour les fuites par email et ne renvoie
-  aucune donnée en clair.
-- Le coût reste faible et limité dans le temps.
-
-Le scénario C n'apporte un plus que pour la recherche par nom et par adresse.
-Il double le coût pour un gain limité, car la règle anti-homonymes empêche de
-détailler la plupart des résultats trouvés par nom.
+- Les fiches de fuites sont la seule source du contenu des fuites (adresse,
+  téléphone, date de naissance, mot de passe). Trois bases différentes
+  trouvent plus de fuites qu'une seule.
+- DeHashed est le seul à chercher par nom et par adresse ; c'est le poste le
+  plus cher, il n'est donc pris que pour le mois de la démo.
+- Brave a un index différent de Tavily : il trouve des pages (LinkedIn, presse,
+  sport) que Tavily rate.
+- Have I Been Pwned donne une description fiable de chaque fuite par email.
 
 ## Garanties
 
 - Les services sont interrogés uniquement avec les données d'un visiteur qui
   a donné son consentement.
-- Aucune réponse n'est stockée. Les mots de passe et les hash ne sont jamais
-  affichés (liste blanche dans les mappers).
+- Aucune réponse n'est stockée. Les mots de passe et les hash sont masqués et
+  affichés seulement avec le bouton « œil » (D19).
 - Les clés API restent sur le poste, dans un fichier non versionné.
 - Les conditions d'utilisation de chaque service sont relues avant la
   souscription, pour vérifier qu'elles autorisent notre usage.
 
 ## Questions à régler avec l'école
 
-- Nombre de visiteurs attendus et date des portes ouvertes.
+- Nombre de visiteurs attendus.
 - Moyen de paiement (carte de l'école ou remboursement) et justificatifs.
 - Adresse email utilisée pour créer les comptes (adresse de l'école de
   préférence).

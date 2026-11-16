@@ -11,6 +11,10 @@ la méthode (niveaux de confiance) et la règle d'ajout d'une source. Le lire
 avant tout travail sur le moteur d'enquête, une source ou l'affichage. Validé
 en D19.
 
+`docs/SOURCES.md` est le catalogue des sources : adresse appelée, entrées,
+champs renvoyés, accès et prix (D20). Une source absente du catalogue n'est
+pas appelée par l'outil.
+
 Projet scolaire mené par deux élèves qui veulent apprendre : en codant, explique
 le pourquoi de chaque choix (pattern, bibliothèque, structure) en quelques
 phrases.

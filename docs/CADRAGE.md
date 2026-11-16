@@ -40,7 +40,7 @@ ce qui est public et légal, et la présente sous forme de fiche.
 | Jusqu'où ? | Toute la fiche de la section 5. Pas de priorité entre les champs. |
 | Comment avance l'enquête ? | Automatiquement, de rebond en rebond, jusqu'à ce qu'aucun nouvel identifiant fiable n'apparaisse. |
 | Quel résultat ? | La fiche de vie remplie, chaque valeur avec sa source, son niveau de confiance et son chemin. |
-| Quand est-ce réussi ? | Quand la fiche couvre ce qu'un enquêteur humain trouverait à la main sur la même personne (section 11). |
+| Quand est-ce réussi ? | Quand le volontaire juge sa fiche juste et complète (section 11). |
 
 Ce but remplace celui du départ (un visiteur qui voit les métadonnées des
 fuites où il apparaît). Le changement a été validé par Tiago et par
@@ -188,7 +188,9 @@ Un identifiant est une valeur qu'on peut donner à une source.
 ### 6.2 Matrice
 
 Pour chaque type d'identifiant : les sources à interroger, les champs qu'elles
-remplissent et les nouveaux identifiants qu'elles produisent (rebonds). Le
+remplissent et les nouveaux identifiants qu'elles produisent (rebonds). Le détail
+de chaque source (adresse appelée, champs renvoyés, prix, statut) est dans
+`SOURCES.md`. Le
 statut « à tester » veut dire que la source n'a pas encore été vérifiée à la
 main sur nos propres données.
 
@@ -197,37 +199,41 @@ Statuts :
 - Prototype : un adaptateur existe dans `sandbox-v1`, à reprendre et tester.
 - Partiel : l'adaptateur de `sandbox-v1` couvre une partie de la ligne.
 - À refaire : l'adaptateur de `sandbox-v1` est à réécrire.
-- À tester : jamais vérifié.
+- Nouveau : jamais codé ; l'adresse vient de la documentation officielle
+  (`SOURCES.md`).
+- Retenu : source payante choisie en D20.
 
 | Entrée | Source | Remplit | Nouveaux identifiants | Accès | Statut |
 | --- | --- | --- | --- | --- | --- |
-| `EMAIL` | Service de fiches de fuites (DeHashed, LeakCheck, Snusbase ou Intelligence X) | A1 A2 A3 B2 B3 H1 H2 H3 H4 | `TEL` `PSEUDO` `NOM` `IP` `EMAIL` | Payant | À tester |
+| `EMAIL` | Fiches de fuites : LeakCheck, Snusbase, DeHashed | A1 A2 A3 B2 B3 H1 H2 H3 H4 | `TEL` `PSEUDO` `NOM` `IP` `EMAIL` | Payant | Retenu |
 | `EMAIL` | HIBP, XposedOrNot | H1 | aucun | Gratuit ou abonnement | Prototype |
 | `EMAIL` | Hudson Rock | H5 | `DOMAINE` | Gratuit | Prototype |
 | `EMAIL` | Gravatar, Libravatar | A1 A5 F2 | `PSEUDO` `PROFIL` | Gratuit | Prototype |
 | `EMAIL` | GitHub (utilisateurs et commits) | A1 C1 E1 E3 F2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Prototype |
 | `EMAIL` | Serveurs de clés PGP | A1 B1 | `EMAIL` | Gratuit | Prototype |
 | `EMAIL` | Moteur de recherche (valeur exacte) | I1 I3 | `PROFIL` | Clé gratuite | Prototype |
-| `EMAIL` | Domaine de l'email (hors webmail) | E1 | `ORGA` `DOMAINE` | Gratuit | À tester |
+| `EMAIL` | Domaine de l'email (hors webmail) | E1 | `ORGA` `DOMAINE` | Gratuit | Nouveau |
 | `EMAIL` | Partie avant le @ | aucun | `PSEUDO` (confiance « possible ») | Local | Prototype |
-| `TEL` | Service de fiches de fuites | A1 A2 B1 B3 C1 E1 H1 H2 | `EMAIL` `NOM` `PSEUDO` | Payant | À tester |
+| `TEL` | Fiches de fuites : LeakCheck, Snusbase, DeHashed | A1 A2 B1 B3 C1 E1 H1 H2 H3 | `EMAIL` `NOM` `PSEUDO` | Payant | Retenu |
 | `TEL` | Annuaire search.ch | A1 B3 C1 | `NOM` | Gratuit, quota | Prototype |
 | `TEL` | Analyse locale du numéro | pays, type de ligne, opérateur d'origine | aucun | Local | Prototype |
 | `TEL` | Moteur de recherche (plusieurs formats) | I1 I3 | `PROFIL` | Clé gratuite | Prototype |
 | `PSEUDO` | Base de sites (WhatsMyName et Maigret, figée dans le dépôt) | F1 F2 | `PROFIL` | Gratuit | À refaire |
-| `PSEUDO` | Service de fiches de fuites | H1 H2 et suivants | `EMAIL` `TEL` | Payant | À tester |
+| `PSEUDO` | Fiches de fuites : LeakCheck, Snusbase, DeHashed | A1 B1 B2 B3 H1 H2 H3 | `EMAIL` `TEL` | Payant | Retenu |
+| `NOM` | Fiches de fuites : Snusbase, DeHashed | A2 B1 B2 B3 H1 H2 | `EMAIL` `TEL` (seulement si la fiche est « confirmé ») | Payant | Retenu |
+| `IP` | Fiches de fuites : Snusbase, DeHashed | H2 | `EMAIL` | Payant | Retenu |
 | `PSEUDO` | Moteur de recherche | I1 | `PROFIL` | Clé gratuite | Prototype |
 | `PROFIL` | API publique du site (GitHub, GitLab, Mastodon, YouTube, Twitch, Steam, Chess.com...) | A1 A5 C1 E1 F2 G2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Partiel |
-| `PROFIL` | Listes publiques d'abonnés, d'amis et mentions | J1 | aucun (identifiants de tiers, jamais relancés) | Gratuit | À tester |
+| `PROFIL` | Listes publiques d'abonnés, d'amis et mentions | J1 | aucun (identifiants de tiers, jamais relancés) | Gratuit | Nouveau |
 | `PROFIL` | Wayback Machine | I2 | `PROFIL` | Gratuit | Prototype |
-| `NOM` | Moteur de recherche ciblé : LinkedIn | A1 C1 D1 E1 | `ORGA` `PROFIL` | Clé gratuite | À tester |
+| `NOM` | Moteur de recherche ciblé : LinkedIn | A1 C1 D1 E1 | `ORGA` `PROFIL` | Clé gratuite | Nouveau |
 | `NOM` | Moteur de recherche ciblé : presse, résultats sportifs, associations | C3 G1 G3 | `ORGA` | Clé gratuite | Partiel |
-| `NOM` | Zefix, FOSC | E2 | `ORGA` | Gratuit | À tester |
+| `NOM` | Zefix, FOSC | E2 | `ORGA` | Gratuit | Nouveau |
 | `NOM` | ORCID, OpenAlex | E3 | `ORGA` | Gratuit | Partiel |
 | `NOM` | Annuaire search.ch | B2 B3 C1 | `TEL` | Gratuit, quota | Prototype (total seulement) |
 | `DOMAINE` | RDAP, crt.sh, Wayback Machine | F3 I2 | `EMAIL` `NOM` | Gratuit | Partiel |
-| `IP` | Géolocalisation d'IP | H4 C1 (approximatif) | aucun | Gratuit | À tester |
-| `ORGA` | Moteur de recherche « nom + organisation » | D1 E1 G1 | `PROFIL` | Clé gratuite | À tester |
+| `IP` | ip-api.com | H4 C1 (approximatif) | aucun | Gratuit | Retenu |
+| `ORGA` | Moteur de recherche « nom + organisation » | D1 E1 G1 | `PROFIL` | Clé gratuite | Nouveau |
 
 Lecture d'un exemple : un email saisi est donné au service de fiches de fuites.
 La fiche Pandabuy contient un téléphone et un pseudo. Le téléphone est un
@@ -241,8 +247,8 @@ Une source entre dans la matrice seulement si :
 
 1. elle remplit au moins un champ de la fiche, ou produit un nouvel identifiant ;
 2. elle est légale à interroger automatiquement (section 6.4) ;
-3. elle a été testée à la main sur nos propres données, et on a noté ce qu'elle
-   renvoie vraiment.
+3. elle est décrite dans `SOURCES.md` : adresse appelée, entrées, champs
+   renvoyés, accès et prix, d'après sa documentation officielle.
 
 Une idée de source qui ne passe pas ces trois points va dans `IDEES.md`, pas
 dans le code.
@@ -381,29 +387,33 @@ est à confirmer par écrit.
 | Fusion de `sandbox` dans `main` | Autorisée : `sandbox` part de `main` et suit ses règles pour pouvoir y être fusionnée. |
 | Son rôle | Aucun sur `sandbox`, qui est la branche de test d'Enzo. Il garde la responsabilité de `main` et la relecture des pull requests. |
 
-### À valider par des tests (enquête manuelle)
+### À régler pendant le développement
+
+Il n'y a pas d'enquête manuelle (décision d'Enzo du 2026-11-16) : les sources
+sont définies d'après leur documentation (`SOURCES.md`, D20).
 
 | Point | Comment |
 | --- | --- |
-| Service de fiches de fuites | Interroger DeHashed, LeakCheck, Snusbase, Intelligence X sur nos propres données et comparer les champs renvoyés. |
-| Sources « À tester » de la matrice | Les essayer à la main ; les passer en « Testé » ou les retirer. |
-| Critère de pseudo rare | Essayer plusieurs pseudos réels et noter lesquels donnent des homonymes. |
-| Durée réelle d'une enquête | La mesurer, même sans limite, pour organiser le stand. |
+| Prix de Snusbase et de DeHashed | Relevés à la création des comptes, reportés dans `BUDGET.md`. |
+| Forme exacte des réponses des sources nouvelles | Relevée avec la console `/dev` (D18) au moment de coder l'adaptateur. |
+| Critère de pseudo rare | Défini avec des exemples inventés dans les tests du domaine. |
+| Durée réelle d'une enquête | Mesurée sur les premiers essais, pour organiser le stand. |
 
 ## 11. Critères de réussite
 
-Mesure par comparaison avec une enquête manuelle :
+Mesure sur des volontaires de test (Enzo, Tiago, d'autres élèves
+consentants) :
 
-1. Pour chaque volontaire de test (Enzo, Tiago, d'autres élèves consentants),
-   on fait d'abord l'enquête à la main en suivant la matrice, et on remplit la
-   fiche de la section 5. C'est la référence.
-2. On lance l'outil avec les mêmes saisies.
-3. On compare champ par champ.
+1. On lance l'outil avec leurs saisies.
+2. Le volontaire relit sa fiche et marque chaque valeur « juste » ou « fausse »,
+   et signale ce qu'il sait être en ligne mais qui manque.
+3. Une valeur fausse montre une erreur de rattachement ; une valeur manquante
+   montre un trou dans la matrice (section 6.3).
 
 L'outil est réussi si :
 
-- il retrouve au moins ce que l'enquête manuelle a trouvé avec les sources de
-  la matrice ;
+- chaque source de `SOURCES.md` a répondu au moins une fois pendant les
+  essais ;
 - aucune valeur d'un homonyme n'est affichée « confirmé » ou « probable » ;
 - chaque valeur affichée a une source et un chemin vérifiables.
 
@@ -413,10 +423,8 @@ Les portes ouvertes ont lieu en janvier 2027.
 
 1. (Fait.) Validation par Tiago et par l'enseignant ; confirmation écrite de
    l'enseignant à obtenir.
-2. Enquête manuelle sur nos propres données avec la matrice : remplir la fiche
-   de référence, tester les services de fiches de fuites et les sources « À
-   tester ».
-3. Préparer le budget dans `BUDGET.md`.
+2. (Fait le 2026-11-16.) Catalogue des sources (`SOURCES.md`, D20).
+3. Préparer le budget dans `BUDGET.md` et le faire accepter par l'enseignant.
 4. (Fait le 2026-11-16.) Prototype archivé dans `sandbox-v1` ; `sandbox`
    repart de `main`.
 5. Écrire le modèle de données (identifiant, constat, chemin, confiance, champs
