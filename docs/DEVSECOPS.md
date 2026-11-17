@@ -159,7 +159,7 @@ Test du 2026-11-17, pull request
 | --- | --- |
 | Faille volontaire | Route `src/app/api/codeql-proof/route.ts` qui écrit le paramètre `name` de l'URL dans du HTML sans l'échapper (XSS réfléchie) |
 | Job `codeql` | Vert : l'analyse s'est terminée |
-| Alerte | [#1](https://github.com/SaltyKeed/osint-open-doors/security/code-scanning/1), règle `js/reflected-xss`, gravité `high`, ligne 5 de la route |
+| Alerte | Alerte n° 1 de Code scanning (visible seulement avec un accès en écriture), règle `js/reflected-xss`, gravité `high`, ligne 5 de la route |
 | Check `CodeQL` | Rouge : « 1 new alert including 1 high severity security vulnerability » |
 | Autres checks | `gitleaks-scan`, `app-checks` et `dependency-review` verts : seul CodeQL a détecté la faille |
 | Fusion | Bloquée par le ruleset (état `BLOCKED`) |
