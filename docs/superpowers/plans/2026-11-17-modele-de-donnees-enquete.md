@@ -45,8 +45,7 @@ l'implémentera dans #64.
 - Une fonction qui reçoit une valeur invalide renvoie `null` ; elle ne lance
   pas d'erreur qui contiendrait la valeur.
 - Fixtures inventées uniquement (`example.ch`, personnes fictives).
-- Le code existant (`types.ts`, `search-query.ts`, `matching.ts`,
-  `masking.ts`, provider XposedOrNot, `search-service.ts`) ne change pas : la
+- Le code existant (`types.ts`, `search-query.ts`, `masking.ts`, provider XposedOrNot, `search-service.ts`) ne change pas : la
   route `/api/search` en dépend. Il est remplacé dans #64 et #65.
 - Les noms de code suivent la spec en anglais : `Finding` pour constat,
   `Identifier` pour identifiant, `Confidence` pour niveau de confiance.
@@ -199,7 +198,10 @@ viendra dans #65.
 ## Tâche 4 : niveaux de confiance et rebond
 
 **Files :** create `src/server/domain/confidence.ts`,
-`src/server/domain/confidence.test.ts`.
+`src/server/domain/confidence.test.ts` ; delete
+`src/server/domain/matching.ts` et `src/server/domain/matching.test.ts`
+(ancienne règle anti-homonymes, remplacée par les niveaux de confiance en T1 ;
+aucun code de l'application ne les appelle).
 
 **Interfaces :**
 
@@ -266,7 +268,8 @@ Règles de `shouldRebound` : jamais pour un `NOM`, jamais pour un proche
 - [ ] **Étape 2 :** le test échoue.
 - [ ] **Étape 3 :** écrire `confidence.ts`. Pour « ne dépasse pas »,
   comparer les positions dans `CONFIDENCE_LEVELS`.
-- [ ] **Étape 4 :** le test passe.
+- [ ] **Étape 4 :** supprimer `matching.ts` et `matching.test.ts` ; `npm test`
+  et `npm run typecheck` passent.
 - [ ] **Étape 5 :** commit `feat(domain): add confidence levels and rebound rule`.
 
 Questions :
@@ -362,7 +365,8 @@ mis à jour.
   Options comparées pour la confiance (calculée par la source ou par le
   moteur, retenu : le moteur) et pour le rebond en chaîne (garder ou non la
   règle de la tâche 4). Raccourcis notés : téléphone suisse seulement, liste
-  de mots courants écrite à la main.
+  de mots courants écrite à la main. Suppression de `matching.ts`, remplacé
+  par `confidence.ts`.
 - [ ] **`ARCHITECTURE.md`, section 4** : sous-section « Modèle de l'enquête »
   avec un diagramme de classes (`classDiagram`) de `Source`, `SourceRecord`,
   `Identifier`, `Finding` et `Confidence`, et le rôle de chaque fichier de la
