@@ -144,6 +144,42 @@ avec le projet) :
 
 Un test qui échoue affiche `FAIL`, le nom du test et la ligne en cause.
 
+## Tester l'accès aux sources
+
+### npm run check:sources
+
+Vérifie depuis le réseau où le PC est branché que chaque source de
+`docs/SOURCES.md` est joignable. Le script `scripts/check-sources.ts` lit les
+adresses dans le catalogue : une source ajoutée au catalogue est testée sans
+modifier le script.
+
+Chaque hôte reçoit une seule requête `GET` sur l'adresse de son API, coupée
+avant la première valeur. Aucune clé API ni donnée personnelle n'est envoyée.
+Une réponse HTTP, même 401 ou 404, prouve que le réseau laisse passer la
+requête.
+
+```text
+Adresse IP publique : 203.0.113.7 (fournisseur)
+Test de 42 hôtes de docs/SOURCES.md…
+
+ok        api.github.com        HTTP 200          GitHub
+À VOIR    hacker-news.fire…     HTTP 301 vers …   Hacker News
+BLOQUÉ    api.snusbase.com      connexion refusée Snusbase
+
+40 joignables, 1 bloqués, 1 redirigés.
+```
+
+| Résultat | Sens | Que faire |
+| --- | --- | --- |
+| `ok` | Le serveur a répondu | Rien |
+| `À VOIR` | Redirection vers un autre domaine, peut-être une page de filtrage | Comparer avec un test fait depuis la maison : si la redirection y apparaît aussi, elle est normale |
+| `BLOQUÉ` | Aucune réponse (DNS, connexion refusée, délai, certificat d'un proxy) | Demander l'ouverture au service informatique |
+
+L'adresse IP publique sert pour les quotas : si tous les postes de l'école ont
+la même, ils partagent le quota des sources limitées par adresse IP
+(XposedOrNot, ip-api.com). Le script se termine avec le code 1 s'il y a
+au moins un hôte bloqué.
+
 ## Sécurité des dépendances
 
 ### npm audit

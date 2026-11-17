@@ -95,6 +95,13 @@ src/
     └── server-only-stub.ts       ← remplace `server-only` dans les tests
 ```
 
+Le dossier `scripts/`, hors de `src/`, contient les outils lancés à la main
+avec Node, en dehors de l'application : `check-sources.ts` teste depuis le
+réseau du poste que chaque source de `SOURCES.md` est joignable
+(`npm run check:sources`, voir le [guide des commandes](guide/02-commandes.md#npm-run-checksources)).
+Son `package.json` (`"type": "module"`) permet à Node de lancer le fichier
+TypeScript directement.
+
 Chaque test est placé à côté du fichier qu'il teste et porte le même nom avec
 `.test.ts` (`env.ts` et `env.test.ts`). Vitest est configuré dans
 `vitest.config.mts`.
