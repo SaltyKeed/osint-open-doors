@@ -90,7 +90,7 @@ Chaque fichier a son test à côté (`*.test.ts`), comme le domaine existant.
   `CADRAGE.md`, section 5), `type FieldCode`, `FIELD_LABELS:
   Record<FieldCode, string>` (libellés français de la section 5).
 
-- [ ] **Étape 1 : tests**
+- [x] **Étape 1 : tests**
 
 | Test | Attendu |
 | --- | --- |
@@ -99,12 +99,12 @@ Chaque fichier a son test à côté (`*.test.ts`), comme le domaine existant.
 | pas de doublon | `new Set(FIELD_CODES).size` vaut 30 |
 | libellés | chaque code a un libellé non vide ; `FIELD_LABELS.B2` vaut `"Numéros de téléphone"` |
 
-- [ ] **Étape 2 :** `npx vitest run src/server/domain/fiche-fields.test.ts`
+- [x] **Étape 2 :** `npx vitest run src/server/domain/fiche-fields.test.ts`
   échoue (module introuvable).
-- [ ] **Étape 3 :** écrire `fiche-fields.ts`. `FieldCode` est déduit de
+- [x] **Étape 3 :** écrire `fiche-fields.ts`. `FieldCode` est déduit de
   `FIELD_CODES`, pas écrit une deuxième fois.
-- [ ] **Étape 4 :** le test passe ; `npm run typecheck` passe.
-- [ ] **Étape 5 :** commit `feat(domain): add life record field codes`.
+- [x] **Étape 4 :** le test passe ; `npm run typecheck` passe.
+- [x] **Étape 5 :** commit `feat(domain): add life record field codes`.
 
 Question : pourquoi `Record<FieldCode, string>` oblige-t-il à écrire un
 libellé pour chaque code, et que se passe-t-il au typecheck si on en oublie
