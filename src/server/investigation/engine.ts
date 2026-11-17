@@ -23,6 +23,7 @@ export interface SourceRun {
   sourceId: string;
   identifierType: IdentifierType;
   status: SourceStatus;
+  records: number;
 }
 
 export interface InvestigationResult {
@@ -109,7 +110,7 @@ export async function investigate(
     );
 
     for (const { source, result } of results) {
-      runs.push({ sourceId: source.id, identifierType: current.identifier.type, status: result.status });
+      runs.push({ sourceId: source.id, identifierType: current.identifier.type, status: result.status, records: result.records.length });
       for (const record of result.records) {
         const confidence = assessConfidence({
           queried: { type: current.identifier.type, confidence: current.confidence },

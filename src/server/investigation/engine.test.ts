@@ -120,11 +120,11 @@ describe("investigate", () => {
     ]);
     const { runs, fiche } = await investigate([inputLead(email)], context, [broken, limited, locked, working], { env });
     expect(locked.calls).toEqual([]);
-    expect(runs.map((r) => [r.sourceId, r.status])).toEqual([
-      ["broken", "error"],
-      ["limited", "quota"],
-      ["locked", "no_key"],
-      ["working", "found"],
+    expect(runs.map((r) => [r.sourceId, r.status, r.records])).toEqual([
+      ["broken", "error", 0],
+      ["limited", "quota", 0],
+      ["locked", "no_key", 0],
+      ["working", "found", 1],
     ]);
     expect([...fiche.values()].some((f) => f.field === "A1")).toBe(true);
   });

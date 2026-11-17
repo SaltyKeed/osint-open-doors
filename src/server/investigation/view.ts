@@ -4,7 +4,8 @@ import { fillRate, type Attribute, type Finding } from "@/server/domain/fiche";
 import { CATEGORIES, FIELDS, type FieldCode } from "@/server/domain/fiche-fields";
 import type { IdentifierType } from "@/server/domain/identifier";
 import { maskValue } from "@/server/domain/masking";
-import type { InvestigationResult } from "./engine";
+import type { SourceStatus } from "@/server/domain/source";
+import type { InvestigationResult, SourceRun } from "./engine";
 
 // What the screen receives. Possible values and namesakes stay on the server:
 // only their number is sent (CADRAGE.md, section 7, "total seulement").
@@ -32,6 +33,35 @@ export interface InvestigationView {
   categories: { code: string; label: string; filled: number; total: number; fields: ViewField[] }[];
   /** Services that received the visitor's data during this investigation. */
   services: string[];
+  /** What each source answered: "nothing found" must not look like a failure. */
+  sourceReport: SourceReport[];
+}
+
+export interface SourceReport {
+  label: string;
+  status: SourceStatus | "not_asked";
+  records: number;
+  /** Calls that failed (error, quota, unclear answer). */
+  problems: number;
+}
+
+function report(label: string, runs: readonly SourceRun[]): SourceReport {
+  const records = runs.reduce((sum, r) => sum + r.records, 0);
+  const problems = runs.filter((r) => r.status === "error" || r.status === "quota" || r.status === "unknown").length;
+  const has = (status: SourceStatus) => runs.some((r) => r.status === status);
+  const status: SourceReport["status"] =
+    runs.length === 0
+      ? "not_asked"
+      : records > 0
+        ? "found"
+        : has("quota")
+          ? "quota"
+          : has("error")
+            ? "error"
+            : runs.every((r) => r.status === "no_key")
+              ? "no_key"
+              : "not_found";
+  return { label, status, records, problems };
 }
 
 const TYPE_LABELS: Record<IdentifierType, string> = {
@@ -83,5 +113,6 @@ export function toView(
       return { code: category.code, label: category.label, filled: rate?.filled ?? 0, total: rate?.total ?? 0, fields };
     }),
     services: [...new Set(result.runs.filter((r) => r.status !== "no_key").map((r) => label(r.sourceId)))],
+    sourceReport: sources.map((s) => report(s.label, result.runs.filter((r) => r.sourceId === s.id))),
   };
 }

@@ -21,7 +21,7 @@ function fiche(): Fiche {
 }
 
 describe("toView", () => {
-  const view = toView({ fiche: fiche(), runs: [{ sourceId: "github", identifierType: "EMAIL", status: "found" }] }, [
+  const view = toView({ fiche: fiche(), runs: [{ sourceId: "github", identifierType: "EMAIL", status: "found", records: 1 }] }, [
     { id: "github", label: "GitHub" },
     { id: "gravatar", label: "Gravatar" },
   ]);
@@ -56,5 +56,31 @@ describe("toView", () => {
 
   it("lists the services that received the visitor's data", () => {
     expect(view.services).toEqual(["GitHub"]);
+  });
+
+  it("tells what each source answered, so that nothing found is not mistaken for a failure", () => {
+    const report = toView(
+      {
+        fiche: fiche(),
+        runs: [
+          { sourceId: "github", identifierType: "EMAIL", status: "found", records: 2 },
+          { sourceId: "github", identifierType: "PSEUDO", status: "error", records: 0 },
+          { sourceId: "gravatar", identifierType: "EMAIL", status: "not_found", records: 0 },
+          { sourceId: "hudsonrock", identifierType: "EMAIL", status: "quota", records: 0 },
+        ],
+      },
+      [
+        { id: "github", label: "GitHub" },
+        { id: "gravatar", label: "Gravatar" },
+        { id: "hudsonrock", label: "Hudson Rock" },
+        { id: "steam", label: "Steam" },
+      ],
+    ).sourceReport;
+    expect(report).toEqual([
+      { label: "GitHub", status: "found", records: 2, problems: 1 },
+      { label: "Gravatar", status: "not_found", records: 0, problems: 0 },
+      { label: "Hudson Rock", status: "quota", records: 0, problems: 1 },
+      { label: "Steam", status: "not_asked", records: 0, problems: 0 },
+    ]);
   });
 });

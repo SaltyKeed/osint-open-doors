@@ -1,7 +1,17 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
-import type { InvestigationView, ViewValue } from "@/server/investigation/view";
+import type { InvestigationView, SourceReport, ViewValue } from "@/server/investigation/view";
+
+const SOURCE_STATUS: Record<SourceReport["status"], { label: (r: SourceReport) => string; style: string }> = {
+  found: { label: (r) => `${r.records} résultat(s)`, style: "bg-green-100 text-green-900" },
+  not_found: { label: () => "rien trouvé", style: "bg-zinc-100 text-zinc-700" },
+  unknown: { label: () => "réponse pas claire", style: "bg-amber-100 text-amber-900" },
+  quota: { label: () => "quota atteint", style: "bg-red-100 text-red-900" },
+  error: { label: () => "erreur", style: "bg-red-100 text-red-900" },
+  no_key: { label: () => "pas de clé", style: "bg-zinc-100 text-zinc-500" },
+  not_asked: { label: () => "pas interrogé", style: "bg-zinc-100 text-zinc-500" },
+};
 
 // First version of the visitor screen (sandbox prototype). The final interface
 // is decided later (T1). Nothing is stored: reloading the page erases everything.
@@ -118,6 +128,23 @@ export function Investigation() {
           Les valeurs sont masquées : le bouton œil affiche chacune. Services qui ont reçu tes données :{" "}
           {view.services.join(", ") || "aucun"}.
         </p>
+        <section className="mt-6 rounded-lg border border-zinc-200 p-4">
+          <h2 className="font-semibold">Ce que chaque source a répondu</h2>
+          <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+            {view.sourceReport.map((source) => {
+              const status = SOURCE_STATUS[source.status];
+              return (
+                <li key={source.label} className="flex items-center justify-between gap-2">
+                  <span>{source.label}</span>
+                  <span className={`rounded px-2 py-0.5 text-xs ${status.style}`}>
+                    {status.label(source)}
+                    {source.status === "found" && source.problems > 0 && ` · ${source.problems} erreur(s)`}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
         <div className="mt-6 grid gap-4">
           {view.categories.map((category) => (
             <section key={category.code} className="rounded-lg border border-zinc-200 p-4">
