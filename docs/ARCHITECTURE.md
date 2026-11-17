@@ -163,6 +163,41 @@ Pour changer ce qu'un provider garde ou affiche, voir le guide
 | `server-only` | tout `src/server/` | Le build échoue si du code serveur (et donc une clé) se retrouve dans le bundle client. |
 | Tests sur fixtures fictives | `tests/fixtures/` | Aucune vraie donnée de fuite n'est versionnée. |
 
+### Moteur d'enquête (prototype de la branche `sandbox`)
+
+Première version de l'enquête de `CADRAGE.md`, sections 4 à 7. Elle vit à côté
+du socle (`providers/`, `search-service.ts`, `/api/search`), qui reste en
+place.
+
+```text
+src/
+├── app/
+│   ├── page.tsx, investigation.tsx  ← saisie, fiche de vie, bouton « œil »
+│   └── api/investigate/route.ts     ← valide la saisie, lance l'enquête, renvoie la vue
+└── server/
+    ├── domain/                      ← modèle de données, sans réseau
+    │   ├── fiche-fields.ts          ← champs A1 à J1 et catégories
+    │   ├── identifier.ts            ← 8 types d'identifiants, normalisation, clé
+    │   ├── confidence.ts            ← niveaux de confiance et hausse par 2 sources
+    │   ├── hints.ts, rare-pseudo.ts ← indices cohérents, pseudo rare
+    │   ├── path.ts, lead.ts         ← chemin, pistes de rebond (qui relance)
+    │   ├── fiche.ts                 ← constats, fusion des doublons, remplissage
+    │   ├── investigation-input.ts   ← schéma zod de la saisie
+    │   └── source.ts                ← le port Source
+    ├── investigation/
+    │   ├── engine.ts                ← la boucle de rebond
+    │   └── view.ts                  ← fiche → écran ; « possible » : le nombre seulement
+    └── sources/                     ← un dossier par source : schema, mapper, index
+        ├── xposedornot/  (réutilise providers/xposedornot)
+        ├── hudsonrock/
+        ├── gravatar/
+        └── github/
+```
+
+Une source décrit ce qu'elle a trouvé (`SourceRecord` : valeurs de la fiche et
+identifiants) ; le moteur calcule la confiance. Les règles sont donc écrites
+une seule fois, dans `confidence.ts`, et pas dans chaque source.
+
 ## 5. Stack technique
 
 Les raisons de chaque choix et les alternatives comparées sont dans
