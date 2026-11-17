@@ -76,7 +76,7 @@ Chaque saisie devient un identifiant de niveau 0, de confiance « confirmé ».
 | Téléphone | `TEL` |
 | Pseudo | `PSEUDO` |
 | Nom et prénom | `NOM` |
-| Localité, date de naissance | Contexte : aident à départager les homonymes et à deviner des pseudos, ne sont pas interrogés seuls |
+| Localité, date de naissance | Contexte : aident à départager les homonymes, ne sont pas interrogés seuls |
 
 ## 5. La fiche de vie
 
@@ -218,7 +218,6 @@ Statuts :
 | `EMAIL` | Serveurs de clés PGP | A1 B1 | `EMAIL` | Gratuit | Prototype |
 | `EMAIL` | Moteur de recherche (valeur exacte) | I1 I3 | `PROFIL` | Clé gratuite | Prototype |
 | `EMAIL` | Domaine de l'email (hors webmail) | E1 | `ORGA` `DOMAINE` | Gratuit | Nouveau |
-| `EMAIL` | Partie avant le @ | aucun | `PSEUDO` (confiance « possible ») | Local | Prototype |
 | `TEL` | Fiches de fuites : LeakCheck Pro, Leak-Lookup, HackCheck | A1 A2 B1 B3 C1 E1 H1 H2 H3 | `EMAIL` `NOM` `PSEUDO` | Payant | Retenu |
 | `TEL` | Annuaire search.ch | A1 B3 C1 | `NOM` | Gratuit, quota | Prototype |
 | `TEL` | Analyse locale du numéro | pays, type de ligne, opérateur d'origine | aucun | Local | Prototype |

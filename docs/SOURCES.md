@@ -139,7 +139,6 @@ l'apport unique, le prix et, quand c'est possible, la couverture mesurée.
 | Clés PGP | `GET https://keys.openpgp.org/vks/v1/by-email/{email}` | Nom et autres emails de la clé | A1 B1 | `EMAIL` | Gratuit | Prototype |
 | Keybase | `GET https://keybase.io/_/api/1.0/user/lookup.json?…` | Comptes prouvés (GitHub, domaine, réseaux) | F1 F2 F3 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Prototype |
 | Domaine de l'email | Calcul local, puis RDAP (section 8) si ce n'est pas un webmail | Organisation (école, employeur) | E1 D1 | `ORGA` `DOMAINE` | Gratuit | Nouveau |
-| Partie avant le @ | Calcul local | Pseudo candidat | aucun | `PSEUDO` (confiance « possible ») | Local | Prototype |
 
 ## 3. Comptes liés au pseudo
 
@@ -210,7 +209,6 @@ Nom » entre guillemets.
 | Nom | `"P. Nom" OR "Nom P."` | aucun | I1 |
 | Nom et localité | `{nom} "{localité}"` | aucun | C1 I1 |
 | Nom et organisation | `{nom} "{organisation}"` | aucun | D1 E1 G1 |
-| Pseudos devinés | `"{pseudo deviné}"` (à partir du nom et de la date de naissance) | Réseaux sociaux | F1 F2 |
 
 Les listes de domaines du prototype (`sandbox-v1`,
 `src/server/providers/tavily/searches.ts`) sont reprises.
