@@ -28,6 +28,11 @@ même pull request : `README.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`,
 `.env.example`. La documentation décrit toujours l'état actuel du
 projet.
 
+`docs/CADRAGE.md` définit la cible de l'enquête (fiche de vie), la matrice de
+rebond et les niveaux de confiance. Le lire avant tout travail sur le moteur
+d'enquête, une source ou l'affichage. `docs/SOURCES.md` est le catalogue des
+sources : une source absente du catalogue n'est pas appelée par l'outil.
+
 `docs/BUDGET.md` liste les services payants et leur coût. Aucun service payant
 n'est souscrit ni intégré avant l'acceptation du budget par l'enseignant.
 
