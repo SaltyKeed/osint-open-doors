@@ -1,8 +1,11 @@
 # OSINT Open Doors
 
-Outil de sensibilisation pour les portes ouvertes du CPNE. Un visiteur teste ses
-propres informations (email, téléphone, nom et prénom) sur un PC de l'école et
-voit les métadonnées des fuites où il apparaît, avec un plan d'action.
+Outil d'enquête OSINT pour les portes ouvertes du CPNE. Un volontaire saisit ses
+propres informations (email, téléphone, pseudo, nom et prénom) sur un PC de
+l'école. L'outil rebondit d'une information à l'autre et reconstitue sa fiche
+de vie à partir de ce qui est public et légal, avec un plan d'action
+(`docs/DECISIONS.md`, T1). Le code actuel est celui du socle, avant le moteur
+d'enquête.
 
 Projet scolaire mené par deux élèves qui veulent apprendre : en codant, explique
 le pourquoi de chaque choix (pattern, bibliothèque, structure) en quelques
@@ -16,7 +19,7 @@ ports & adapters, stack, exécution. Il est mis à jour quand le code change.
 
 `docs/DECISIONS.md` garde les options comparées et la raison de chaque choix.
 Une nouvelle décision (dépendance, changement de structure, nouveau provider)
-y est ajoutée à la fin, numérotée et datée.
+y est ajoutée à la fin, numérotée avec le préfixe T (T1, T2…) et datée.
 
 Toute modification (code, configuration, Docker, agents, variables
 d'environnement, organisation) met à jour la documentation concernée dans la
