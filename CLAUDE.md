@@ -7,6 +7,14 @@ de vie à partir de ce qui est public et légal, avec un plan d'action
 (`docs/DECISIONS.md`, T1). Le code actuel est celui du socle, avant le moteur
 d'enquête.
 
+`docs/CADRAGE.md` définit la cible (fiche de vie), le plan (matrice de rebond),
+la méthode (niveaux de confiance) et la règle d'ajout d'une source. Le lire
+avant tout travail sur le moteur d'enquête, une source ou l'affichage.
+
+`docs/SOURCES.md` est le catalogue des sources : adresse appelée, entrées,
+champs renvoyés, accès et prix. Une source absente du catalogue n'est pas
+appelée par l'outil.
+
 Projet scolaire mené par deux élèves qui veulent apprendre : en codant, explique
 le pourquoi de chaque choix (pattern, bibliothèque, structure) en quelques
 phrases.
