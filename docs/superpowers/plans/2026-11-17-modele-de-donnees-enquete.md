@@ -375,8 +375,12 @@ mis à jour.
 - [ ] **`CADRAGE.md`, section 7** : remplacer le pseudo-code de la boucle par
   un diagramme de flux (`flowchart`), et ajouter un diagramme de décision de
   la confiance qui suit les règles de la tâche 4.
-- [ ] **`CLAUDE.md`, Style des documents** : « Les diagrammes sont en
-  Mermaid (bloc `mermaid`), dans le document qui les explique. »
+- [x] **`CLAUDE.md`, Style des documents** : règle des diagrammes Mermaid
+  (fait avec la tâche 4).
+- [x] **Guide simple** `docs/guide/05-fonctionnement-de-l-enquete.md` :
+  identifiants, fiche, niveaux de confiance, rebonds, avec diagrammes (fait
+  avec la tâche 4). À compléter avec les constats (tâche 5) et le port
+  `Source` (tâche 6).
 - [ ] **Vérification** : `npx markdownlint-cli2 "docs/**/*.md"` passe ;
   aperçu des diagrammes sur la pull request GitHub.
 - [ ] **Commit** `docs: document investigation data model (T2)`.

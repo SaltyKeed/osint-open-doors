@@ -42,7 +42,7 @@ ensuite un plan d'action concret.
  │  2. search-service lance les providers en parallèle          │
  │  3. chaque provider : appel HTTP → parse zod → mapper        │
  │     (liste blanche, la réponse brute n'est pas transmise)    │
- │  4. domaine : matching anti-homonymes, masquage, score,      │
+ │  4. domaine : niveaux de confiance, masquage, score,         │
  │     plan d'action                                            │
  │  5. réponse : métadonnées uniquement                         │
  └───────────────────────────┬──────────────────────────────────┘
@@ -80,7 +80,10 @@ src/
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
 │   │   ├── types.ts              ← Exposure, DataCategory, SearchQuery, QueryKind…
 │   │   ├── search-query.ts       ← normalisation et schéma zod de la saisie
-│   │   ├── matching.ts           ← règle anti-homonymes
+│   │   ├── fiche-fields.ts       ← codes des champs de la fiche (A1 à J1)
+│   │   ├── identifier.ts         ← types d'identifiants et normalisation
+│   │   ├── pseudo.ts             ← règle du pseudo rare
+│   │   ├── confidence.ts         ← niveaux de confiance et règle de rebond
 │   │   ├── masking.ts            ← masquage des valeurs
 │   │   ├── severity.ts           ← score d'exposition
 │   │   └── actions.ts            ← catégories exposées → plan d'action

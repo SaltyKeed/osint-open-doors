@@ -77,6 +77,10 @@ Documentation sobre et factuelle, comme écrite par les élèves : phrases simpl
 texte brut sans emoji, sections séparées uniquement par des titres. Dans les
 tableaux comparatifs, l'option choisie est marquée « (retenu) ».
 
+Les diagrammes (flux, architecture, décisions) sont écrits en Mermaid, dans un
+bloc `mermaid`, dans le document qui les explique : GitHub les affiche et ils
+changent avec le texte. Pas de dossier de diagrammes séparé.
+
 La CI vérifie les fichiers de `docs/` avec markdownlint et lychee : tableaux au
 format `| --- | --- |` (un espace autour de chaque `|`), langage indiqué sur
 chaque bloc de code (`text` pour un schéma), liens et ancres valides.

@@ -29,7 +29,9 @@ Guide, à lire dans l'ordre :
    fichier et dossier du dépôt.
 4. [Flux des données d'un provider](docs/guide/04-flux-des-donnees.md) :
    chemin des données d'une API jusqu'à l'écran et fichier à modifier.
-5. [Glossaire](docs/guide/glossaire.md) : définition des termes techniques.
+5. [Fonctionnement de l'enquête](docs/guide/05-fonctionnement-de-l-enquete.md) :
+   identifiants, niveaux de confiance et rebonds, expliqués simplement.
+6. [Glossaire](docs/guide/glossaire.md) : définition des termes techniques.
 
 Documents de référence :
 
