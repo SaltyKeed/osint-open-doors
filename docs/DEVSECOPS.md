@@ -17,7 +17,7 @@ branche de travail
 GitHub Actions          ci.yml    -> gitleaks-scan          (obligatoire)
                         app.yml   -> app-checks             (obligatoire)
                         docs.yml  -> markdownlint, link check (si docs/ change)
-                        codeql.yml -> codeql                 (non obligatoire)
+                        codeql.yml -> codeql, puis CodeQL    (obligatoire)
                         dependency-review.yml -> dependency-review (pull request)
       |
       v
@@ -43,7 +43,8 @@ l'école. La publication d'une image Docker est une question ouverte
 | `.github/workflows/app.yml` | `app-checks` | `npm ci`, lint, typage, tests Vitest, build Next.js | Idem | Oui |
 | `.github/workflows/docs.yml` | `markdownlint` | Structure des fichiers Markdown de `docs/` | Pull request ou push sur `main` qui modifie `docs/` | Non |
 | `.github/workflows/docs.yml` | `link check` | Liens et ancres des fichiers de `docs/` (lychee) | Idem | Non |
-| `.github/workflows/codeql.yml` | `codeql` | Analyse statique du code TypeScript et JavaScript | Chaque pull request, chaque push sur `main`, chaque lundi | Non |
+| `.github/workflows/codeql.yml` | `codeql` | Analyse statique du code TypeScript et JavaScript | Chaque pull request, chaque push sur `main`, chaque lundi | Non : le job reste vert même s'il trouve une faille |
+| (créé par Code scanning) | `CodeQL` | Rouge si la pull request ajoute une alerte de sécurité `high` ou plus | Après le job `codeql` | Oui |
 | `.github/workflows/dependency-review.yml` | `dependency-review` | Échoue si la pull request ajoute une dépendance avec une faille de gravité haute ou critique | Chaque pull request | Non, à rendre obligatoire après un premier échec volontaire |
 
 Le nom affiché du check est la clé `name` du job. Sans `name`, c'est
@@ -136,16 +137,35 @@ Le ruleset `main-branch` (Settings, Rules) s'applique à la branche par défaut.
 | Force push | Interdit |
 | Pull request obligatoire | 1 approbation ; approbation annulée par un nouveau commit ; conversations résolues avant la fusion |
 | Méthodes de fusion | Merge et squash |
-| Checks obligatoires | `gitleaks-scan`, `app-checks`, branche à jour avec `main` |
+| Checks obligatoires | `gitleaks-scan`, `app-checks`, `CodeQL`, branche à jour avec `main` |
 | Contournement | Rôle Repository admin (responsable du dépôt), toujours autorisé |
 
 `dependency-review` sera ajouté aux checks obligatoires après un premier échec
 volontaire (section 4). Il bloque les failles `high` et `critical` : une faille
 moins grave reste signalée par Dependabot sans arrêter le travail.
 
-`codeql` n'est pas obligatoire. Une fausse alerte la veille des portes
-ouvertes ne doit pas bloquer une correction. Les alertes sont relues dans
-Security, Code scanning avant chaque fusion.
+Le check obligatoire est `CodeQL`, créé par Code scanning, et non le job
+`codeql` du workflow. Le job reste vert tant que l'analyse se termine, même
+s'il trouve une faille. `CodeQL` passe au rouge quand la pull request ajoute
+une alerte de sécurité `high` ou plus. En cas de fausse alerte, on la ferme
+dans Security, Code scanning avec la raison, puis le check repasse au vert.
+
+### Preuve de fonctionnement
+
+Test du 2026-11-17, pull request
+[#56](https://github.com/SaltyKeed/osint-open-doors/pull/56), jamais fusionnée.
+
+| Étape | Résultat |
+| --- | --- |
+| Faille volontaire | Route `src/app/api/codeql-proof/route.ts` qui écrit le paramètre `name` de l'URL dans du HTML sans l'échapper (XSS réfléchie) |
+| Job `codeql` | Vert : l'analyse s'est terminée |
+| Alerte | [#1](https://github.com/SaltyKeed/osint-open-doors/security/code-scanning/1), règle `js/reflected-xss`, gravité `high`, ligne 5 de la route |
+| Check `CodeQL` | Rouge : « 1 new alert including 1 high severity security vulnerability » |
+| Autres checks | `gitleaks-scan`, `app-checks` et `dependency-review` verts : seul CodeQL a détecté la faille |
+| Fusion | Bloquée par le ruleset (état `BLOCKED`) |
+
+Le responsable du dépôt peut contourner le ruleset. Le blocage s'applique
+donc aux pull requests d'Enzo et de Dependabot.
 
 ### Autres réglages du dépôt
 
