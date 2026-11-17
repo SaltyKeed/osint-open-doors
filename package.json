@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:sources": "node scripts/check-sources.ts"
+    "check:sources": "node scripts/check-sources.ts",
+    "diagnose:email": "node scripts/diagnose-email.ts"
   },
   "dependencies": {
     "libphonenumber-js": "1.13.16",
