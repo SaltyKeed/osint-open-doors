@@ -17,6 +17,8 @@ branche de travail
 GitHub Actions          ci.yml    -> gitleaks-scan          (obligatoire)
                         app.yml   -> app-checks             (obligatoire)
                         docs.yml  -> markdownlint, link check (si docs/ change)
+                        codeql.yml -> codeql                 (non obligatoire)
+                        dependency-review.yml -> dependency-review (pull request)
       |
       v
 ruleset main-branch     checks obligatoires verts, 1 approbation,
@@ -41,6 +43,8 @@ l'école. La publication d'une image Docker est une question ouverte
 | `.github/workflows/app.yml` | `app-checks` | `npm ci`, lint, typage, tests Vitest, build Next.js | Idem | Oui |
 | `.github/workflows/docs.yml` | `markdownlint` | Structure des fichiers Markdown de `docs/` | Pull request ou push sur `main` qui modifie `docs/` | Non |
 | `.github/workflows/docs.yml` | `link check` | Liens et ancres des fichiers de `docs/` (lychee) | Idem | Non |
+| `.github/workflows/codeql.yml` | `codeql` | Analyse statique du code TypeScript et JavaScript | Chaque pull request, chaque push sur `main`, chaque lundi | Non |
+| `.github/workflows/dependency-review.yml` | `dependency-review` | Échoue si la pull request ajoute une dépendance avec une faille de gravité haute ou critique | Chaque pull request | Non, à rendre obligatoire après un premier échec volontaire |
 
 Le nom affiché du check est la clé `name` du job. Sans `name`, c'est
 l'identifiant du job. Le ruleset attend ce nom exact : renommer un job
@@ -56,8 +60,8 @@ toutes.
 | Famille | Ce qui est analysé | Question posée | Chez nous |
 | --- | --- | --- | --- |
 | Secrets | L'historique Git | Une clé ou un mot de passe a-t-il été commité ? | gitleaks, secret scanning de GitHub |
-| SCA (Software Composition Analysis) | Les dépendances (paquets npm, actions) | Un paquet utilisé a-t-il une faille connue ? | Dependabot ; `dependency-review-action` prévu |
-| SAST (Static Application Security Testing) | Notre code source, sans le lancer | Notre code contient-il une injection, une SSRF ? | CodeQL prévu |
+| SCA (Software Composition Analysis) | Les dépendances (paquets npm, actions) | Un paquet utilisé a-t-il une faille connue ? | Dependabot, `dependency-review-action` |
+| SAST (Static Application Security Testing) | Notre code source, sans le lancer | Notre code contient-il une injection, une SSRF ? | CodeQL |
 | DAST (Dynamic Application Security Testing) | L'application qui tourne | Que voit un attaquant qui envoie des requêtes ? | OWASP ZAP, plus tard |
 | Conteneur | L'image Docker et le `Dockerfile` | L'image contient-elle des paquets vulnérables ou une mauvaise configuration ? | Trivy, hadolint, plus tard |
 
@@ -71,6 +75,8 @@ toutes.
 | Dependabot alerts | SCA | Signale une dépendance npm ou une action qui a une faille connue (CVE). | Settings, Advanced Security |
 | Dependabot security updates | SCA | Ouvre une pull request qui corrige la faille signalée. | Settings, Advanced Security |
 | Dependabot version updates | SCA | Ouvre chaque semaine des pull requests pour les nouvelles versions. | `.github/dependabot.yml` |
+| `dependency-review-action` | SCA | Compare les dépendances de la pull request avec celles de `main` et échoue si une dépendance ajoutée a une faille de gravité `high` ou `critical`. | `dependency-review.yml` |
+| CodeQL | SAST | Analyse notre code (injection, SSRF, donnée non validée). Les alertes sont dans Security, Code scanning. | `codeql.yml` |
 | markdownlint, lychee | Documentation | Structure et liens de `docs/`. | `docs.yml`, `docs/.markdownlint.jsonc` |
 
 ### Réglages de Dependabot
@@ -101,7 +107,8 @@ Ces règles s'appliquent à tout nouveau workflow ou à toute modification.
   Le réglage du dépôt refuse les actions non épinglées.
 - **Permissions minimales.** Chaque workflow déclare `permissions`, en
   lecture seule par défaut. Seul `ci.yml` peut écrire des commentaires de pull
-  request, pour gitleaks.
+  request, pour gitleaks. Seul `codeql.yml` peut écrire des résultats
+  d'analyse (`security-events: write`).
 - **`persist-credentials: false`** sur `actions/checkout` quand le job ne
   pousse rien : le jeton GitHub ne reste pas sur la machine, et un script lancé
   par `npm ci` ne peut pas le lire.
@@ -132,6 +139,14 @@ Le ruleset `main-branch` (Settings, Rules) s'applique à la branche par défaut.
 | Checks obligatoires | `gitleaks-scan`, `app-checks`, branche à jour avec `main` |
 | Contournement | Rôle Repository admin (responsable du dépôt), toujours autorisé |
 
+`dependency-review` sera ajouté aux checks obligatoires après un premier échec
+volontaire (section 4). Il bloque les failles `high` et `critical` : une faille
+moins grave reste signalée par Dependabot sans arrêter le travail.
+
+`codeql` n'est pas obligatoire. Une fausse alerte la veille des portes
+ouvertes ne doit pas bloquer une correction. Les alertes sont relues dans
+Security, Code scanning avant chaque fusion.
+
 ### Autres réglages du dépôt
 
 | Menu | Réglage |
@@ -158,13 +173,18 @@ Dependabot.
   dernier commit ne suffit pas, il reste dans l'historique. Un faux positif
   s'exclut dans un fichier `.gitleaksignore` avec l'empreinte donnée par
   gitleaks.
+- **Alerte CodeQL.** Lire l'alerte dans Security, Code scanning : elle montre
+  le chemin de la donnée dans le code. Corriger dans une branche `fix/…`. Un
+  faux positif se ferme dans l'alerte avec la raison (« False positive » ou
+  « Used in tests »).
+- **Échec de `dependency-review`.** La pull request ajoute un paquet avec une
+  faille haute ou critique. Choisir une version corrigée ou un autre paquet avant de
+  fusionner.
 
 ## 7. Prévu
 
 | Outil | Famille | Rôle | Statut |
 | --- | --- | --- | --- |
-| `dependency-review-action` | SCA | Bloque une pull request qui ajoute une dépendance avec une faille connue. | Retenu (D17), pas encore en place |
-| CodeQL | SAST | Analyse notre code TypeScript : injection, SSRF, donnée non validée. | Retenu (D17), pas encore en place |
 | Trivy, hadolint | Conteneur | Failles de l'image Docker, erreurs du `Dockerfile`. | Avec Docker ([IDEES.md, I2](IDEES.md#i2-améliorations-de-la-ci)) |
 | OWASP ZAP | DAST | Teste l'application qui tourne : en-têtes HTTP, réponses. | Avec l'interface (I2) |
 
