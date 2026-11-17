@@ -141,7 +141,7 @@ une pull request et des checks obligatoires avant la fusion. Voir
 ## SAST (Static Application Security Testing)
 
 Analyse de sécurité du code source sans le lancer, par exemple pour trouver
-une injection. Prévu avec CodeQL. Voir [DEVSECOPS.md](../DEVSECOPS.md#7-prévu).
+une injection. Fait par CodeQL. Voir [DEVSECOPS.md](../DEVSECOPS.md#3-outils).
 
 ## SCA (Software Composition Analysis)
 
