@@ -2,18 +2,10 @@
 
 Outil d'enquête OSINT pour les portes ouvertes du CPNE. Un volontaire saisit ses
 propres informations (email, téléphone, pseudo, nom et prénom) sur un PC de
-l'école. L'outil rebondit automatiquement d'une information à l'autre et
-reconstitue sa fiche de vie à partir de tout ce qui est public et légal, avec
-un plan d'action.
-
-`docs/CADRAGE.md` définit la cible (fiche de vie), le plan (matrice de rebond),
-la méthode (niveaux de confiance) et la règle d'ajout d'une source. Le lire
-avant tout travail sur le moteur d'enquête, une source ou l'affichage. Validé
-en D19.
-
-`docs/SOURCES.md` est le catalogue des sources : adresse appelée, entrées,
-champs renvoyés, accès et prix (D20). Une source absente du catalogue n'est
-pas appelée par l'outil.
+l'école. L'outil rebondit d'une information à l'autre et reconstitue sa fiche
+de vie à partir de ce qui est public et légal, avec un plan d'action
+(`docs/DECISIONS.md`, T1). Le code actuel est celui du socle, avant le moteur
+d'enquête.
 
 Projet scolaire mené par deux élèves qui veulent apprendre : en codant, explique
 le pourquoi de chaque choix (pattern, bibliothèque, structure) en quelques
@@ -27,7 +19,7 @@ ports & adapters, stack, exécution. Il est mis à jour quand le code change.
 
 `docs/DECISIONS.md` garde les options comparées et la raison de chaque choix.
 Une nouvelle décision (dépendance, changement de structure, nouveau provider)
-y est ajoutée à la fin, numérotée et datée.
+y est ajoutée à la fin, numérotée avec le préfixe T (T1, T2…) et datée.
 
 Toute modification (code, configuration, Docker, agents, variables
 d'environnement, organisation) met à jour la documentation concernée dans la
@@ -35,6 +27,11 @@ même pull request : `README.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`,
 `docs/DEVSECOPS.md` (workflows, Dependabot, réglages GitHub), `CLAUDE.md`,
 `.env.example`. La documentation décrit toujours l'état actuel du
 projet.
+
+`docs/CADRAGE.md` définit la cible de l'enquête (fiche de vie), la matrice de
+rebond et les niveaux de confiance. Le lire avant tout travail sur le moteur
+d'enquête, une source ou l'affichage. `docs/SOURCES.md` est le catalogue des
+sources : une source absente du catalogue n'est pas appelée par l'outil.
 
 `docs/BUDGET.md` liste les services payants et leur coût. Aucun service payant
 n'est souscrit ni intégré avant l'acceptation du budget par l'enseignant.
@@ -51,19 +48,11 @@ les règles de @AGENTS.md (fichier généré par Next.js).
 Ils s'appliquent à tout le code, sans exception. Détail et justification :
 `docs/ARCHITECTURE.md`, section 2.
 
-- Les mappers des sources construisent les champs de la fiche à partir d'une
-  liste blanche. La réponse brute reste dans le dossier de la source. Seule
-  exception : les colonnes inconnues d'une fuite sont gardées sous « autres
-  données de la fuite », masquées par défaut (D25).
-- Le plan d'action est rédigé par l'API Anthropic à partir des types de
-  constats seulement : aucune valeur ne lui est envoyée (D25).
-- Chaque information a un niveau de confiance (`docs/CADRAGE.md`, section 7).
-  Seules les informations « confirmé » et « probable » sont détaillées et
-  servent au rebond ; un nom seul ne sert jamais de rebond.
-- Les valeurs sont masquées par défaut (`+41 79 ••• •• 42`) et visibles avec
-  un bouton « œil », mots de passe compris (D19).
-- Les proches (entourage) sont affichés mais ne sont jamais renvoyés dans la
-  boucle d'enquête.
+- Les mappers des providers construisent les objets du domaine à partir d'une
+  liste blanche de champs. La réponse brute reste dans le dossier du provider.
+- Une fiche trouvée par nom est détaillée seulement si elle contient aussi le
+  téléphone ou l'email saisi par le visiteur. Sinon, seul un total est affiché.
+- Les valeurs affichées sont masquées (`+41 79 ••• •• 42`).
 - Les données personnelles vivent uniquement en mémoire, le temps de la
   requête. Pas de base de données, de fichier, de cookie ni de `localStorage`.
 - Les logs et messages d'erreur contiennent des identifiants techniques
@@ -135,7 +124,7 @@ Sous-agents dans `.claude/agents/`, plugins déclarés dans
 - Tâches suivies dans les GitHub Issues, avec un responsable assigné, et
   dans le projet GitHub `OSINT-Open-Doors`. Le champ `Status` (Backlog,
   Ready, In progress, In review, Done) donne l'avancement.
-- La branche `sandbox` est la branche de test d'Enzo. Depuis D19, elle part de
-  `main`, suit ses règles et peut y être fusionnée par une pull request. Le
-  premier prototype est archivé dans `sandbox-v1`, en lecture seule.
+- Le prototype d'Enzo sert à tester des idées. Ses issues ont le statut
+  `Prototyping` et ses pull requests ne sont jamais fusionnées dans `main`.
+  Une idée retenue est refaite dans le socle, avec sa propre issue.
 - Préférences personnelles dans `CLAUDE.local.md` (non versionné).

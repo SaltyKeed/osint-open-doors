@@ -1,9 +1,10 @@
 # Cadrage de l'outil d'enquête
 
-Date : 2026-11-16
+Date : 2026-11-16, adapté le 2026-11-17
 
-Statut : validé le 2026-11-16 par Tiago et par l'enseignant (oralement, à
-confirmer par écrit). Décision D19 dans `DECISIONS.md`.
+Proposé par Enzo sur la branche `sandbox` (décisions D19 à D25 de cette
+branche), repris avec des modifications en T1 (`DECISIONS.md`). Validation de
+l'enseignant orale, à confirmer par écrit.
 
 ## 1. Pourquoi ce document
 
@@ -35,7 +36,7 @@ ce qui est public et légal, et la présente sous forme de fiche.
 | Question | Réponse |
 | --- | --- |
 | Qui est enquêté ? | Un volontaire consentant, qui saisit lui-même ses informations. |
-| Qui voit l'écran ? | Le volontaire seul (et l'opérateur), dans un coin privé. Pas de projection. |
+| Qui voit l'écran ? | Le volontaire et l'élève présent au stand, dans un coin privé. Pas de projection. |
 | Où ? | Aux portes ouvertes du CPNE, sur un PC de l'école. |
 | Jusqu'où ? | Toute la fiche de la section 5. Pas de priorité entre les champs. |
 | Comment avance l'enquête ? | Automatiquement, de rebond en rebond, jusqu'à ce qu'aucun nouvel identifiant fiable n'apparaisse. |
@@ -43,13 +44,14 @@ ce qui est public et légal, et la présente sous forme de fiche.
 | Quand est-ce réussi ? | Quand le volontaire juge sa fiche juste et complète (section 11). |
 
 Ce but remplace celui du départ (un visiteur qui voit les métadonnées des
-fuites où il apparaît). Le changement a été validé par Tiago et par
-l'enseignant (D19).
+fuites où il apparaît). Le changement est décidé en T1 ; l'enseignant l'a
+validé oralement.
 
 ## 3. Scénario
 
 ```text
-1. Le volontaire s'installe. L'opérateur explique le principe.
+1. Le volontaire s'installe. Un élève explique le principe et reste présent
+   pendant toute la recherche.
 2. Il saisit ce qu'il veut donner sur lui : email, téléphone, nom et prénom,
    pseudo, localité, date de naissance. Tout est facultatif, au moins un champ
    est requis.
@@ -161,11 +163,11 @@ source et sa confiance.
 
 | Code | Champ |
 | --- | --- |
-| J1 | Proches identifiables (famille, amis, collègues) : nom, lien avec la personne, profil |
+| J1 | Proches identifiables (famille, amis, collègues) : nom, prénom, âge et adresse si trouvés |
 
-L'entourage est détaillé (décision du 2026-11-16). Ce sont des tiers qui n'ont
-pas donné leur accord : ce choix doit être validé par l'enseignant (section 10).
-Les identifiants des proches ne sont jamais renvoyés dans la boucle d'enquête :
+L'entourage est limité à ces informations de surface (T1). Ce sont des tiers
+qui n'ont pas donné leur accord : le risque est accepté en T1. Les
+identifiants des proches ne sont jamais renvoyés dans la boucle d'enquête :
 l'outil n'enquête pas sur eux.
 
 ## 6. Matrice de rebond
@@ -196,16 +198,19 @@ main sur nos propres données.
 
 Statuts :
 
+- En place : un adaptateur existe dans `main`.
 - Prototype : un adaptateur existe dans `sandbox-v1`, à reprendre et tester.
 - Partiel : l'adaptateur de `sandbox-v1` couvre une partie de la ligne.
 - À refaire : l'adaptateur de `sandbox-v1` est à réécrire.
 - Nouveau : jamais codé ; l'adresse vient de la documentation officielle
   (`SOURCES.md`).
-- Retenu : source payante choisie en D20.
+- Retenu : source payante choisie par Enzo (`SOURCES.md`, section 10),
+  souscrite seulement après l'acceptation du budget.
 
 | Entrée | Source | Remplit | Nouveaux identifiants | Accès | Statut |
 | --- | --- | --- | --- | --- | --- |
 | `EMAIL` | Fiches de fuites (`SOURCES.md`, section 1.1) | A1 A2 A3 B2 B3 H1 H2 H3 H4 | `TEL` `PSEUDO` `NOM` `IP` `EMAIL` | Payant | Retenu |
+| `EMAIL` | XposedOrNot | H1 | aucun | Gratuit, quota | En place |
 | `EMAIL` | Have I Been Pwned Core 1, catalogue HIBP | H1 | aucun | Abonnement et gratuit | Retenu |
 | `EMAIL` | Infostealers et combolists : Hudson Rock, LeakRadar Enterprise | H3 H5 | `DOMAINE` `PROFIL` | Gratuit et payant | Prototype et retenu |
 | `EMAIL` | Gravatar, Libravatar | A1 A5 F2 | `PSEUDO` `PROFIL` | Gratuit | Prototype |
@@ -298,7 +303,7 @@ Il n'y a pas de limite de profondeur ni de durée (décision du 2026-11-16).
 L'enquête s'arrête d'elle-même quand les rebonds ne donnent plus rien de
 nouveau. La fiche se remplit en direct pendant ce temps. La seule limite est
 le quota de chaque source : une source dont le quota est atteint est sautée
-et l'écran l'indique (D25).
+et l'écran l'indique.
 
 ### Rattachement et niveaux de confiance
 
@@ -327,9 +332,13 @@ Règles :
   confiance et son chemin.
 - Pour chaque fuite : nom, date, description, et la fiche de la personne, champ
   par champ, masquée avec un bouton « œil ».
-- Le graphe des rebonds, en direct pendant l'enquête.
+- Le chemin des rebonds, en direct pendant l'enquête.
 - La liste des services qui ont reçu les données du visiteur.
-- Un plan d'action par constat.
+- Un plan d'action par constat, construit par des règles écrites à l'avance,
+  sans IA (T1).
+
+La forme de l'interface (écrans, graphe, identité visuelle) sera décidée plus
+tard. La console `/dev` actuelle sert seulement aux tests.
 
 ## 9. Invariants
 
@@ -340,65 +349,55 @@ Règles :
 | Clés API côté serveur uniquement | Gardé |
 | Liste blanche de champs dans chaque adaptateur de source (les champs de la fiche) | Gardé |
 | Effacement à la fin et après inactivité | Gardé |
-| Consentement par case à cocher | Gardé |
-| Fiche trouvée par nom détaillée seulement si elle contient un autre identifiant saisi | Remplacé par les niveaux de confiance (section 7), validé (D19) |
-| Pas d'exposition de tiers | Changé : entourage détaillé (J1), validé (D19) |
-| Valeurs masquées | Changé : masquées par défaut, visibles avec le bouton « œil », validé (D19) |
-| Jamais de mot de passe ni de hash affiché | Changé : affiché derrière le bouton « œil », validé (D19) |
+| Consentement par case à cocher, un élève présent pendant la recherche | Gardé (T1) |
+| Aucune donnée trouvée envoyée à une IA | Nouveau (T1) |
+| Fiche trouvée par nom détaillée seulement si elle contient un autre identifiant saisi | Remplacé par les niveaux de confiance (section 7, T1) |
+| Pas d'exposition de tiers | Changé : entourage limité au nom, prénom, âge et adresse (J1, T1) |
+| Valeurs masquées | Changé : masquées par défaut, visibles avec le bouton « œil » (T1) |
+| Jamais de mot de passe ni de hash affiché | Changé : affiché derrière le bouton « œil » (T1) |
+
+Ces invariants s'appliquent au moteur d'enquête. Tant qu'il n'est pas codé,
+`ARCHITECTURE.md`, section 2, décrit ceux du code actuel.
 
 ## 10. Décisions et validations
 
-### Décisions prises par Enzo (2026-11-16)
+Les propositions d'Enzo du 2026-11-16 ont été reprises par Tiago en T1
+(`DECISIONS.md`), avec l'accord d'Enzo.
 
-| Sujet | Décision |
-| --- | --- |
-| But | Enquête automatique sur la vie complète d'un volontaire consentant |
-| Périmètre | Toute la fiche de vie, sans priorité entre les champs |
-| Écran | Volontaire seul, coin privé |
-| Durée | Pas de limite ; la fiche se remplit en direct |
-| Profondeur de rebond | Pas de limite ; arrêt quand plus rien de nouveau |
-| Affichage | Tout est affiché, masqué par défaut, visible avec le bouton « œil » |
-| Mots de passe | Affichés derrière le bouton « œil » |
-| Entourage | Détaillé (J1), sans enquête sur les proches |
-| Preuve de possession | Case à cocher |
-| Budget | Plus de 150 CHF, justifié ligne par ligne dans `BUDGET.md` |
-| Date de la démo | Portes ouvertes de janvier 2027 |
-| Base de code | Repartir de zéro sur `sandbox`, à partir de `main` et des règles de Tiago, pour pouvoir fusionner dans `main` |
-| Ancien prototype | Archivé dans une branche `sandbox-v1` avant de repartir |
-| Conception du moteur, de l'interface et du plan d'action | Décidée en D25 (`DECISIONS.md`) |
+| Sujet | Proposition d'Enzo | Retenu (T1) |
+| --- | --- | --- |
+| But | Enquête automatique sur la vie complète d'un volontaire consentant | Repris |
+| Périmètre, durée, profondeur | Toute la fiche, sans limite ; arrêt quand plus rien de nouveau | Repris |
+| Affichage | Tout est affiché, masqué par défaut, visible avec le bouton « œil » | Repris |
+| Mots de passe | Affichés derrière le bouton « œil » | Repris |
+| Entourage | Détaillé | Limité au nom, prénom, âge et adresse si trouvés |
+| Preuve de possession | Case à cocher | Case à cocher et un élève présent pendant la recherche |
+| Sources | Catalogue `SOURCES.md`, XposedOrNot supprimé | Catalogue repris, XposedOrNot gardé |
+| Budget | Plus de 150 CHF | Sources gratuites d'abord ; payantes après l'acceptation du budget |
+| Plan d'action | Rédigé par l'API Anthropic | Règles écrites à l'avance, sans IA |
+| Organisation | `sandbox` fusionnée dans `main` en fin de projet | Les idées sont refaites dans `main`, une pull request par étape |
 
 ### Validé par l'enseignant (oralement, 2026-11-16)
 
-Chaque point a été présenté avec son risque et validé tel quel. La validation
-est à confirmer par écrit.
+Chaque point a été présenté par Enzo avec son risque. La validation est à
+confirmer par écrit.
 
 | Point | Risque présenté |
 | --- | --- |
 | Changement de but : d'un outil de sensibilisation aux fuites à une enquête complète | Le cadre D12 a été donné pour l'ancien but. |
 | Contenu complet des fiches de fuites (H2) | Données issues de bases volées, affichées en clair derrière l'œil. |
-| Mots de passe affichés (H3) | Un mot de passe encore utilisé s'affiche en clair sur un poste partagé ; l'opérateur peut le voir. Alternative : indice seulement (longueur, deux premiers caractères). |
-| Entourage détaillé (J1) | Données de tiers qui n'ont pas donné leur accord (nLPD). Alternative : nombre de proches seulement. |
-| Case à cocher comme seule preuve | N'empêche pas un visiteur de taper l'email d'un autre et de voir sa fiche de fuite. Alternative : code envoyé à l'email. |
-| Budget de plus de 150 CHF | À détailler dans `BUDGET.md` après les tests. |
-
-### Validé par Tiago (2026-11-16)
-
-| Point | Décision |
-| --- | --- |
-| Le cadrage entier | Validé tel quel. |
-| Fusion de `sandbox` dans `main` | Autorisée : `sandbox` part de `main` et suit ses règles pour pouvoir y être fusionnée. |
-| Son rôle | Aucun sur `sandbox`, qui est la branche de test d'Enzo. Il garde la responsabilité de `main` et la relecture des pull requests. |
+| Mots de passe affichés (H3) | Un mot de passe encore utilisé s'affiche en clair sur un poste partagé ; l'élève présent peut le voir. Alternative : indice seulement (longueur, deux premiers caractères). |
+| Entourage (J1) | Données de tiers qui n'ont pas donné leur accord (nLPD). T1 limite l'entourage aux informations de surface. |
+| Case à cocher comme seule preuve | N'empêche pas un visiteur de taper l'email d'un autre et de voir sa fiche de fuite. Alternative : code envoyé à l'email. T1 ajoute la présence d'un élève. |
+| Budget de plus de 150 CHF | À détailler dans `BUDGET.md`. |
 
 ### À régler pendant le développement
-
-Il n'y a pas d'enquête manuelle (décision d'Enzo du 2026-11-16) : les sources
-sont définies d'après leur documentation (`SOURCES.md`, D20).
 
 | Point | Comment |
 | --- | --- |
 | Prix de Snusbase | Relevé à la création du compte, reporté dans `BUDGET.md`. |
 | Devis de Leak-Lookup | Demande de devis pour l'API privée, en présentant le projet scolaire ; si refus, LeakCheck et Snusbase restent les services à fiches. |
-| Forme exacte des réponses des sources nouvelles | Relevée avec la console `/dev` (D18) au moment de coder l'adaptateur. |
+| Forme exacte des réponses des sources | Relevée avec la console `/dev` (D18) au moment de coder l'adaptateur. |
 | Critère de pseudo rare | Défini avec des exemples inventés dans les tests du domaine. |
 | Durée réelle d'une enquête | Mesurée sur les premiers essais, pour organiser le stand. |
 
@@ -422,20 +421,16 @@ L'outil est réussi si :
 
 ## 12. Étapes suivantes
 
-Les portes ouvertes ont lieu en janvier 2027.
+Les portes ouvertes ont lieu en janvier 2027. Chaque étape a son issue et sa
+pull request vers `main`.
 
-1. (Fait.) Validation par Tiago et par l'enseignant ; confirmation écrite de
-   l'enseignant à obtenir.
-2. (Fait le 2026-11-16.) Catalogue des sources (`SOURCES.md`, D20).
-3. Préparer le budget dans `BUDGET.md` et le faire accepter par l'enseignant.
-4. (Fait le 2026-11-16.) Prototype archivé dans `sandbox-v1` ; `sandbox`
-   repart de `main`.
-5. (Fait le 2026-11-16.) Décisions de conception (D25).
-6. Fin novembre : écrire le modèle de données (identifiant, constat, chemin,
-   confiance, champs de la fiche) et ses tests.
-7. 1 au 15 décembre : moteur d'enquête avec GitHub, Gravatar et Hudson Rock,
-   puis les autres sources gratuites ; test du réseau de l'école.
-8. 16 au 31 décembre : sources payantes (après acceptation du budget) et
-   interface.
-9. 1 au 15 janvier : essais sur volontaires et corrections ; pull request vers
-   `main`.
+1. Obtenir la confirmation écrite de l'enseignant.
+2. Préparer le budget dans `BUDGET.md` et le faire accepter par l'enseignant.
+3. Écrire le modèle de données (identifiant, constat, chemin, confiance,
+   champs de la fiche) et ses tests.
+4. Construire le moteur d'enquête avec les sources gratuites, en commençant
+   par XposedOrNot, GitHub, Gravatar et Hudson Rock ; tester l'accès aux
+   sources depuis le réseau de l'école.
+5. Ajouter les sources payantes après l'acceptation du budget.
+6. Décider et construire l'interface.
+7. Essais sur volontaires et corrections.

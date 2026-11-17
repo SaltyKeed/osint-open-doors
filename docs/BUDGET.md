@@ -35,7 +35,6 @@ des fuites que les autres n'ont pas.
 | Have I Been Pwned (Core 1) | Présence de l'email dans les fuites récentes et les données de la police | 4.39 USD par mois | Page officielle |
 | LeakRadar (Enterprise) | Infostealers, combolists Telegram et dark web | 58.33 EUR par mois | Page officielle |
 | Brave Search API | Second moteur de recherche | 5 USD par 1000 requêtes, 5 USD offerts par mois | Page officielle |
-| API Anthropic (Claude Haiku 5.5) | Rédaction du plan d'action à partir des types de constats (D25) | 0.10 USD par million de tokens en entrée, 0.50 en sortie | Documentation Anthropic |
 | Tavily (au-delà du gratuit) | Moteur de recherche principal | 0.008 USD par crédit ; 1000 crédits gratuits par mois ; gratuit pour les étudiants sur demande | Page officielle |
 
 ## Hypothèses
@@ -59,8 +58,7 @@ des fuites que les autres n'ont pas.
 | LeakRadar | 2 mois x 58.33 EUR | environ 126 |
 | Brave Search API | environ 3000 requêtes par mois x 0.005, moins 5 offerts, sur 2 mois | 20.00 |
 | Tavily | environ 2000 crédits au-delà du gratuit x 0.008 (0 si l'offre étudiante est accordée) | 16.00 |
-| API Anthropic | 200 plans d'action et les essais, moins de 1 USD ; réserve | 5.00 |
-| Total sans Leak-Lookup | | environ 327 |
+| Total sans Leak-Lookup | | environ 322 |
 
 Les montants en euros sont convertis à environ 1.08 USD pour 1 EUR. Une marge
 d'environ 10 % est à prévoir pour le taux de change et la TVA. Le total est à

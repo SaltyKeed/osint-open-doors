@@ -5,10 +5,15 @@ comparées, l'option retenue et la raison. L'architecture qui en résulte est
 décrite dans `ARCHITECTURE.md`.
 
 Une nouvelle décision s'ajoute à la fin, avec un numéro et une date. Une
-décision remplacée n'est pas supprimée : elle est marquée « remplacée par Dn ».
+décision remplacée n'est pas supprimée : elle est marquée « remplacée par Tn ».
+
+Numérotation : D1 à D18 sont les décisions prises jusqu'au 2026-11-13. Depuis
+T1, les décisions de `main` portent le préfixe T. Les décisions D19 et
+suivantes de la branche `sandbox` sont celles du prototype d'Enzo et ne
+s'appliquent pas à `main` tant qu'une décision T ne les reprend pas.
 
 Statuts possibles : ouverte (en discussion, aucune option retenue), retenue,
-remplacée par Dn. Sans mention de statut, une décision est retenue.
+remplacée par Tn. Sans mention de statut, une décision est retenue.
 
 ## Critères généraux
 
@@ -158,6 +163,8 @@ La règle de relecture est remplacée par D14.
 
 Date : 2026-11-10
 
+Statut : remplacée par T1.
+
 L'application a deux usages :
 
 - `surface` : sources légales et publiques (fuites connues par email, voir
@@ -233,6 +240,10 @@ Questions à trancher :
 ## D12. Cadre validé par l'enseignant
 
 Date : 2026-11-11
+
+Statut : en partie remplacée par T1 (affichage des mots de passe, règle
+anti-homonymes). Le budget et l'interrogation par des services qui indexent
+les fuites restent valables.
 
 L'enseignant responsable a précisé le cadre du projet (information orale, à
 confirmer par écrit) :
@@ -602,6 +613,8 @@ disponibles que dans HIBP, qui donne leur présence sans le contenu.
 
 Date : 2026-11-16
 
+Statut : en partie remplacée par T1 (plan d'action sans IA, entourage limité, XposedOrNot gardé, organisation par pull request).
+
 Décisions prises par Enzo, par questionnaire, avant d'écrire le code de la
 nouvelle base. Chaque ligne donne l'option retenue ; les autres options
 proposées sont indiquées entre parenthèses.
@@ -676,6 +689,65 @@ Conséquences : D10 (modes) est remplacé ; D18 (console `/dev`) est adapté ;
 l'invariant de liste blanche accepte les colonnes inconnues des fuites, masquées
 par défaut.
 
+## T1. Outil d'enquête, à partir des propositions d'Enzo
+
+Date : 2026-11-17
+
+Le 2026-11-16, Enzo a proposé sur la branche `sandbox` de faire du projet un
+outil d'enquête (décisions D19 à D25 de `sandbox`, commit `8e03ef7`, fichiers
+`CADRAGE.md` et `SOURCES.md`). Tiago a repris ces propositions point par
+point. Enzo est d'accord avec le résultat.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Garder l'outil de sensibilisation (D12) | Invariants simples ; rien d'affiché de sensible. | Ne montre pas ce qu'un enquêteur peut vraiment retrouver. |
+| Reprendre toutes les propositions d'Enzo | Fiche de vie complète. | Plan d'action par IA ; entourage détaillé ; une seule pull request en fin de projet. |
+| **Reprendre les propositions d'Enzo avec des limites (retenu)** | Fiche de vie, rebonds et niveaux de confiance ; pas d'IA ; entourage limité ; code relu étape par étape. | Affiche des données sensibles avec une case à cocher comme seule preuve. |
+
+### Repris
+
+| Sujet | Décision |
+| --- | --- |
+| But | Un volontaire saisit ses propres informations (email, téléphone, pseudo, nom et prénom). L'outil rebondit d'une information à l'autre et reconstitue sa fiche de vie à partir de ce qui est public et légal. |
+| Sources | Le catalogue et la mesure de couverture des fuites d'Enzo servent de base. Une source peut être ajoutée si elle remplit un champ de la fiche ou ouvre un rebond. |
+| Structure | Un port générique `Source` : un identifiant en entrée, des constats et de nouveaux identifiants en sortie. Les modes `surface` et `deep` (D10) sont supprimés : une source sans clé configurée est sautée. |
+| Rebonds | Un identifiant trouvé relance une recherche. Un nom seul ne sert jamais de rebond. |
+| Validation des informations | Chaque information a un niveau de confiance : confirmé, probable, possible, homonyme probable. Seuls les deux premiers sont détaillés et servent au rebond. Ces niveaux remplacent la règle anti-homonymes de D12. |
+| Affichage | Toute valeur est masquée par défaut et visible avec un bouton « œil », mots de passe et contenu des fiches de fuites compris. |
+
+### Modifié
+
+| Sujet | Proposition d'Enzo | Décision |
+| --- | --- | --- |
+| Entourage | Liste détaillée des proches | Informations de surface seulement : nom, prénom, âge et adresse si trouvés. Les proches ne servent jamais de rebond. |
+| Consentement | Case à cocher | Case à cocher, et un élève présent au stand pendant chaque recherche. |
+| Budget | Plus de 150 CHF, sources payantes dès décembre | Les sources gratuites d'abord. Les sources payantes attendent l'acceptation du budget par l'enseignant (`BUDGET.md`). |
+| Organisation | `sandbox` fusionnée dans `main` par une seule pull request en fin de projet | Enzo continue sur `sandbox`. Les bonnes idées sont refaites dans `main`, une issue et une pull request relue par étape. `sandbox` n'est pas fusionnée. |
+
+### Refusé
+
+| Sujet | Raison |
+| --- | --- |
+| Plan d'action rédigé par l'API Anthropic | Les données trouvées ne doivent pas passer par une IA. Le plan d'action est construit par des règles écrites à l'avance et testées. Une IA pourra être essayée sur un prototype qui fonctionne, pour mesurer ce qu'elle apporte. |
+
+### Risques acceptés
+
+- Une case à cocher n'empêche pas un visiteur de saisir l'email d'une autre
+  personne et de voir ses mots de passe. La présence d'un élève au stand est
+  la seule protection.
+- L'adresse et l'âge des proches sont des données de tiers qui n'ont pas
+  donné leur accord (nLPD).
+- L'enseignant a validé le changement de but oralement le 2026-11-16. La
+  validation est à confirmer par écrit.
+
+### Ce qui ne change pas encore
+
+Les invariants de `ARCHITECTURE.md` (section 2) décrivent le code actuel. Ils
+seront mis à jour avec le code du moteur d'enquête, dans la même pull
+request. Les invariants qui restent : zéro stockage, aucun log de données
+personnelles, recherche en `POST`, clés API dans `src/server/`, liste blanche
+de champs dans les adaptateurs.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -690,16 +762,15 @@ par défaut.
 | Runtime | Node.js 24 LTS (D16) | Node.js 26 LTS |
 | Premier provider | XposedOrNot | Have I Been Pwned |
 | Quota XposedOrNot | Ouverte (D15) | |
-| Modes | Un seul mode, toutes les sources du catalogue (D25, remplace D10) | Deux modes |
+| But | Outil d'enquête sur un volontaire consentant (T1) | Outil de sensibilisation (D12) |
+| Modes | Un seul mode, port générique `Source` (T1, remplace D10) | Deux modes |
 | CI | GitHub Actions : gitleaks, lint, typage, tests, build, markdownlint, lychee (D13) | |
 | DevSecOps | Dependabot, dependency-review-action, CodeQL (D17) | Renovate, Semgrep |
 | CD et image | Ouverte (D11) | |
 | Test des providers | Page `/dev` en développement uniquement (D18) | Commandes PowerShell |
 | Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
-| Fuites publiques | Par des services qui les indexent (D12) | Gratuit uniquement (XposedOrNot) |
-| But du projet | Outil d'enquête automatique sur un volontaire consentant (D19, `CADRAGE.md`) | Outil de sensibilisation aux fuites |
+| Fuites publiques | Par des services qui les indexent (D12) ; gratuits d'abord (T1) | |
+| Plan d'action | Règles écrites à l'avance (T1) | IA à tester plus tard |
 | Sources | Catalogue `SOURCES.md` ; moteurs Tavily et Brave (D20) | Tavily seul |
 | Fuites | LeakCheck Pro, Leak-Lookup, Snusbase, HackCheck, HIBP Core, LeakRadar Enterprise, Hudson Rock, catalogue HIBP (D24) | Sans Leak-Lookup s'il refuse le devis |
 | Moteur d'enquête | Port `Source`, streaming SSE, une enquête à la fois, règles de confiance fixes (D25) | Score pondéré, interrogation régulière |
-| Interface | Écrans séparés, cartes par catégorie, graphe React Flow (D25) | Une page, Cytoscape.js |
-| Plan d'action | Claude Haiku 5.5, types de constats sans valeur (D25) | Règles écrites à l'avance |

@@ -1,6 +1,10 @@
 # Catalogue des sources
 
-Date : 2026-11-16
+Date : 2026-11-16, adapté le 2026-11-17
+
+Catalogue établi par Enzo sur la branche `sandbox` (décisions D20 à D24 de
+cette branche), repris en T1 (`DECISIONS.md`). Les références D20 à D24 citées
+plus bas renvoient à ces décisions de `sandbox`.
 
 Ce document dit sur quoi l'outil tape pour remplir la fiche de vie
 (`CADRAGE.md`, section 5). Pour chaque source : l'adresse appelée, ce qu'on lui
@@ -12,6 +16,7 @@ nouvelle source y entre selon la règle de `CADRAGE.md`, section 6.3.
 
 Statuts :
 
+- En place : un adaptateur existe dans `main`.
 - Prototype : un adaptateur existe dans la branche `sandbox-v1` et a déjà
   répondu ; il est à reprendre.
 - Nouveau : jamais codé ; l'adresse vient de la documentation officielle.
@@ -40,12 +45,13 @@ fuite et on ne va pas sur les forums criminels.
 | HackCheck Diamond | API REST (adresse à relever dans la documentation après souscription) | Email, pseudo, nom complet, hash, IP, téléphone, mot de passe, domaine | Fiches de fuites | A1 B1 B2 B3 H1 H2 H3 H4 | 39.49 USD par mois, 10 requêtes par seconde ; 15 % de réduction avec une adresse scolaire | Retenu (choix d'Enzo, D24) |
 | Have I Been Pwned Core 1 | `GET https://haveibeenpwned.com/api/v3/breachedaccount/{email}?truncateResponse=false`, en-tête `hibp-api-key` | Email | Fuites où l'email apparaît, avec titre, date, description, types de données, logo ; y compris les compilations d'infostealers et les données saisies par la police | H1 | 4.39 USD par mois, 10 requêtes par minute | Retenu |
 | LeakRadar Enterprise | API REST | Email, pseudo, domaine | Journaux d'infostealers (identifiant, mot de passe, adresse du site), combolists (dont celles diffusées sur Telegram) et dark web | H3 H5 F2 | 58.33 EUR par mois (699.99 par an), 100 000 révélations par jour | Retenu (D24) |
+| XposedOrNot | `GET https://api.xposedornot.com/v1/breach-analytics?email=…` | Email | Fuites où l'email apparaît, avec date, types de données et gravité | H1 | Gratuit, 100 requêtes par jour par IP (D15) | En place |
 | Hudson Rock | `GET https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-email?email=…` et `search-by-username?username=…` | Email, pseudo | Ordinateur infecté : date, système, nombre d'identifiants volés | H5 | Gratuit | Prototype |
 | Catalogue HIBP | `GET https://haveibeenpwned.com/api/v3/breaches` | aucune | Titre, date, description, types de données et logo de 1052 fuites | H1 (présentation d'une fuite trouvée par un autre service) | Gratuit | Prototype |
 | ransomware.live | `GET https://api.ransomware.live/v2/searchvictims/{organisation}` | Domaine de l'email ou employeur | Organisation revendiquée par un rançongiciel | H1 (fuite de l'employeur) | Gratuit | Prototype |
 
 Les services à fiches renvoient des mots de passe en clair. L'adaptateur les
-garde seulement pour le champ H3, affiché derrière le bouton « œil » (D19).
+garde seulement pour le champ H3, affiché derrière le bouton « œil » (T1).
 
 ### 1.2 Couverture mesurée
 
@@ -104,7 +110,8 @@ l'apport unique, le prix et, quand c'est possible, la couverture mesurée.
 | ProxyNova COMB | Email, pseudo | Paires email et mot de passe | Compilation COMB, déjà incluse dans Snusbase | Gratuit | Doublon |
 | Revealer Pro | Email, pseudo | Fuites, infostealers (50 par jour), comptes | Son « énumération de comptes » est une technique exclue (`CADRAGE.md`, section 6.4) | 79.99 USD par mois | Doublon |
 | Leak-Lookup public | Comme l'API privée | Noms des fuites seulement | 10 recherches par jour, insuffisant pour 200 visiteurs | Gratuit | Doublon de l'API privée |
-| XposedOrNot, LeakCheck public, IPQS | Email | Liste des fuites | Couvert par HIBP Core et les services à fiches | Gratuit | Doublon |
+| XposedOrNot | Email | Liste des fuites | Couvert par HIBP Core, qui est payant | Gratuit | Gardé (T1) : gratuit et déjà en place, utile tant que le budget n'est pas accepté |
+| LeakCheck public, IPQS | Email | Liste des fuites | Couvert par HIBP Core et les services à fiches | Gratuit | Doublon |
 | Catalogue XposedOrNot | aucune | Description de 801 fuites | Moins complet que le catalogue HIBP (1052) | Gratuit | Doublon |
 
 ### 1.4 Écartés pour une autre raison
@@ -248,11 +255,14 @@ Les listes de domaines du prototype (`sandbox-v1`,
 | Fiches de fuites | Champs qui désignent un tiers (contact d'urgence, parent) | Proches | J1 | Nouveau |
 | Moteur de recherche | Pages qui citent la personne avec d'autres noms (équipe, liste de membres) | Proches | J1 | Nouveau |
 
-Les identifiants des proches ne sont jamais renvoyés dans la boucle d'enquête.
+Pour un proche, l'adaptateur garde seulement le nom, le prénom, l'âge et
+l'adresse si la source les donne (T1). Les identifiants des proches ne sont
+jamais renvoyés dans la boucle d'enquête.
 
 ## 10. Choix faits
 
-Choix d'Enzo du 2026-11-16 (D20 à D24).
+Choix d'Enzo du 2026-11-16 (D20 à D24 de `sandbox`), repris en T1 avec
+XposedOrNot en plus.
 
 | Choix | Décision | Raison |
 | --- | --- | --- |
@@ -260,6 +270,7 @@ Choix d'Enzo du 2026-11-16 (D20 à D24).
 | Présence dans les fuites récentes | Have I Been Pwned Core 1 (D23) | Plus de la moitié des fuites de 2023 à 2026 ne sont dans aucun service à fiches. |
 | Infostealers et combolists | Hudson Rock (gratuit) et LeakRadar Enterprise (D24) | Seule source mesurable pour les combolists Telegram de 2024 à 2026. |
 | Présentation des fuites | Catalogue HIBP | Description et logo de chaque fuite trouvée. |
+| Liste des fuites par email, gratuite | XposedOrNot (T1) | Gratuit et déjà en place ; seule source de fuites par email tant que le budget n'est pas accepté. |
 | Moteur de recherche | Tavily et Brave | Deux index différents : Brave trouve des pages que Tavily rate. |
 | Géolocalisation d'IP | ip-api.com | Donne la ville approximative, gratuit pour un projet scolaire. |
 | Intelligence X, Google Custom Search | Écartés | Hors budget ; API fermée le 2027-01-01. Autres sources écartées : section 1.4. |
