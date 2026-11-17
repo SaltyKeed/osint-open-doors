@@ -317,8 +317,11 @@ Règles :
 
 - Un `NOM` seul ne sert jamais de rebond. C'est la principale source de faux
   résultats du prototype.
-- Un pseudo est rare s'il n'est pas un mot du dictionnaire, un prénom seul ou
-  une combinaison courante ; le critère exact est à définir et à tester.
+- Un pseudo est rare s'il a au moins 6 caractères dont une lettre, et s'il
+  n'existe pas sur un nombre anormal de sites. Le premier critère est vérifié
+  dans le domaine ; le second par le moteur, sur les réponses réelles. Pas de
+  liste de prénoms ou de mots courants : elle sera ajoutée seulement si les
+  essais sur volontaires montrent des homonymes (T2).
 - Un site qui ne répond pas clairement donne « inconnu », jamais « trouvé ».
 - Chaque constat garde son chemin, pour que l'écran explique « trouvé grâce
   à… ».
@@ -397,7 +400,7 @@ confirmer par écrit.
 | Prix de Snusbase | Relevé à la création du compte, reporté dans `BUDGET.md`. |
 | Devis de Leak-Lookup | Demande de devis pour l'API privée, en présentant le projet scolaire ; si refus, LeakCheck et Snusbase restent les services à fiches. |
 | Forme exacte des réponses des sources | Relevée avec la console `/dev` (D18) au moment de coder l'adaptateur. |
-| Critère de pseudo rare | Défini avec des exemples inventés dans les tests du domaine. |
+| Critère de pseudo rare | Longueur et lettre dans le domaine ; nombre de sites mesuré par le moteur (#65) ; liste de prénoms seulement si les essais montrent des homonymes (T2). |
 | Durée réelle d'une enquête | Mesurée sur les premiers essais, pour organiser le stand. |
 
 ## 11. Critères de réussite

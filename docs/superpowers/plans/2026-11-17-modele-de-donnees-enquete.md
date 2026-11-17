@@ -171,13 +171,11 @@ Questions :
 - Produces : `isRarePseudo(pseudo: string): boolean`. Reçoit un pseudo déjà
   normalisé (tâche 2).
 
-Règle (`CADRAGE.md`, section 7) : au moins 6 caractères, au moins une lettre,
-et pas un mot courant seul. Les mots courants sont une petite liste dans le
-fichier (prénoms et mots fréquents comme `azerty`, `admin`, `thomas`,
-`julien`), avec ce commentaire :
-`// shortcut: short hand-written list; replace with a first-name dataset if namesakes show up in tests.`
-Le critère « trouvé sur un nombre anormal de sites » dépend du moteur : il
-viendra dans #65.
+Règle (`CADRAGE.md`, section 7) : au moins 6 caractères et au moins une
+lettre. Pas de liste de prénoms ou de mots courants : un mot courant comme
+`thomas` est attrapé par le moteur, parce qu'il existe sur un nombre anormal
+de sites (#65). Une liste (prénoms de l'OFS) sera ajoutée seulement si les
+essais sur volontaires montrent des homonymes. Options comparées dans T2.
 
 - [ ] **Étape 1 : tests**
 
@@ -186,12 +184,12 @@ viendra dans #65.
 | `"lmartin_06"` | `true` | |
 | `"lea"` | `false` | moins de 6 caractères |
 | `"123456"` | `false` | aucune lettre |
-| `"thomas"` | `false` | prénom seul |
-| `"azerty"` | `false` | mot courant seul |
-| `"thomas_vs_42"` | `true` | prénom, mais pas seul |
+| `"thomas_vs_42"` | `true` | |
+| `"thomas"` | `true` | limite connue : attrapé par le nombre de sites (#65) |
+| `"azerty"` | `true` | limite connue : attrapé par le nombre de sites (#65) |
 
 - [ ] **Étape 2 :** le test échoue.
-- [ ] **Étape 3 :** écrire `pseudo.ts` (un `Set` pour la liste).
+- [ ] **Étape 3 :** écrire `pseudo.ts` (une seule expression booléenne).
 - [ ] **Étape 4 :** le test passe.
 - [ ] **Étape 5 :** commit `feat(domain): add rare pseudo rule`.
 
@@ -364,8 +362,10 @@ mis à jour.
 - [ ] **T2 dans `DECISIONS.md`** : « Modèle de données de l'enquête ».
   Options comparées pour la confiance (calculée par la source ou par le
   moteur, retenu : le moteur) et pour le rebond en chaîne (garder ou non la
-  règle de la tâche 4). Raccourcis notés : téléphone suisse seulement, liste
-  de mots courants écrite à la main. Suppression de `matching.ts`, remplacé
+  règle de la tâche 4) et pour le pseudo rare (liste à la main, prénoms de
+  l'OFS, modèle de Markov de Perito et al. 2011, retenu : règle minimale et
+  nombre de sites mesuré par le moteur). Raccourci noté : téléphone suisse
+  seulement. Suppression de `matching.ts`, remplacé
   par `confidence.ts`.
 - [ ] **`ARCHITECTURE.md`, section 4** : sous-section « Modèle de l'enquête »
   avec un diagramme de classes (`classDiagram`) de `Source`, `SourceRecord`,
