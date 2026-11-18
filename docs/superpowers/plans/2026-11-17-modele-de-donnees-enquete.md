@@ -359,7 +359,7 @@ GitHub les affiche, et ils changent dans la même pull request que le texte.
 Pas de dossier `docs/diagrams` : un diagramme séparé de son texte n'est plus
 mis à jour.
 
-- [ ] **T2 dans `DECISIONS.md`** : « Modèle de données de l'enquête ».
+- [x] **T2 dans `DECISIONS.md`** : « Modèle de données de l'enquête ».
   Options comparées pour la confiance (calculée par la source ou par le
   moteur, retenu : le moteur) et pour le rebond en chaîne (garder ou non la
   règle de la tâche 4) et pour le pseudo rare (liste à la main, prénoms de
@@ -367,12 +367,12 @@ mis à jour.
   nombre de sites mesuré par le moteur). Raccourci noté : téléphone suisse
   seulement. Suppression de `matching.ts`, remplacé
   par `confidence.ts`.
-- [ ] **`ARCHITECTURE.md`, section 4** : sous-section « Modèle de l'enquête »
+- [x] **`ARCHITECTURE.md`, section 4** : sous-section « Modèle de l'enquête »
   avec un diagramme de classes (`classDiagram`) de `Source`, `SourceRecord`,
   `Identifier`, `Finding` et `Confidence`, et le rôle de chaque fichier de la
   tâche. Préciser que l'ancien modèle (`Exposure`, `BreachProvider`) reste
   jusqu'à #64.
-- [ ] **`CADRAGE.md`, section 7** : remplacer le pseudo-code de la boucle par
+- [x] **`CADRAGE.md`, section 7** : remplacer le pseudo-code de la boucle par
   un diagramme de flux (`flowchart`), et ajouter un diagramme de décision de
   la confiance qui suit les règles de la tâche 4.
 - [x] **`CLAUDE.md`, Style des documents** : règle des diagrammes Mermaid

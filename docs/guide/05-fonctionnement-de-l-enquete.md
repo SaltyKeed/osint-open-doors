@@ -88,7 +88,7 @@ confiance.
 
 | Niveau | Quand | Affiché en détail | Relance une recherche |
 | --- | --- | --- | --- |
-| Confirmé | La fiche contient aussi un email, un téléphone ou un profil déjà confirmé | Oui | Oui |
+| Confirmé | La fiche contient aussi un email, un téléphone ou un profil déjà confirmé, ou elle a été trouvée avec un email, un téléphone, un profil ou un domaine confirmé | Oui | Oui |
 | Probable | Trouvé par un pseudo rare, avec au moins un indice cohérent (même ville, même photo, même année) | Oui, marqué « probable » | Oui, une seule fois |
 | Possible | Trouvé par un pseudo seul, une IP, une organisation, ou un nom avec un indice | Non, compté dans un total | Non |
 | Homonyme probable | Trouvé par un nom seul | Non, compté dans un total | Non |

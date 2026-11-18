@@ -146,22 +146,68 @@ l'ajouter à `SURFACE_PROVIDERS` ou `DEEP_PROVIDERS` dans `registry.ts`.
 Pour changer ce qu'un provider garde ou affiche, voir le guide
 [Flux des données d'un provider](guide/04-flux-des-donnees.md).
 
-Le port de l'outil d'enquête (T1) est prêt dans `domain/source.ts`, mais pas
-encore utilisé : il remplacera `BreachProvider` quand XposedOrNot y sera
-branché (issue #64). Une source reçoit un seul identifiant et renvoie des
-fiches (`SourceRecord`) : les champs trouvés, les nouveaux identifiants, et
-si la fiche concerne le visiteur ou un proche. Elle ne calcule pas la
-confiance : seul le moteur sait quels identifiants sont déjà confirmés.
+### Modèle de l'enquête
 
-```ts
-// src/server/domain/source.ts
-export interface Source {
-  id: string;
-  accepts: readonly IdentifierType[];
-  investigate(input: Identifier, signal: AbortSignal): Promise<SourceRecord[]>;
-  inspect(input: Identifier, signal: AbortSignal): Promise<SourceInspection>;
-}
+Le modèle de l'outil d'enquête (T1, T2) est prêt dans `domain/`, mais pas
+encore utilisé par l'application. L'ancien modèle (`Exposure`,
+`BreachProvider`) reste en place jusqu'à ce que XposedOrNot soit branché sur
+le port `Source` (issue #64).
+
+```mermaid
+classDiagram
+    class Source {
+        <<interface>>
+        id: string
+        accepts: IdentifierType[]
+        investigate(input, signal) SourceRecord[]
+        inspect(input, signal) SourceInspection
+    }
+    class SourceRecord {
+        about: subject ou relative
+        fields: champ et valeur[]
+        identifiers: Identifier[]
+    }
+    class Identifier {
+        type: IdentifierType
+        value: string
+    }
+    class Finding {
+        field: FieldCode
+        value: string
+        sources: string[]
+        confidence: Confidence
+        path: Identifier[]
+    }
+    class Confidence {
+        <<enumeration>>
+        confirmed
+        probable
+        possible
+        namesake
+    }
+    Source ..> Identifier : reçoit
+    Source ..> SourceRecord : renvoie
+    SourceRecord --> Identifier : nouveaux identifiants
+    Finding --> Identifier : chemin
+    Finding --> Confidence
 ```
+
+Une source reçoit un identifiant et renvoie des fiches (`SourceRecord`). Elle
+ne calcule pas la confiance : le moteur (#65) le fait, parce que lui seul
+connaît les identifiants déjà confirmés (T2). Il transforme les fiches en
+constats (`Finding`), puis regroupe les doublons.
+
+| Fichier | Rôle |
+| --- | --- |
+| `fiche-fields.ts` | Codes des champs de la fiche (`A1` à `J1`) et libellés |
+| `identifier.ts` | Types d'identifiants, normalisation, clé `TYPE:valeur` des recherches déjà faites |
+| `pseudo.ts` | Règle du pseudo rare (6 caractères et une lettre) |
+| `confidence.ts` | `assessConfidence`, `isDetailed`, `shouldRebound` |
+| `finding.ts` | `Finding` et `mergeFindings` (fusion des doublons) |
+| `source.ts` | Le port `Source` et les fiches renvoyées |
+
+Explication simple, avec des exemples :
+[Fonctionnement de l'enquête](guide/05-fonctionnement-de-l-enquete.md).
 
 ### Bonnes pratiques appliquées
 

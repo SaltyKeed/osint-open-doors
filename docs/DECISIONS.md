@@ -497,6 +497,61 @@ request. Les invariants qui restent : zéro stockage, aucun log de données
 personnelles, recherche en `POST`, clés API dans `src/server/`, liste blanche
 de champs dans les adaptateurs.
 
+## T2. Modèle de données de l'enquête
+
+Date : 2026-11-18
+
+Le moteur d'enquête (#65) a besoin d'un vocabulaire commun : champs de la
+fiche, identifiants, niveaux de confiance, constats et port `Source`. Ce
+modèle est écrit dans `src/server/domain/` (issue #63), sans appel réseau et
+testé. Le fonctionnement est expliqué dans
+[Fonctionnement de l'enquête](guide/05-fonctionnement-de-l-enquete.md).
+
+### Qui calcule la confiance
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| La source, dans sa réponse | Chaque source juge ce qu'elle renvoie. | Une source ne voit qu'un identifiant à la fois : elle ne sait pas si un téléphone de sa fiche est déjà confirmé. Règles copiées dans chaque source. |
+| **Le moteur (retenu)** | Il connaît tous les identifiants déjà confirmés. Une seule fonction testée (`assessConfidence`). | Les sources doivent renvoyer assez d'éléments pour que le moteur juge (champs et identifiants de la fiche). |
+
+Une source renvoie des fiches (`SourceRecord`) sans niveau de confiance. Le
+moteur en tire des constats (`Finding`), avec confiance et chemin.
+
+### Rebond en chaîne
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Tout identifiant « confirmé » ou « probable » relance | Trouve le plus d'informations. | Un « probable » qui trouve un autre « probable » peut passer d'un homonyme à l'autre sans fin. |
+| **Ce qu'un « probable » trouve relance seulement s'il est « confirmé » (retenu)** | Une seule étape d'incertitude dans un chemin. | Peut manquer des informations justes trouvées par deux indices faibles à la suite. |
+
+Un `NOM` et un identifiant trouvé chez un proche ne relancent jamais de
+recherche (T1).
+
+### Pseudo rare
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Liste de prénoms et de mots courants écrite à la main | Simple. | Incomplète et arbitraire : ne couvre qu'une langue et ce que l'auteur a pensé à mettre. |
+| Liste des prénoms de l'OFS | Données officielles suisses. | Ne couvre ni les mots courants ni les pseudos étrangers ; fichier à importer et à tenir à jour. |
+| Modèle de Markov sur les caractères (Perito et al., 2011) | Mesure la rareté d'un pseudo de façon reconnue. | Demande un corpus d'entraînement et beaucoup de code pour un projet de quelques semaines. |
+| **Règle minimale dans le domaine, nombre de sites mesuré par le moteur (retenu)** | Peu de code. Le nombre de sites qui portent le pseudo est mesuré sur les vraies réponses. | Un mot courant de 6 lettres (`thomas`) passe le premier filtre ; il dépend du second. |
+
+Règle du domaine (`pseudo.ts`) : au moins 6 caractères et au moins une
+lettre. Le moteur écarte un pseudo présent sur un nombre anormal de sites
+(#65). Une liste sera ajoutée seulement si les essais sur volontaires montrent
+des homonymes.
+
+### Raccourci et suppression
+
+- Les téléphones sont normalisés au format suisse seulement
+  (`normalizeSwissPhone`). Un numéro étranger est gardé tel quel et n'est pas
+  fusionné avec une autre écriture du même numéro. À remplacer par
+  `libphonenumber-js` quand une source renvoie des numéros étrangers.
+- `matching.ts` (règle anti-homonymes de D12) est supprimé et remplacé par
+  `confidence.ts`.
+- L'ancien modèle (`Exposure`, `BreachProvider`) reste en place jusqu'à ce
+  que XposedOrNot soit branché sur le port `Source` (#64).
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -520,3 +575,5 @@ de champs dans les adaptateurs.
 | Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) ; gratuits d'abord (T1) | |
 | Plan d'action | Règles écrites à l'avance (T1) | IA à tester plus tard |
+| Confiance des informations | Calculée par le moteur ; ce qu'un « probable » trouve relance seulement s'il est « confirmé » (T2) | |
+| Pseudo rare | 6 caractères et une lettre, puis nombre de sites mesuré par le moteur (T2) | Liste de mots, modèle de Markov |

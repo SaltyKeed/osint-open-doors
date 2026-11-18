@@ -147,7 +147,7 @@ source et sa confiance.
 | --- | --- |
 | H1 | Fuites : nom, date, types de données exposées |
 | H2 | Contenu de la fiche de la personne dans chaque fuite |
-| H3 | Mots de passe exposés (affichage à trancher, section 10) |
+| H3 | Mots de passe exposés (masqués, visibles avec le bouton « œil », T1) |
 | H4 | Adresses IP connues et localisation approximative |
 | H5 | Ordinateurs infectés par un logiciel espion |
 
@@ -277,26 +277,32 @@ exécutées.
 | Terme | Sens |
 | --- | --- |
 | Identifiant | Une valeur d'un type de la section 6.1, donnée à une source. |
-| Constat | Une valeur d'un champ de la fiche, avec sa source, sa preuve, son niveau de confiance et son chemin. |
+| Constat | Une valeur d'un champ de la fiche, avec les sources qui l'ont renvoyée, son niveau de confiance et son chemin. Deux écritures de la même valeur (`079 123 45 67` et `+41791234567`) forment un seul constat (T2). |
 | Rebond | Un nouvel identifiant trouvé, renvoyé dans la matrice. |
 | Chemin | La suite de rebonds qui a mené à un constat (email, puis fuite Pandabuy, puis pseudo, puis profil Steam). |
 
 ### Boucle
 
-```text
-file = identifiants saisis (confiance « confirmé »)
-déjà vus = vide
-
-tant que la file n'est pas vide :
-  1. prendre un identifiant ; passer s'il est déjà vu
-  2. interroger toutes les sources de la matrice pour son type
-  3. pour chaque réponse : extraire les constats et les nouveaux identifiants
-  4. calculer le niveau de confiance de chacun
-  5. ajouter à la file les nouveaux identifiants « confirmé » ou « probable »
-  6. envoyer les constats à l'écran au fur et à mesure
-
-fin : quand aucun nouvel identifiant fiable n'apparaît
+```mermaid
+flowchart TD
+    A["Identifiants saisis, niveau « confirmé »"] --> B["File des identifiants"]
+    B --> C{"File vide ?"}
+    C -- oui --> Z["Fin de l'enquête"]
+    C -- non --> D["Prendre un identifiant"]
+    D --> E{"Déjà cherché ?"}
+    E -- oui --> B
+    E -- non --> F["Interroger les sources qui acceptent son type"]
+    F --> G["Fiches renvoyées par les sources"]
+    G --> H["Niveau de confiance de chaque fiche"]
+    H --> I["Constats regroupés et envoyés à l'écran"]
+    H --> J{"Nouvel identifiant qui doit relancer ?"}
+    J -- oui --> B
+    J -- non --> I
 ```
+
+Un identifiant déjà cherché est reconnu par sa clé `TYPE:valeur`, après
+normalisation (section 6.1). Les constats arrivent à l'écran au fur et à
+mesure.
 
 Il n'y a pas de limite de profondeur ni de durée (décision du 2026-11-16).
 L'enquête s'arrête d'elle-même quand les rebonds ne donnent plus rien de
@@ -308,13 +314,40 @@ et l'écran l'indique.
 
 | Niveau | Condition | Affiché | Sert au rebond |
 | --- | --- | --- | --- |
-| Confirmé | La source contient aussi un `EMAIL` ou un `TEL` déjà confirmé, ou un `PROFIL` confirmé renvoie vers elle | Oui | Oui |
-| Probable | `PSEUDO` rare et au moins un autre indice cohérent (même ville, même photo, même nom, même année) | Oui, marqué « probable » | Oui |
-| Possible | `PSEUDO` seul, ou `NOM` avec un indice faible | Total seulement | Non |
+| Confirmé | La fiche contient aussi un `EMAIL`, un `TEL` ou un `PROFIL` déjà confirmé, ou elle a été trouvée par un identifiant unique confirmé (`EMAIL`, `TEL`, `PROFIL`, `DOMAINE`) | Oui | Oui |
+| Probable | `PSEUDO` rare et au moins un autre indice cohérent (même ville, même photo, même nom, même année) | Oui, marqué « probable » | Oui, sauf si l'identifiant qui l'a trouvé était lui-même « probable » |
+| Possible | `PSEUDO` seul, `IP`, `ORGA`, ou `NOM` avec un indice | Total seulement | Non |
 | Homonyme probable | `NOM` seul | Total seulement | Non |
+
+Le niveau est choisi par `assessConfidence` (`src/server/domain/confidence.ts`) :
+
+```mermaid
+flowchart TD
+    A["Fiche renvoyée par une source"] --> B{"Contient un EMAIL, TEL ou PROFIL déjà confirmé ?"}
+    B -- oui --> C["Confirmé"]
+    B -- non --> D{"Type de l'identifiant cherché ?"}
+    D -- "EMAIL, TEL, PROFIL, DOMAINE" --> E["Niveau de l'identifiant cherché"]
+    D -- PSEUDO --> F{"Pseudo rare et au moins un indice ?"}
+    F -- oui --> G["Probable"]
+    F -- non --> H["Possible"]
+    D -- NOM --> I{"Au moins un indice ?"}
+    I -- oui --> H
+    I -- non --> J["Homonyme probable"]
+    D -- "IP, ORGA" --> H
+    E --> K["Jamais plus sûr que l'identifiant cherché"]
+    G --> K
+    H --> K
+    J --> K
+```
 
 Règles :
 
+- Sauf dans le cas « confirmé », un résultat n'est jamais plus sûr que
+  l'identifiant qui l'a trouvé.
+- Ce qu'un identifiant « probable » trouve relance une recherche seulement
+  s'il est « confirmé ». Sans cette règle, l'enquête pourrait passer d'un
+  homonyme à l'autre (T2).
+- Un identifiant trouvé chez un proche ne relance jamais de recherche (T1).
 - Un `NOM` seul ne sert jamais de rebond. C'est la principale source de faux
   résultats du prototype.
 - Un pseudo est rare s'il a au moins 6 caractères dont une lettre, et s'il
