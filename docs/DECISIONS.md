@@ -505,7 +505,7 @@ Le moteur d'enquête (#65) a besoin d'un vocabulaire commun : champs de la
 fiche, identifiants, niveaux de confiance, constats et port `Source`. Ce
 modèle est écrit dans `src/server/domain/` (issue #63), sans appel réseau et
 testé. Le fonctionnement est expliqué dans
-[Fonctionnement de l'enquête](guide/05-fonctionnement-de-l-enquete.md).
+[Fonctionnement de l'enquête](guide/06-fonctionnement-de-l-enquete.md).
 
 ### Qui calcule la confiance
 

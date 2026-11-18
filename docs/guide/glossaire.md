@@ -7,8 +7,9 @@ différent.
 ## App Router
 
 Façon d'organiser une application Next.js dans le dossier `src/app/` : chaque
-dossier correspond à une route et son fichier `page.tsx` est la page affichée.
-Voir [Fichiers du projet](03-fichiers-du-projet.md#le-dossier-src-aujourdhui)
+dossier correspond à une adresse, son fichier `page.tsx` est la page affichée
+et son fichier `route.ts` renvoie des données. Voir
+[Comment marche une application web](03-application-web.md#le-routage--quel-code-répond-à-quelle-adresse)
 et [DECISIONS.md, D1](../DECISIONS.md#d1-framework-front-et-serveur).
 
 ## Build
@@ -16,6 +17,21 @@ et [DECISIONS.md, D1](../DECISIONS.md#d1-framework-front-et-serveur).
 Étape qui transforme le code source en une version optimisée, prête à être
 exécutée en production. Dans le projet, elle se lance avec `npm run build`.
 Voir [Commandes du projet](02-commandes.md#npm-run-build).
+
+## Client et serveur
+
+Le client est le programme qui demande (le navigateur) ; le serveur est celui
+qui répond (notre application Next.js). Ils ne communiquent que par requêtes
+HTTP. Voir
+[Comment marche une application web](03-application-web.md#deux-programmes-qui-se-parlent).
+
+## Client Component et Server Component
+
+Un composant React qui commence par `"use client"` est un Client Component :
+il est envoyé au navigateur et réagit aux clics. Sans cette directive, c'est
+un Server Component : il s'exécute sur le serveur, qui envoie seulement le
+HTML produit. Voir
+[Comment marche une application web](03-application-web.md#ce-qui-tourne-où).
 
 ## Check obligatoire (required status check)
 
@@ -71,13 +87,25 @@ données de fuite. Voir
 Liste des seuls champs gardés ; tout le reste est supprimé. Dans une source,
 le schéma zod puis le mapper appliquent chacun une liste blanche, ce qui
 empêche un mot de passe ou un hash d'arriver jusqu'à l'écran. Voir
-[Flux des données d'une source](04-flux-des-donnees.md#deux-listes-blanches).
+[Flux des données d'une source](05-flux-des-donnees.md#deux-listes-blanches).
 
 ## Lockfile
 
 Fichier qui note la version exacte de chaque paquet installé. Pour npm, c'est
 `package-lock.json`. Voir
-[Fichiers du projet](03-fichiers-du-projet.md#packagejson-et-package-lockjson).
+[Fichiers du projet](04-fichiers-du-projet.md#packagejson-et-package-lockjson).
+
+## HTTP
+
+Protocole des échanges entre le navigateur et un serveur : une requête
+(méthode, chemin, en-têtes, corps) suivie d'une réponse (code, en-têtes,
+corps). Voir
+[Comment marche une application web](03-application-web.md#le-message--une-requête-http).
+
+## JSON
+
+Format texte des données échangées entre le navigateur, notre serveur et les
+API des sources, par exemple `{ "email": "lea@exemple.ch" }`.
 
 ## LTS (Long Term Support)
 
@@ -127,10 +155,10 @@ clé est configurée. Voir
 
 ## Route handler
 
-Fichier `route.ts` de l'App Router qui répond à une requête HTTP au lieu
-d'afficher une page. La recherche passera par le route handler
+Fichier `route.ts` de l'App Router qui répond à une requête HTTP avec des
+données au lieu d'afficher une page. La recherche passe par le route handler
 `src/app/api/search/route.ts`. Voir
-[ARCHITECTURE.md, section 4](../ARCHITECTURE.md#4-structure-du-code-ports--adapters).
+[Comment marche une application web](03-application-web.md#le-routage--quel-code-répond-à-quelle-adresse).
 
 ## Ruleset
 
@@ -159,7 +187,7 @@ qui protège les clés API. Voir
 
 Réglage de TypeScript qui active toutes les vérifications strictes des types.
 Le projet ajoute aussi `noUncheckedIndexedAccess`. Voir
-[Fichiers du projet](03-fichiers-du-projet.md#tsconfigjson) et
+[Fichiers du projet](04-fichiers-du-projet.md#tsconfigjson) et
 [DECISIONS.md, D2](../DECISIONS.md#d2-langage).
 
 ## Vitest
