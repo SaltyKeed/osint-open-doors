@@ -152,6 +152,7 @@ function details(field: SourceField): string {
   }
   const i = field.infection;
   if (i) return `${i.date ?? "date ?"}, ${i.operatingSystem ?? "système ?"}, ${i.stolenCredentials ?? "?"} identifiants volés`;
+  if (field.page) return field.page.title;
   return "-";
 }
 

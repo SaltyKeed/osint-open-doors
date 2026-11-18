@@ -77,6 +77,7 @@ src/
 │   │   ├── gravatar/             ← même structure
 │   │   ├── hudsonrock/           ← même structure
 │   │   ├── github/               ← même structure, jeton optionnel
+│   │   ├── tavily/               ← même structure, recherche web, clé obligatoire
 │   │   ├── snusbase/             ← même structure (prévu)
 │   │   └── dehashed/             ← même structure (prévu)
 │   │
@@ -169,6 +170,8 @@ Règles du contrat, vérifiées par les tests de `xposedornot/` :
 - Sur une réponse HTTP 429, ou 403 sans appel restant (GitHub), elle lève
   `SourceQuotaError` : le moteur ne
   l'appelle plus jusqu'à la fin de l'enquête.
+- Une source payée à la requête déclare `maxCallsPerInvestigation` : le
+  moteur ne l'appelle pas plus souvent dans une même enquête (T5).
 - En cas d'échec, il lève une erreur au message fixe
   (`xposedornot: HTTP 500`, `xposedornot: invalid response`), sans la saisie
   du visiteur ni le corps de la réponse.
@@ -204,6 +207,10 @@ classDiagram
         value: string
         breach: BreachDetails optionnel
         infection: InfectionDetails optionnel
+        page: PageDetails optionnel
+    }
+    class PageDetails {
+        title: string
     }
     class InfectionDetails {
         date: string
@@ -229,6 +236,7 @@ classDiagram
         path: Identifier[]
         breach: BreachDetails optionnel
         infection: InfectionDetails optionnel
+        page: PageDetails optionnel
     }
     class Confidence {
         <<enumeration>>
@@ -242,6 +250,7 @@ classDiagram
     SourceRecord --> SourceField
     SourceField --> BreachDetails : H1 seulement
     SourceField --> InfectionDetails : H5 seulement
+    SourceField --> PageDetails : I1 seulement
     SourceRecord --> Identifier : nouveaux identifiants
     Finding --> Identifier : chemin
     Finding --> Confidence
@@ -318,7 +327,8 @@ Le choix de Docker compose en local est expliqué dans
   sont lues et validées par `src/server/env.ts`, le seul fichier qui lit
   `process.env` ; une erreur ne donne que le nom de la variable. Aucune clé ne
   porte le préfixe `NEXT_PUBLIC_`, qui l'enverrait au navigateur.
-- Seule clé aujourd'hui : `GITHUB_TOKEN`, optionnelle.
+- Clés aujourd'hui : `GITHUB_TOKEN` (optionnelle, GitHub marche sans) et
+  `TAVILY_API_KEY` (sans elle, la recherche web est sautée).
 - Le navigateur du poste est lancé avec
   `--kiosk --incognito http://localhost:3000`.
 

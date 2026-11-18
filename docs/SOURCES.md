@@ -186,8 +186,8 @@ recherche : titre et extrait de la page publique.
 
 | Source | Appel | Accès | Statut |
 | --- | --- | --- | --- |
-| Tavily | `POST https://api.tavily.com/search` (filtre par domaines, profondeur `basic` ou `advanced`) | 1000 crédits gratuits par mois, gratuit pour les étudiants (à demander), puis 0.008 USD par crédit | Prototype |
-| Brave Search API | `GET https://api.search.brave.com/res/v1/web/search?q=…`, en-tête `X-Subscription-Token` | 5 USD par 1000 requêtes, 5 USD offerts par mois | Retenu |
+| Tavily | `POST https://api.tavily.com/search`, profondeur `basic` (1 crédit), `exact_match`, sans réponse générée ni texte des pages. Email et téléphone seulement, 3 recherches par enquête (T5) | 1000 crédits gratuits par mois sans carte bancaire (`TAVILY_API_KEY`), gratuit pour les étudiants (à demander), puis 0.008 USD par crédit | En place |
+| Brave Search API | `GET https://api.search.brave.com/res/v1/web/search?q=…`, en-tête `X-Subscription-Token` | 5 USD par 1000 requêtes, 5 USD offerts par mois, carte bancaire exigée | Non utilisé (T5) |
 | Google Custom Search | API JSON | Fermée aux nouveaux clients, arrêt le 2027-01-01 (le mois de la démo) | Écarté |
 
 ### Requêtes envoyées
@@ -212,6 +212,11 @@ Nom » entre guillemets.
 
 Les listes de domaines du prototype (`sandbox-v1`,
 `src/server/providers/tavily/searches.ts`) sont reprises.
+
+En place : les requêtes par email et par téléphone (T5). Les requêtes « nom et
+localité » et « nom et organisation », avec les filtres de domaines, sont
+décidées et pas encore codées (T6, #80). Le nom seul et le pseudo ne sont pas
+cherchés : leurs pages ne pourraient pas être affichées.
 
 ## 5. Annuaires et registres suisses
 

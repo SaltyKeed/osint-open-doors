@@ -16,6 +16,20 @@ describe("fetchJson", () => {
     await expect(fetchJson("x", "https://api.example/a", new AbortController().signal)).rejects.toBeInstanceOf(SourceQuotaError);
   });
 
+  it.each([432, 433])("treats HTTP %i as a quota error (Tavily plan limits)", async (status) => {
+    stub(status);
+    await expect(fetchJson("x", "https://api.example/a", new AbortController().signal)).rejects.toBeInstanceOf(SourceQuotaError);
+  });
+
+  it("sends a POST with a JSON body when asked", async () => {
+    stub(200);
+    await fetchJson("x", "https://api.example/a", new AbortController().signal, {}, { query: "q" });
+    const init = (vi.mocked(fetch).mock.calls[0] as unknown as [string, RequestInit])[1];
+    expect(init.method).toBe("POST");
+    expect(init.body).toBe('{"query":"q"}');
+    expect((init.headers as Record<string, string>)["Content-Type"]).toBe("application/json");
+  });
+
   it("treats any other 403 as an ordinary error", async () => {
     stub(403);
     await expect(fetchJson("x", "https://api.example/a", new AbortController().signal)).rejects.toThrow(/^x: HTTP 403$/);

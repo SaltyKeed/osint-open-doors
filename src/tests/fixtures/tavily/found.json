@@ -1,0 +1,24 @@
+{
+  "query": "\"lea.martin@exemple.ch\"",
+  "answer": null,
+  "images": [],
+  "results": [
+    {
+      "title": "Résultats course populaire 10 km - Club Exemple",
+      "url": "https://club.example/resultats-2026",
+      "content": "Inscriptions : contact lea.martin@exemple.ch, catégorie dames 20-29 ans.",
+      "score": 0.81,
+      "raw_content": null,
+      "favicon": "https://club.example/favicon.ico"
+    },
+    {
+      "title": "Page sans rapport",
+      "url": "https://autre.example/page",
+      "content": "Un texte qui ne cite pas l'adresse cherchée.",
+      "score": 0.42,
+      "raw_content": null
+    }
+  ],
+  "response_time": 0.9,
+  "request_id": "exemple-123"
+}

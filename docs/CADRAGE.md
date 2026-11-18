@@ -216,30 +216,30 @@ Statuts :
 | `EMAIL` | Gravatar (en place), Libravatar | A1 A5 C1 E1 F1 F2 | `PSEUDO` `PROFIL` | Gratuit | En place (Gravatar) |
 | `EMAIL` | GitHub (commits, puis comptes) | A1 A5 B1 C1 E1 E3 F1 F2 F3 | `PSEUDO` `EMAIL` `DOMAINE` | Gratuit | En place |
 | `EMAIL` | Serveurs de clés PGP | A1 B1 | `EMAIL` | Gratuit | Prototype |
-| `EMAIL` | Moteur de recherche (valeur exacte) | I1 I3 | `PROFIL` | Clé gratuite | Prototype |
+| `EMAIL` | Moteur de recherche (valeur exacte) : Tavily | I1 | aucun | Clé gratuite | En place (T5) |
 | `EMAIL` | Domaine de l'email (hors webmail) | E1 | `ORGA` `DOMAINE` | Gratuit | Nouveau |
 | `TEL` | Fiches de fuites : LeakCheck Pro, Leak-Lookup, HackCheck | A1 A2 B1 B3 C1 E1 H1 H2 H3 | `EMAIL` `NOM` `PSEUDO` | Payant | Retenu |
 | `TEL` | Annuaire search.ch | A1 B3 C1 | `NOM` | Gratuit, quota | Prototype |
 | `TEL` | Analyse locale du numéro | pays, type de ligne, opérateur d'origine | aucun | Local | Prototype |
-| `TEL` | Moteur de recherche (plusieurs formats) | I1 I3 | `PROFIL` | Clé gratuite | Prototype |
+| `TEL` | Moteur de recherche (plusieurs formats) : Tavily | I1 | aucun | Clé gratuite | En place (T5) |
 | `PSEUDO` | Base de sites (WhatsMyName et Maigret, figée dans le dépôt) | F1 F2 | `PROFIL` | Gratuit | À refaire |
 | `PSEUDO` | Fiches de fuites (`SOURCES.md`, section 1.1) | A1 B1 B2 B3 H1 H2 H3 | `EMAIL` `TEL` | Payant | Retenu |
 | `NOM` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | A2 B1 B2 B3 H1 H2 | `EMAIL` `TEL` (seulement si la fiche est « confirmé ») | Payant | Retenu |
 | `IP` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | H2 | `EMAIL` | Payant | Retenu |
-| `PSEUDO` | Moteur de recherche | I1 | `PROFIL` | Clé gratuite | Prototype |
+| `PSEUDO` | Moteur de recherche | I1 | `PROFIL` | Clé gratuite | Pas pour l'instant : aucun champ à comparer (T5) |
 | `PSEUDO` | Infostealers : Hudson Rock | H5 | aucun | Gratuit | En place |
 | `PSEUDO` | GitHub (compte du même nom) | A1 A5 B1 C1 E1 F1 F2 F3 | `PSEUDO` `EMAIL` `DOMAINE` | Gratuit | En place |
 | `PROFIL` | API publique du site (GitHub, GitLab, Mastodon, YouTube, Twitch, Steam, Chess.com...) | A1 A5 C1 E1 F2 G2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Partiel |
 | `PROFIL` | Listes publiques d'abonnés, d'amis et mentions | J1 | aucun (identifiants de tiers, jamais relancés) | Gratuit | Nouveau |
 | `PROFIL` | Wayback Machine | I2 | `PROFIL` | Gratuit | Prototype |
-| `NOM` | Moteur de recherche ciblé : LinkedIn | A1 C1 D1 E1 | `ORGA` `PROFIL` | Clé gratuite | Nouveau |
-| `NOM` | Moteur de recherche ciblé : presse, résultats sportifs, associations | C3 G1 G3 | `ORGA` | Clé gratuite | Partiel |
+| `NOM` | Moteur de recherche ciblé, nom et valeur confirmée : LinkedIn | A1 C1 D1 E1 | `ORGA` `PROFIL` | Clé gratuite | Décidé, à coder (T6, #80) |
+| `NOM` | Moteur de recherche ciblé, nom et valeur confirmée : presse, résultats sportifs, associations | C3 G1 G3 | `ORGA` | Clé gratuite | Décidé, à coder (T6, #80) |
 | `NOM` | Zefix, FOSC | E2 | `ORGA` | Gratuit | Nouveau |
 | `NOM` | ORCID, OpenAlex | E3 | `ORGA` | Gratuit | Partiel |
 | `NOM` | Annuaire search.ch | B2 B3 C1 | `TEL` | Gratuit, quota | Prototype (total seulement) |
 | `DOMAINE` | RDAP, crt.sh, Wayback Machine | F3 I2 | `EMAIL` `NOM` | Gratuit | Partiel |
 | `IP` | ip-api.com | H4 C1 (approximatif) | aucun | Gratuit | Retenu |
-| `ORGA` | Moteur de recherche « nom + organisation » | D1 E1 G1 | `PROFIL` | Clé gratuite | Nouveau |
+| `ORGA` | Moteur de recherche « nom + organisation » | D1 E1 G1 | `PROFIL` | Clé gratuite | Décidé, à coder (T6, #80) |
 
 Lecture d'un exemple : un email saisi est donné au service de fiches de fuites.
 La fiche Pandabuy contient un téléphone et un pseudo. Le téléphone est un
@@ -353,6 +353,10 @@ Règles :
 - Un identifiant trouvé chez un proche ne relance jamais de recherche (T1).
 - Un `NOM` seul ne sert jamais de rebond. C'est la principale source de faux
   résultats du prototype.
+- Exception décidée, pas encore codée (T6, #80) : une page trouvée par une
+  recherche web « nom et valeur confirmée » (ville, école, employeur) est
+  « probable » si elle contient le nom et cette valeur. Elle ne relance pas
+  de recherche.
 - Un indice cohérent est une valeur de A1, A2 ou C1 identique à celle d'un
   constat confirmé ; le nom saisi par le visiteur compte comme A1 confirmé.
   La photo (A5) sera ajoutée avec une source qui donne une empreinte
