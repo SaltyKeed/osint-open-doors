@@ -10,7 +10,7 @@ import { toLeakCheckRecords } from "./leakcheck/mapper";
 import { toLeakLookupResult } from "./leaklookup/mapper";
 import { leakLookupSchema } from "./leaklookup/schema";
 import { leakCheckPublicSchema } from "./leakcheck/schema";
-import { toXposedRecords } from "./xposedornot/mapper";
+import { checkEmailSchema, toCheckEmailRecords, toXposedRecords } from "./xposedornot/mapper";
 
 // All values below are invented test data.
 const email = normalizeIdentifier("EMAIL", "lea@example.ch")!;
@@ -212,5 +212,19 @@ describe("leak-lookup public", () => {
   it("the daily limit is reported as a quota, not as nothing found", () => {
     const body = leakLookupSchema.parse({ error: "true", message: "REQUEST LIMIT REACHED" });
     expect(toLeakLookupResult(body, email).status).toBe("quota");
+  });
+});
+
+describe("xposedornot check-email", () => {
+  it("adds the breaches that the analytics route did not return", () => {
+    const body = checkEmailSchema.parse({ breaches: [["Pandabuy", "Wattpad", "Duolingo"]] });
+    const records = toCheckEmailRecords(body, email, new Set(["wattpad"]));
+    expect(records.map((r) => r.values[0]?.value)).toEqual(["Pandabuy", "Duolingo"]);
+    expect(records[0]?.origin).toBe("Pandabuy");
+    expect(types(records[0]!.identifiers)).toEqual(["EMAIL:lea@example.ch"]);
+  });
+
+  it("not found gives nothing", () => {
+    expect(toCheckEmailRecords(checkEmailSchema.parse({ Error: "Not found" }), email, new Set())).toEqual([]);
   });
 });
