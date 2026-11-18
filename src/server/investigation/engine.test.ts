@@ -129,3 +129,25 @@ describe("investigate", () => {
     expect([...fiche.values()].some((f) => f.field === "A1")).toBe(true);
   });
 });
+
+describe("investigate, time limit", () => {
+  it("stops queuing new identifiers after the deadline and keeps what was found", async () => {
+    let n = 0;
+    // Each answer gives a new confirmed email: without a deadline the loop would never end.
+    const endless = fake("endless", ["EMAIL"], () => {
+      n += 1;
+      return [
+        {
+          origin: `endless-${n}`,
+          evidence: null,
+          values: [{ field: "I1", value: `page ${n}` }],
+          identifiers: [{ identifier: id("EMAIL", "lea@example.ch") }, { identifier: id("EMAIL", `lea${n}@example.ch`) }],
+        },
+      ];
+    });
+    const started = Date.now();
+    const { fiche } = await investigate([inputLead(email)], context, [endless], { env, deadlineMs: 100 });
+    expect(Date.now() - started).toBeLessThan(2000);
+    expect([...fiche.values()].some((f) => f.field === "I1")).toBe(true);
+  });
+});

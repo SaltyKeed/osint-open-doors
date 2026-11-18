@@ -145,3 +145,38 @@ describe("toView, lists of the result screen", () => {
     expect(view.actions.map((a) => a.id)).toEqual(["infection", "passwords", "two-factor", "profiles", "pages", "archives"]);
   });
 });
+
+describe("toView, leads and commune (screens of the first prototype)", () => {
+  function withLeads(): Fiche {
+    const f: Fiche = new Map();
+    const attrs = (pairs: [string, string][]) => pairs.map(([label, value]) => ({ label, value, known: true }));
+    addSighting(
+      f,
+      { field: "F2", value: "https://chess.example/lmartin06", attributes: attrs([["Service", "Chess"], ["Pseudo", "lmartin06"], ["Détail", "Compte créé en 2021"]]) },
+      sighting("possible"),
+    );
+    addSighting(f, { field: "I1", value: "Résultats du tournoi", attributes: attrs([["Adresse", "https://club.example/r"], ["Extrait", "Léa Martin, 3e"]]) }, sighting("homonyme"));
+    addSighting(f, { field: "B3", value: "Rue du Lac 12, 2000 Neuchâtel" }, sighting("confirme"));
+    addSighting(f, { field: "H1", value: "OldForum", attributes: attrs([["Date", "2015-01"]]) }, sighting("possible"));
+    return f;
+  }
+  const resolver = (zip: string | undefined, city: string | undefined) =>
+    zip === "2000" ? { name: `Commune de ${city}`, canton: "NE", lat: 47, lng: 7, rings: [] } : undefined;
+  const view = toView({ fiche: withLeads(), runs: [] }, [], resolver);
+
+  it("lists the unconfirmed accounts and pages as leads, with their level", () => {
+    expect(view.leads.profiles).toMatchObject([{ platform: "Chess", pseudo: "lmartin06", details: ["Compte créé en 2021"], confidence: "possible" }]);
+    expect(view.leads.pages).toMatchObject([{ title: "Résultats du tournoi", site: "club.example", confidence: "homonyme" }]);
+    expect(view.profiles).toEqual([]);
+  });
+
+  it("lists the breaches found by a pseudo only as leads too", () => {
+    expect(view.leads.breaches).toMatchObject([{ name: "OldForum", date: "2015-01", confidence: "possible" }]);
+    expect(view.breaches).toEqual([]);
+  });
+
+  it("places the commune of a confirmed address, never the street", () => {
+    expect(view.commune).toEqual({ name: "Commune de Neuchâtel", canton: "NE", lat: 47, lng: 7, rings: [] });
+    expect(JSON.stringify(view.commune)).not.toContain("Rue du Lac");
+  });
+});

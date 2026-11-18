@@ -15,7 +15,9 @@ export interface PlatformAccount {
 export function toPlatformRecord(account: PlatformAccount, pseudo: Identifier): SourceRecord {
   const profile = normalizeIdentifier("PROFIL", account.url);
   return {
-    origin: account.site,
+    // The account itself is the origin: WhatsMyName and the platform API checking the
+    // same account are one proof, not two independent ones.
+    origin: profile?.value ?? account.url,
     evidence: account.url,
     values: [
       {

@@ -89,22 +89,29 @@ function attributes(b: CatalogueBreach): Attribute[] {
 /** New fiche where every known breach carries its catalogue title and details. */
 export function enrichBreaches(fiche: Fiche, catalogue: readonly CatalogueBreach[]): Fiche {
   const enriched: Fiche = new Map();
+  /** First name seen for a breach absent from the catalogue, shown for all its variants. */
+  const names = new Map<string, string>();
   for (const finding of fiche.values()) {
     const breach = finding.field === "H1" ? findBreach(finding.value, catalogue) : null;
     const value = breach?.Title ?? finding.value;
     // The catalogue details replace the shorter ones given by the sources.
     const own = breach ? finding.attributes.filter((a) => !REPLACED.has(a.label)) : finding.attributes;
     const extra = breach ? attributes(breach) : [];
+    // A breach is known by its normalized name: "Pandabuy" and "pandabuy.com" are one
+    // breach, so one origin (one proof), whatever source reported it.
+    const breachKey = finding.field === "H1" ? (breach ? `catalogue:${breach.Name}` : key(finding.value)) : null;
+    if (breachKey && !breach && !names.has(breachKey)) names.set(breachKey, finding.value);
+    const shown = breachKey && !breach ? (names.get(breachKey) ?? value) : value;
     finding.sightings.forEach((sighting, i) => {
       addSighting(
         enriched,
         {
           field: finding.field,
-          value,
+          value: shown,
           attributes: i === 0 ? [...extra, ...own] : [],
           thirdParty: finding.thirdParty,
         },
-        sighting,
+        breachKey ? { ...sighting, origin: `breach:${breachKey}` } : sighting,
       );
     });
   }

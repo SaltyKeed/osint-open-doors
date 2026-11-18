@@ -84,7 +84,8 @@ describe("toWebRecords", () => {
   const records = toWebRecords(body, email);
 
   it("keeps only pages that really contain the searched value", () => {
-    expect(records.map((r) => r.origin)).toEqual(["instagram.com", "club.example"]);
+    // A profile page has the account as origin (one proof with the other sources that check it).
+    expect(records.map((r) => r.origin)).toEqual(["https://instagram.com/lmartin06", "club.example"]);
   });
 
   it("each page is an I1 value with its address and excerpt, never the full page text", () => {

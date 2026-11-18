@@ -163,44 +163,66 @@ Pour changer ce qu'un provider garde ou affiche, voir le guide
 | `server-only` | tout `src/server/` | Le build échoue si du code serveur (et donc une clé) se retrouve dans le bundle client. |
 | Tests sur fixtures fictives | `tests/fixtures/` | Aucune vraie donnée de fuite n'est versionnée. |
 
-### Moteur d'enquête (prototype de la branche `sandbox`)
+### Moteur d'enquête et interface (prototype de la branche `sandbox`)
 
-Première version de l'enquête de `CADRAGE.md`, sections 4 à 7. Elle vit à côté
-du socle (`providers/`, `search-service.ts`, `/api/search`), qui reste en
+Première version de l'enquête de `CADRAGE.md`, sections 4 à 7, avec
+l'interface du premier prototype (`sandbox-v1`) : thème sombre, barre qui
+reconnaît le type de saisie, globe pendant la recherche, onglets de résultats,
+carte de la commune, effacement après 2 minutes d'inactivité. Le socle
+(`providers/`, `search-service.ts`, `/api/search`, console `/dev`) reste en
 place.
 
 ```text
 src/
 ├── app/
-│   ├── page.tsx, investigation.tsx  ← saisie et consentement
-│   ├── results.tsx                  ← résultats à la manière de la v1 : onglets, plan d'action
-│   └── api/investigate/route.ts     ← valide la saisie, lance l'enquête, renvoie la vue
+│   ├── page.tsx                     ← l'application (SearchApp), liste des services du consentement
+│   └── api/investigate/route.ts     ← valide la saisie, lance l'enquête (90 s au plus), renvoie la vue
+├── components/                      ← interface reprise de sandbox-v1
+│   ├── search-app.tsx               ← enchaînement saisie → chargement → résultats, inactivité
+│   ├── search-screen.tsx, search-bar.tsx, search-tag.tsx ← étiquettes reconnues (email, tél., nom…)
+│   ├── loading-screen.tsx, search-globe-loader.tsx, globe-scene.tsx ← globe 3D (three.js)
+│   ├── results-screen.tsx           ← onglets : fuites, web, comptes, archives, fiche, pistes
+│   ├── commune-reveal.tsx, commune-map.tsx ← commune de l'adresse (jamais la rue)
+│   └── ui/                          ← composants shadcn/ui
+├── data/                            ← globe, carte de la Suisse, communes (OFS, swisstopo)
+├── lib/                             ← détection du type de saisie, masques, téléphone (navigateur et serveur)
 └── server/
     ├── domain/                      ← modèle de données, sans réseau
     │   ├── fiche-fields.ts          ← champs A1 à J1 et catégories
     │   ├── identifier.ts            ← 8 types d'identifiants, normalisation, clé
-    │   ├── confidence.ts            ← niveaux de confiance et hausse par 2 sources
+    │   ├── confidence.ts            ← niveaux de confiance et hausse par 2 sources indépendantes
     │   ├── hints.ts, rare-pseudo.ts ← indices cohérents, pseudo rare
     │   ├── path.ts, lead.ts         ← chemin, pistes de rebond (qui relance)
     │   ├── fiche.ts                 ← constats, fusion des doublons, remplissage
     │   ├── investigation-input.ts   ← schéma zod de la saisie
     │   └── source.ts                ← le port Source
     ├── investigation/
-    │   ├── engine.ts                ← la boucle de rebond
-    │   └── view.ts                  ← fiche → écran ; « possible » : le nombre seulement
-    └── sources/                     ← un dossier par source : schema, mapper, index
-        ├── xposedornot/  (réutilise providers/xposedornot)
-        ├── hudsonrock/
-        ├── gravatar/
-        ├── github/
-        ├── leakcheck/, leaklookup/    (API publiques, noms des fuites)
-        ├── websearch/                 (Tavily : pages et profils, source des rebonds)
-        └── wayback/                   (archives des profils et domaines)
+    │   ├── engine.ts                ← la boucle de rebond, durée maximale
+    │   ├── breaches.ts              ← fuites présentées avec le catalogue HIBP
+    │   └── view.ts                  ← fiche → écran, plan d'action par règles
+    ├── geo/communes.ts              ← code postal et localité → commune
+    └── sources/                     ← un dossier par source, 20 sources
+        ├── xposedornot/, leakcheck/, leaklookup/, hudsonrock/ ← fuites et infostealers
+        ├── gravatar/, github/, pgp/, emaildomain/             ← email
+        ├── profiles/, whatsmyname/, keybase/                  ← pseudo (API des plateformes, 612 sites)
+        ├── phone/, searchch/                                  ← téléphone
+        ├── orcid/, wikidata/, shab/                           ← nom
+        └── websearch/, rdap/, ransomware/, wayback/           ← web, domaines, archives
 ```
 
 Une source décrit ce qu'elle a trouvé (`SourceRecord` : valeurs de la fiche et
 identifiants) ; le moteur calcule la confiance. Les règles sont donc écrites
-une seule fois, dans `confidence.ts`, et pas dans chaque source.
+une seule fois, dans `confidence.ts`, et pas dans chaque source. Un compte a
+pour origine son adresse, une fuite son nom : deux sources qui vérifient le
+même compte ou la même fuite ne comptent que pour une preuve.
+
+Les résultats non confirmés (trouvés par un pseudo ou un nom seuls) sont
+montrés dans des onglets « pistes à vérifier », comme dans `sandbox-v1`, et ne
+relancent jamais de recherche. T1 prévoit d'en montrer seulement le nombre :
+écart à valider avec Tiago avant de reprendre ce prototype dans `main`.
+
+Tailwind CSS reste en version 4.3.3 sur `sandbox` : avec la 4.3.5, le
+chargeur Turbopack ne trouve plus le paquet `tw-animate-css` de l'interface.
 
 ## 5. Stack technique
 

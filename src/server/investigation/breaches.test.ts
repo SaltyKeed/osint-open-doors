@@ -70,6 +70,20 @@ describe("enrichBreaches", () => {
     ]);
   });
 
+  it("the same breach seen by two sources under two names is one proof, not two", () => {
+    const f: Fiche = new Map();
+    const possible = (sourceId: string, origin: string) => ({ ...sighting(sourceId, origin), confidence: "possible" as const });
+    addSighting(f, { field: "H1", value: "Duolingo" }, possible("xposedornot", "Duolingo"));
+    addSighting(f, { field: "H1", value: "duolingo.com" }, possible("leakcheck-public", "duolingo.com"));
+    addSighting(f, { field: "H1", value: "pandabuy.com" }, possible("leak-lookup", "pandabuy.com"));
+    addSighting(f, { field: "H1", value: "Pandabuy" }, possible("leakcheck-public", "Pandabuy"));
+    const enriched = [...enrichBreaches(f, catalogue).values()];
+    expect(enriched.map((b) => [b.value, b.confidence])).toEqual([
+      ["Duolingo", "possible"],
+      ["pandabuy.com", "possible"],
+    ]);
+  });
+
   it("leaves the other findings unchanged", () => {
     const enriched = enrichBreaches(fiche(), catalogue);
     expect([...enriched.values()].find((f) => f.field === "B1")?.value).toBe("lea@example.ch");

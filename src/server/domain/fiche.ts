@@ -48,6 +48,8 @@ export type Fiche = Map<string, Finding>;
 function findingKey(field: FieldCode, value: string): string {
   if (field === "B1") return `${field}:${normalizeIdentifier("EMAIL", value)?.value ?? fold(value)}`;
   if (field === "B2") return `${field}:${normalizeIdentifier("TEL", value)?.value ?? fold(value)}`;
+  // "https://www.chess.com/x" and "https://chess.com/x" are the same account.
+  if (field === "F2") return `${field}:${normalizeIdentifier("PROFIL", value)?.value ?? fold(value)}`;
   return `${field}:${fold(value)}`;
 }
 

@@ -58,7 +58,9 @@ export function toWebRecords(body: TavilyResponse, queried: Identifier): SourceR
       if (profileId) identifiers.push(profileId);
       if (pseudoId) identifiers.push(pseudoId);
     }
-    records.push({ origin: host, evidence: result.url, values, identifiers: identifiers.map((identifier) => ({ identifier })) });
+    // A profile page is the account itself: same origin as the other sources that check it.
+    const origin = profile ? (normalizeIdentifier("PROFIL", profile.url)?.value ?? host) : host;
+    records.push({ origin, evidence: result.url, values, identifiers: identifiers.map((identifier) => ({ identifier })) });
   }
   return records;
 }

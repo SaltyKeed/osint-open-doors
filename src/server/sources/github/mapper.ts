@@ -42,7 +42,9 @@ export function toGithubUserRecord(user: GithubUser, known: Identifier[]): Sourc
     .filter((i): i is Identifier => i !== null)
     .filter((i) => !seen.has(`${i.type}:${i.value}`) && seen.add(`${i.type}:${i.value}`))
     .map((identifier) => ({ identifier }));
-  return { origin: "GitHub", evidence: user.html_url, values, identifiers };
+  // The account is the origin (see profiles/record.ts).
+  const origin = normalizeIdentifier("PROFIL", user.html_url)?.value ?? user.html_url;
+  return { origin, evidence: user.html_url, values, identifiers };
 }
 
 /** Commits made with the email: author names, projects, and the accounts linked to them. */

@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+import { SearchApp } from "@/components/search-app";
 import { SOURCES } from "@/server/sources";
-import { Investigation } from "./investigation";
-
-export const metadata: Metadata = { title: "OSINT Open Doors" };
 
 export default function Home() {
-  // The consent text lists the services from the same list the engine uses.
-  return <Investigation services={SOURCES.map((s) => s.label)} />;
+  return (
+    <main className="flex flex-1 flex-col items-center justify-center px-6 py-16 sm:px-12">
+      {/* The consent text lists the services from the same list the engine uses. */}
+      <SearchApp services={SOURCES.map((s) => s.label)} />
+    </main>
+  );
 }

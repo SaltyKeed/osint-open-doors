@@ -51,7 +51,8 @@ describe("toPlatformRecord", () => {
       pseudo,
     );
     expect(record).toEqual({
-      origin: "Chess.com",
+      // The account itself is the origin: two sources checking it are one proof.
+      origin: "https://chess.com/member/lmartin06",
       evidence: "https://www.chess.com/member/lmartin06",
       values: [
         {

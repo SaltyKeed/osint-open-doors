@@ -36,6 +36,8 @@ export interface InvestigateOptions {
   signal?: AbortSignal;
   /** Per call: a slow source is cut and marked "error", the others go on. */
   timeoutMs?: number;
+  /** Whole investigation: after it, no new identifier is queried and the fiche is returned. */
+  deadlineMs?: number;
 }
 
 /** Where the volunteer's own input goes in the fiche. */
@@ -91,8 +93,10 @@ export async function investigate(
     }
   }
 
+  const until = Date.now() + (options.deadlineMs ?? Number.POSITIVE_INFINITY);
   const queue = [...leads];
   for (let lead = queue.shift(); lead; lead = queue.shift()) {
+    if (Date.now() > until) break;
     const key = identifierKey(lead.identifier);
     if (seen.has(key) || !canPivot(lead)) continue;
     seen.add(key);

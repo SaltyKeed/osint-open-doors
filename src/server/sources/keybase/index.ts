@@ -43,7 +43,8 @@ export function toKeybaseRecord(raw: unknown, pseudo: Identifier): SourceRecord 
     (i): i is Identifier => i !== null,
   );
   return {
-    origin: "Keybase",
+    // The account is the origin (see profiles/record.ts).
+    origin: normalizeIdentifier("PROFIL", url)?.value ?? url,
     evidence: url,
     values: [
       {

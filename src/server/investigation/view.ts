@@ -5,6 +5,8 @@ import { CATEGORIES, FIELDS, type FieldCode } from "@/server/domain/fiche-fields
 import type { IdentifierType } from "@/server/domain/identifier";
 import { maskValue } from "@/server/domain/masking";
 import type { SourceStatus } from "@/server/domain/source";
+import type { Commune } from "@/server/domain/commune";
+import { resolveCommune } from "@/server/geo/communes";
 import type { InvestigationResult, SourceRun } from "./engine";
 
 // What the screen receives. Possible values and namesakes stay on the server:
@@ -42,13 +44,26 @@ export interface InvestigationView {
   profiles: ProfileCard[];
   archives: ArchiveCard[];
   actions: Action[];
+  /** Unconfirmed accounts and pages (found by a pseudo or a name only): to check, never pivots. */
+  leads: { profiles: LeadProfile[]; pages: PageCard[]; breaches: BreachCard[] };
+  /** Commune of a confirmed postal address, for the map. Never the street. */
+  commune: Commune | null;
 }
+
+export interface LeadProfile extends Card {
+  platform: string;
+  url: string;
+  pseudo: string;
+  details: string[];
+}
+
+export type CommuneResolver = (zip: string | undefined, city: string | undefined) => Commune | undefined;
 
 // Lists of the result screen, one per kind of finding (layout of the first prototype).
 // Only confirmed and probable findings are listed.
 
 interface Card {
-  confidence: ViewValue["confidence"];
+  confidence: Confidence;
   sources: string[];
   path: string[];
 }
@@ -216,6 +231,7 @@ const TYPE_LABELS: Record<IdentifierType, string> = {
 export function toView(
   result: InvestigationResult,
   sources: readonly { id: string; label: string }[],
+  resolve: CommuneResolver = resolveCommune,
 ): InvestigationView {
   const label = (id: string) => (id === "saisie" ? "saisie" : (sources.find((s) => s.id === id)?.label ?? id));
   const findings = [...result.fiche.values()];
@@ -238,30 +254,51 @@ export function toView(
   const of = (field: FieldCode) => detailed.filter((f) => f.field === field);
   const card = (f: Finding): Card => {
     const v = toValue(f);
-    return { confidence: v.confidence, sources: v.sources, path: v.path };
+    return { confidence: f.confidence, sources: v.sources, path: v.path };
   };
-
-  const breaches: BreachCard[] = of("H1")
-    .map((f) => {
-      const data = (attr(f, "Données exposées") ?? "").split(", ").filter(Boolean);
-      return {
-        ...card(f),
-        name: f.value,
-        date: attr(f, "Date de la fuite", "Date", "Année"),
-        accounts: attr(f, "Comptes touchés"),
-        data,
-        passwordExposed: data.some((d) => d.startsWith("mot")),
-        description: attr(f, "Description (anglais)"),
-        logo: attr(f, "Logo"),
-      };
-    })
-    // Password breaches first, then the most recent (dates are dd.mm.yyyy or yyyy-mm).
-    .sort((a, b) => Number(b.passwordExposed) - Number(a.passwordExposed) || sortKey(b.date).localeCompare(sortKey(a.date)));
-  const infections = of("H5").map((f) => ({ ...card(f), label: f.value, attributes: f.attributes }));
-  const pages = of("I1").map((f) => {
+  const unconfirmed = findings.filter((f) => !isDetailed(f.confidence) && !f.thirdParty);
+  const pageOf = (f: Finding): PageCard => {
     const url = attr(f, "Adresse") ?? f.value;
     return { ...card(f), title: f.value, url, site: hostOf(url), excerpt: attr(f, "Extrait") };
-  });
+  };
+  const leads = {
+    profiles: unconfirmed
+      .filter((f) => f.field === "F2")
+      .map((f) => ({
+        ...card(f),
+        platform: attr(f, "Service") ?? hostOf(f.value),
+        url: f.value,
+        pseudo: attr(f, "Pseudo") ?? "",
+        details: f.attributes.filter((a) => a.label === "Détail").map((a) => a.value),
+      })),
+    pages: unconfirmed.filter((f) => f.field === "I1").map(pageOf),
+  };
+  // "Rue du Lac 12, 2000 Neuchâtel": the zip code and the locality give the commune.
+  const place = of("B3")
+    .map((f) => /\b(\d{4})\s+([^,]+)$/.exec(f.value))
+    .find((m) => m !== null);
+  const commune = place ? (resolve(place[1], place[2]) ?? null) : null;
+
+  const toBreach = (f: Finding): BreachCard => {
+    const data = (attr(f, "Données exposées") ?? "").split(", ").filter(Boolean);
+    return {
+      ...card(f),
+      name: f.value,
+      date: attr(f, "Date de la fuite", "Date", "Année"),
+      accounts: attr(f, "Comptes touchés"),
+      data,
+      passwordExposed: data.some((d) => d.startsWith("mot")),
+      description: attr(f, "Description (anglais)"),
+      logo: attr(f, "Logo"),
+    };
+  };
+  // Password breaches first, then the most recent (dates are dd.mm.yyyy or yyyy-mm).
+  const byPriority = (a: BreachCard, b: BreachCard) =>
+    Number(b.passwordExposed) - Number(a.passwordExposed) || sortKey(b.date).localeCompare(sortKey(a.date));
+  const breaches = of("H1").map(toBreach).sort(byPriority);
+  const leadBreaches = unconfirmed.filter((f) => f.field === "H1").map(toBreach).sort(byPriority);
+  const infections = of("H5").map((f) => ({ ...card(f), label: f.value, attributes: f.attributes }));
+  const pages = of("I1").map(pageOf);
   const profiles = of("F2").map((f) => ({
     ...card(f),
     platform: attr(f, "Service") ?? hostOf(f.value),
@@ -296,6 +333,8 @@ export function toView(
     profiles,
     archives,
     actions: actionPlan(summary, profiles),
+    leads: { ...leads, breaches: leadBreaches },
+    commune,
     categories: CATEGORIES.map((category) => {
       const rate = rates.find((r) => r.category === category.code);
       const fields = FIELDS.filter((field) => field.category === category.code)

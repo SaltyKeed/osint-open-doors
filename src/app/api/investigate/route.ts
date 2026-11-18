@@ -21,7 +21,8 @@ export async function POST(request: Request): Promise<Response> {
 
   const { leads, context } = toInitialLeads(input.data);
   const [result, catalogue] = await Promise.all([
-    investigate(leads, context, SOURCES, { env: process.env, signal: request.signal }),
+    // 90 seconds at most: the visitor waits at the stand (search-app.tsx waits 120 seconds).
+    investigate(leads, context, SOURCES, { env: process.env, signal: request.signal, deadlineMs: 90_000 }),
     loadCatalogue(request.signal),
   ]);
   const fiche = enrichBreaches(result.fiche, catalogue);
