@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Source, SourceRecord } from "./source";
+import { SourceQuotaError, type Source, type SourceRecord } from "./source";
 
 // All values below are invented test data.
 
@@ -24,5 +24,13 @@ describe("Source port", () => {
   it("returns the records of the source", async () => {
     const records = await fakeSource.investigate();
     expect(records).toEqual([record]);
+  });
+});
+
+describe("SourceQuotaError", () => {
+  it("is an Error with a fixed message naming the source only", () => {
+    const error = new SourceQuotaError("fake");
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe("fake: quota reached");
   });
 });

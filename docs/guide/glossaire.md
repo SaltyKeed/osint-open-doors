@@ -18,21 +18,6 @@ et [DECISIONS.md, D1](../DECISIONS.md#d1-framework-front-et-serveur).
 exécutée en production. Dans le projet, elle se lance avec `npm run build`.
 Voir [Commandes du projet](02-commandes.md#npm-run-build).
 
-## Client et serveur
-
-Le client est le programme qui demande (le navigateur) ; le serveur est celui
-qui répond (notre application Next.js). Ils ne communiquent que par requêtes
-HTTP. Voir
-[Comment marche une application web](03-application-web.md#deux-programmes-qui-se-parlent).
-
-## Client Component et Server Component
-
-Un composant React qui commence par `"use client"` est un Client Component :
-il est envoyé au navigateur et réagit aux clics. Sans cette directive, c'est
-un Server Component : il s'exécute sur le serveur, qui envoie seulement le
-HTML produit. Voir
-[Comment marche une application web](03-application-web.md#ce-qui-tourne-où).
-
 ## Check obligatoire (required status check)
 
 Contrôle de la CI qui doit réussir pour qu'une pull request puisse être
@@ -44,10 +29,32 @@ obligatoires. Voir [DEVSECOPS.md](../DEVSECOPS.md#ruleset-de-la-branche-main).
 Contrôles lancés automatiquement par GitHub Actions à chaque pull request ou
 push sur `main`. Voir [DECISIONS.md, D13](../DECISIONS.md#d13-ci-de-vérification).
 
+## Client Component et Server Component
+
+Un composant React qui commence par `"use client"` est un Client Component :
+il est envoyé au navigateur et réagit aux clics. Sans cette directive, c'est
+un Server Component : il s'exécute sur le serveur, qui envoie seulement le
+HTML produit. Voir
+[Comment marche une application web](03-application-web.md#ce-qui-tourne-où).
+
+## Client et serveur
+
+Le client est le programme qui demande (le navigateur) ; le serveur est celui
+qui répond (notre application Next.js). Ils ne communiquent que par requêtes
+HTTP. Voir
+[Comment marche une application web](03-application-web.md#deux-programmes-qui-se-parlent).
+
 ## DAST (Dynamic Application Security Testing)
 
 Test de sécurité d'une application qui tourne, en lui envoyant des requêtes.
 Prévu plus tard avec OWASP ZAP. Voir [DEVSECOPS.md](../DEVSECOPS.md#7-prévu).
+
+## Dependabot
+
+Service de GitHub qui signale les dépendances avec une faille connue et ouvre
+des pull requests pour les mettre à jour. Configuré dans
+`.github/dependabot.yml`. Voir
+[DEVSECOPS.md](../DEVSECOPS.md#réglages-de-dependabot).
 
 ## Dépendance (dependency)
 
@@ -62,13 +69,6 @@ ESLint ou TypeScript. Elle est listée dans `devDependencies` et s'installe avec
 `npm install -D`. Voir
 [Commandes du projet](02-commandes.md#npm-install-avec-un-paquet).
 
-## Dependabot
-
-Service de GitHub qui signale les dépendances avec une faille connue et ouvre
-des pull requests pour les mettre à jour. Configuré dans
-`.github/dependabot.yml`. Voir
-[DEVSECOPS.md](../DEVSECOPS.md#réglages-de-dependabot).
-
 ## ESLint
 
 Outil qui analyse le code et signale les erreurs courantes et les mauvaises
@@ -81,6 +81,25 @@ Fichier de données fictives utilisé par les tests, par exemple une réponse
 d'API inventée. Dans le projet, les fixtures ne contiennent jamais de vraies
 données de fuite. Voir
 [ARCHITECTURE.md, section 4](../ARCHITECTURE.md#4-structure-du-code-ports--adapters).
+
+## Générateur (generator)
+
+Fonction qui produit ses résultats un par un, avec `yield`, au lieu de tout
+renvoyer à la fin. Le moteur d'enquête (`src/server/investigation.ts`) est un
+générateur asynchrone (`async function*`) : chaque événement part dès qu'il
+est prêt.
+
+## HTTP
+
+Protocole des échanges entre le navigateur et un serveur : une requête
+(méthode, chemin, en-têtes, corps) suivie d'une réponse (code, en-têtes,
+corps). Voir
+[Comment marche une application web](03-application-web.md#le-message--une-requête-http).
+
+## JSON
+
+Format texte des données échangées entre le navigateur, notre serveur et les
+API des sources, par exemple `{ "email": "lea@exemple.ch" }`.
 
 ## Liste blanche (whitelist)
 
@@ -95,18 +114,6 @@ Fichier qui note la version exacte de chaque paquet installé. Pour npm, c'est
 `package-lock.json`. Voir
 [Fichiers du projet](04-fichiers-du-projet.md#packagejson-et-package-lockjson).
 
-## HTTP
-
-Protocole des échanges entre le navigateur et un serveur : une requête
-(méthode, chemin, en-têtes, corps) suivie d'une réponse (code, en-têtes,
-corps). Voir
-[Comment marche une application web](03-application-web.md#le-message--une-requête-http).
-
-## JSON
-
-Format texte des données échangées entre le navigateur, notre serveur et les
-API des sources, par exemple `{ "email": "lea@exemple.ch" }`.
-
 ## LTS (Long Term Support)
 
 Version de Node.js qui reçoit des correctifs de sécurité pendant une longue
@@ -120,6 +127,12 @@ Fonction qui transforme la réponse brute d'une API en objets du domaine. Elle
 ne recopie que les champs d'une liste blanche, ce qui empêche par exemple un
 mot de passe d'arriver jusqu'à l'écran. Voir
 [ARCHITECTURE.md, section 2](../ARCHITECTURE.md#2-invariants-non-négociables).
+
+## NDJSON (newline-delimited JSON)
+
+Une suite de JSON, un par ligne. `/api/search` répond dans ce format : chaque
+ligne est un événement du moteur, envoyé dès qu'il est trouvé. Voir
+[Comment marche une application web](03-application-web.md#une-réponse-en-plusieurs-morceaux).
 
 ## npm
 

@@ -609,6 +609,78 @@ deuxième source de fuites.
 - L'ancien modèle (`BreachProvider`, `Exposure`, `QueryKind`, `PersonRecord`)
   est supprimé.
 
+## T4. Moteur d'enquête
+
+Date : 2026-11-18
+
+Le moteur (#65) enchaîne les recherches : il prend un identifiant dans la
+file, interroge les sources, calcule la confiance de chaque fiche (T2), crée
+les constats et relance les nouveaux identifiants fiables. Six points de
+conception ont été tranchés avant de coder.
+
+### Indices cohérents
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Valeurs texte (retenu)** | Simple et testable : même valeur normalisée qu'un constat confirmé sur A1 (nom), A2 (date de naissance) ou C1 (ville). | Une ville est partagée par beaucoup de gens : un indice seul reste faible, d'où le niveau « possible » pour un nom. |
+| Texte et photo | Une même photo est un indice fort. | Une même photo sous deux adresses ne se reconnaît pas sans comparer les images. |
+| Ville seulement | Le plus simple. | Indice trop faible. |
+
+Chaque champ qui correspond compte pour un indice. La photo (A5) pourra être
+ajoutée avec une source qui donne une empreinte comparable (Gravatar).
+
+### Rattachement à un identifiant confirmé
+
+Le moteur compare seulement les identifiants de la fiche (clé `TYPE:valeur`)
+avec les `EMAIL`, `TEL` et `PROFIL` déjà confirmés. Règle pour les mappers :
+tout email, téléphone ou profil présent dans une fiche est aussi mis dans
+`identifiers`. Un seul endroit à regarder, au lieu de deux qui disent la même
+chose.
+
+### Pseudo présent sur un nombre anormal de sites
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Nombre fixe de profils | Simple. | Dépend du nombre de sites testés par la source : 20 profils sur 600 sites n'a pas le même sens que 20 sur 30. |
+| **Part des sites testés (retenu)** | S'adapte à la taille de la liste de sites de la source. | La source doit dire combien de sites elle teste. |
+| Reporter à la première source de pseudos | Moins de code dans #65. | La règle de T2 reste sans effet. |
+
+Une source de pseudos déclare `sitesChecked`, le nombre de sites de sa liste.
+Pour une recherche par pseudo, le moteur divise le nombre de fiches renvoyées
+par ce nombre. Au-delà d'une part maximale, le pseudo n'est pas rare pour ces
+fiches. La valeur de départ est fixée dans le code et ajustée lors des essais
+avec la première source de pseudos (#66, #68).
+
+### Durée
+
+Chaque appel à une source a 8 secondes. L'enquête n'a pas de limite de durée
+totale (`CADRAGE.md`, section 7) : elle s'arrête quand la file est vide, ou
+quand le visiteur quitte la page, car la requête est alors annulée.
+
+### Affichage en direct
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Événements envoyés au fur et à mesure (retenu)** | Le visiteur voit la fiche se remplir pendant l'enquête et n'attend pas devant un écran vide. Le moteur se teste en lisant ses événements, sans réseau. | La route envoie un flux au lieu d'une seule réponse. |
+| Une seule réponse à la fin | Plus simple aujourd'hui. | Le moteur et la route seraient refaits avec l'interface. |
+
+Le moteur est un générateur asynchrone qui émet des événements : nouveau
+constat, nouvel identifiant relancé, source en échec, fin. `/api/search`
+envoie une ligne JSON par événement (NDJSON). Seuls les constats « confirmé »
+et « probable » sont envoyés en détail ; les autres sont comptés, et le total
+est envoyé à la fin (invariant des homonymes).
+
+### Quota atteint
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Erreur dédiée (retenu)** | Une source à quota épuisé n'est plus appelée pour le reste de l'enquête, et l'écran dit pourquoi. | Une classe d'erreur de plus dans le domaine. |
+| Même traitement qu'une panne | Plus simple. | La source est rappelée à chaque identifiant et l'écran ne distingue pas les deux cas. |
+
+Sur une réponse HTTP 429, le client d'une source lève `SourceQuotaError`. Le
+moteur saute alors cette source jusqu'à la fin de l'enquête. Une panne
+ordinaire ne saute que l'appel en cours.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -635,3 +707,4 @@ deuxième source de fuites.
 | Confiance des informations | Calculée par le moteur ; ce qu'un « probable » trouve relance seulement s'il est « confirmé » (T2) | |
 | Pseudo rare | 6 caractères et une lettre, puis nombre de sites mesuré par le moteur (T2) | Liste de mots, modèle de Markov |
 | Détails d'un événement | Un type fermé par sorte d'événement, ajouté avec sa source : `BreachDetails` pour H1 (T3) | Détail générique |
+| Moteur d'enquête | Générateur d'événements envoyés en direct (NDJSON), 8 s par appel, quota = source sautée, pseudo non rare au-delà d'une part des sites testés (T4) | Une seule réponse à la fin |

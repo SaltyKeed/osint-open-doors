@@ -28,12 +28,13 @@ describe("POST /api/search", () => {
     expect(await response.text()).not.toContain("jean");
   });
 
-  it("returns 200 with records for a valid email", async () => {
+  it("streams one JSON event per line and ends with done", async () => {
     const response = await post(JSON.stringify({ email: "Jean@Exemple.ch", consent: true }));
     expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body.records).toHaveLength(1);
-    expect(body.failedSources).toEqual([]);
+    expect(response.headers.get("Content-Type")).toBe("application/x-ndjson");
+    const lines = (await response.text()).trim().split("\n").map((line) => JSON.parse(line));
+    expect(lines[0]).toMatchObject({ type: "finding", finding: { field: "H1", value: "ExampleShop", sources: ["fake"] } });
+    expect(lines.at(-1)).toEqual({ type: "done", hidden: { possible: 0, namesake: 0 } });
   });
 
   it.each([

@@ -25,6 +25,11 @@ function comparedValue(field: FieldCode, value: string): string {
   return value.trim().toLowerCase();
 }
 
+/** Two findings with the same key are the same piece of information. */
+export function findingKey(field: FieldCode, value: string): string {
+  return `${field}:${comparedValue(field, value)}`;
+}
+
 function surer(a: Confidence, b: Confidence): Confidence {
   return CONFIDENCE_LEVELS.indexOf(a) <= CONFIDENCE_LEVELS.indexOf(b) ? a : b;
 }
@@ -44,7 +49,7 @@ export function mergeFindings(findings: Finding[]): Finding[] {
   const merged = new Map<string, Finding>();
   for (const finding of findings) {
     // The field is part of the key: the same city in C1 and C2 stays two findings.
-    const key = `${finding.field}:${comparedValue(finding.field, finding.value)}`;
+    const key = findingKey(finding.field, finding.value);
     const existing = merged.get(key);
     if (!existing) {
       merged.set(key, { ...finding, sources: [...new Set(finding.sources)] });

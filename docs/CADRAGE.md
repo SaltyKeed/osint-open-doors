@@ -302,20 +302,21 @@ flowchart TD
 
 Un identifiant déjà cherché est reconnu par sa clé `TYPE:valeur`, après
 normalisation (section 6.1). Les constats arrivent à l'écran au fur et à
-mesure.
+mesure (T4).
 
-Il n'y a pas de limite de profondeur ni de durée (décision du 2026-11-16).
-L'enquête s'arrête d'elle-même quand les rebonds ne donnent plus rien de
-nouveau. La fiche se remplit en direct pendant ce temps. La seule limite est
-le quota de chaque source : une source dont le quota est atteint est sautée
-et l'écran l'indique.
+Il n'y a pas de limite de profondeur ni de durée totale (décision du
+2026-11-16). Chaque appel à une source a 8 secondes. L'enquête s'arrête
+d'elle-même quand les rebonds ne donnent plus rien de nouveau, ou quand le
+visiteur quitte la page. Une source dont le quota est atteint (HTTP 429) est
+sautée jusqu'à la fin de l'enquête et l'écran l'indique ; une source en
+panne ne saute que l'appel en cours.
 
 ### Rattachement et niveaux de confiance
 
 | Niveau | Condition | Affiché | Sert au rebond |
 | --- | --- | --- | --- |
 | Confirmé | La fiche contient aussi un `EMAIL`, un `TEL` ou un `PROFIL` déjà confirmé, ou elle a été trouvée par un identifiant unique confirmé (`EMAIL`, `TEL`, `PROFIL`, `DOMAINE`) | Oui | Oui |
-| Probable | `PSEUDO` rare et au moins un autre indice cohérent (même ville, même photo, même nom, même année) | Oui, marqué « probable » | Oui, sauf si l'identifiant qui l'a trouvé était lui-même « probable » |
+| Probable | `PSEUDO` rare et au moins un indice cohérent : même nom (A1), même date de naissance (A2) ou même ville (C1) qu'un constat confirmé | Oui, marqué « probable » | Oui, sauf si l'identifiant qui l'a trouvé était lui-même « probable » |
 | Possible | `PSEUDO` seul, `IP`, `ORGA`, ou `NOM` avec un indice | Total seulement | Non |
 | Homonyme probable | `NOM` seul | Total seulement | Non |
 
@@ -350,9 +351,18 @@ Règles :
 - Un identifiant trouvé chez un proche ne relance jamais de recherche (T1).
 - Un `NOM` seul ne sert jamais de rebond. C'est la principale source de faux
   résultats du prototype.
+- Un indice cohérent est une valeur de A1, A2 ou C1 identique à celle d'un
+  constat confirmé ; le nom saisi par le visiteur compte comme A1 confirmé.
+  La photo (A5) sera ajoutée avec une source qui donne une empreinte
+  comparable (T4).
+- Une fiche est rattachée au visiteur si ses identifiants contiennent un
+  `EMAIL`, un `TEL` ou un `PROFIL` déjà confirmé. Les mappers mettent donc tout
+  email, téléphone ou profil d'une fiche dans ses identifiants (T4).
 - Un pseudo est rare s'il a au moins 6 caractères dont une lettre, et s'il
   n'existe pas sur un nombre anormal de sites. Le premier critère est vérifié
-  dans le domaine ; le second par le moteur, sur les réponses réelles. Pas de
+  dans le domaine ; le second par le moteur : une source de pseudos déclare
+  le nombre de sites qu'elle teste, et au-delà de 10 % de sites où le pseudo
+  existe, il est courant (valeur de départ, T4). Pas de
   liste de prénoms ou de mots courants : elle sera ajoutée seulement si les
   essais sur volontaires montrent des homonymes (T2).
 - Un site qui ne répond pas clairement donne « inconnu », jamais « trouvé ».
@@ -433,7 +443,7 @@ confirmer par écrit.
 | Prix de Snusbase | Relevé à la création du compte, reporté dans `BUDGET.md`. |
 | Devis de Leak-Lookup | Demande de devis pour l'API privée, en présentant le projet scolaire ; si refus, LeakCheck et Snusbase restent les services à fiches. |
 | Forme exacte des réponses des sources | Relevée avec la console `/dev` (D18) au moment de coder l'adaptateur. |
-| Critère de pseudo rare | Longueur et lettre dans le domaine ; nombre de sites mesuré par le moteur (#65) ; liste de prénoms seulement si les essais montrent des homonymes (T2). |
+| Critère de pseudo rare | Longueur et lettre dans le domaine ; part des sites testés mesurée par le moteur, 10 % au départ (T4) ; liste de prénoms seulement si les essais montrent des homonymes (T2). |
 | Durée réelle d'une enquête | Mesurée sur les premiers essais, pour organiser le stand. |
 
 ## 11. Critères de réussite
