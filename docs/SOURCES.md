@@ -146,7 +146,7 @@ l'apport unique, le prix et, quand c'est possible, la couverture mesurée.
 
 | Source | Appel | Renvoie | Remplit | Rebonds | Accès | Statut |
 | --- | --- | --- | --- | --- | --- | --- |
-| WhatsMyName (`wmn-data.json`) | Copie figée dans le dépôt (CC BY-SA 4.0), puis une requête par site sur l'adresse du profil | Compte trouvé, absent ou inconnu (code HTTP et texte de la page, les deux exigés) | F1 F2 | `PROFIL` | Gratuit | À refaire : le prototype téléchargeait le fichier depuis GitHub, le projet est archivé |
+| WhatsMyName (`wmn-data.json`) | Copie figée dans le dépôt (projet archivé le 2026-11-09 ; CC BY-SA 4.0, Micah Hoffman et contributeurs), puis une requête par site sur l'adresse du profil. 569 sites sur 691 : sans sites pour adultes, sans protection anti-robot, sans `POST` (T7) | Compte trouvé, absent ou inconnu (code HTTP et texte de la page, les deux exigés). Seule l'adresse du compte est gardée | F2 | aucun (T7) | Gratuit | En place |
 | Maigret (`data.json`) | Fusion avec WhatsMyName : seulement les sites avec texte de présence et d'absence, sans `disabled` ni `protection` | Comme ci-dessus, environ 3000 sites | F1 F2 | `PROFIL` | Gratuit (MIT) | Nouveau |
 
 ### 3.2 API publiques des plateformes

@@ -751,6 +751,62 @@ Règles à appliquer :
 `Source` reçoit un seul identifiant), le nombre de recherches ciblées par
 enquête, et quelles valeurs confirmées passent en premier.
 
+## T7. Pseudo vérifié sur une liste de sites
+
+Date : 2026-11-18
+
+WhatsMyName vérifie si un compte porte un pseudo sur des centaines de sites,
+avec une seule source pilotée par un fichier de données, au lieu d'une source
+par plateforme (T5).
+
+### Affichage des comptes trouvés
+
+Un compte trouvé ainsi n'a que son adresse : aucun champ à comparer, donc
+aucun indice cohérent. Avec T2, il serait « possible », compté sans être
+affiché.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Garder T2, total seulement | Aucun homonyme affiché. | « Ton pseudo existe sur 23 sites », sans la liste : peu parlant. |
+| **Exception à T2 pour un pseudo sûr (retenu)** | Le visiteur voit les comptes qui portent son pseudo. | Un compte d'un homonyme qui a le même pseudo rare peut s'afficher, marqué « probable ». |
+| Ne pas faire WhatsMyName | Aucun risque. | Plus de recherche de pseudo sur de nombreux sites. |
+
+Exception : un compte trouvé par une source qui vérifie une liste de sites
+(elle déclare `sitesChecked`) est « probable » si le pseudo cherché est
+confirmé, rare et pas courant (présent sur au plus 10 % des sites, T4). Ces
+comptes ne relancent pas de recherche : la source ne renvoie pas leurs
+adresses comme identifiants.
+
+### Liste de sites
+
+WhatsMyName est archivé depuis le 2026-11-09. Une copie figée du fichier
+`wmn-data.json` est gardée dans le dépôt, sous sa licence (CC BY-SA 4.0,
+Micah Hoffman et contributeurs). Sur 691 sites, 569 sont gardés : sans les
+sites pour adultes (catégorie NSFW, interdits pour des portes ouvertes), sans
+les sites derrière une protection anti-robot (résultat peu fiable) et sans
+ceux qui demandent un `POST`. Disqus est aussi retiré : son adresse de
+vérification contient la clé d'API d'un tiers, que gitleaks a détectée et que
+nous ne republions pas.
+
+Un compte est « trouvé » seulement si le code HTTP **et** le texte attendus
+sont présents. Une réponse différente, une erreur ou un délai dépassé donnent
+« inconnu », jamais « trouvé ». Les redirections ne sont pas suivies : pour
+certains sites, elles font partie de la preuve.
+
+### Durée
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Délai propre à la source (retenu)** | Les 569 sites sont vérifiés ; le seuil « pseudo courant » reste juste. | L'enquête attend la source plus longtemps que 8 secondes. |
+| Résultat partiel en 8 secondes | Port inchangé, plus rapide. | Une partie des sites n'est jamais vérifiée et la part des sites devient fausse. |
+
+Une source peut déclarer `callTimeoutMs` pour remplacer les 8 secondes de T4.
+WhatsMyName : 25 secondes au total, 30 requêtes à la fois, 5 secondes par
+site.
+
+Le pseudo est envoyé aux 569 sites : ils feront partie de la liste des
+services qui ont reçu les données du visiteur (`CADRAGE.md`, section 8).
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -780,3 +836,4 @@ enquête, et quelles valeurs confirmées passent en premier.
 | Moteur d'enquête | Générateur d'événements envoyés en direct (NDJSON), 8 s par appel, quota = source sautée, pseudo non rare au-delà d'une part des sites testés (T4) | Une seule réponse à la fin |
 | Recherche web | Tavily, email et téléphone seulement, 3 recherches par enquête (T5) | Brave Search API |
 | Recherche par le nom | Seulement complétée par une information confirmée, page affichée si elle contient les deux (T6, à coder) | Nom seul |
+| Pseudo sur une liste de sites | WhatsMyName figé dans le dépôt, 569 sites, comptes « probable » si le pseudo est sûr (T7) | Une source par plateforme |

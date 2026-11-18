@@ -84,8 +84,13 @@ src/
 │       │   └── (mêmes fichiers)
 │       ├── github/
 │       │   └── (mêmes fichiers)
-│       └── tavily/
-│           └── (mêmes fichiers)
+│       ├── tavily/
+│       │   └── (mêmes fichiers)
+│       └── whatsmyname/
+│           ├── index.ts
+│           ├── check.ts
+│           ├── schema.ts
+│           └── wmn-data.json
 └── tests/
     ├── fixtures/xposedornot/
     ├── fixtures/gravatar/
@@ -120,6 +125,9 @@ src/
   C'est le seul fichier qui lit `process.env`. Toutes les clés sont
   optionnelles ; une erreur ne donne que le nom de la variable, jamais sa
   valeur.
+- `server/providers/whatsmyname/wmn-data.json` est une copie figée de la liste
+  de sites de WhatsMyName (projet archivé, licence CC BY-SA 4.0). `check.ts`
+  vérifie un site ; `index.ts` les vérifie tous, 30 à la fois.
 - `server/providers/http.ts` fait l'appel HTTP commun à toutes les sources :
   `null` sur une réponse 404, `SourceQuotaError` sur une 429, et des erreurs au
   message fixe, sans la saisie du visiteur.

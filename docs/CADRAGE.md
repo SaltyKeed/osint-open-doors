@@ -222,7 +222,7 @@ Statuts :
 | `TEL` | Annuaire search.ch | A1 B3 C1 | `NOM` | Gratuit, quota | Prototype |
 | `TEL` | Analyse locale du numéro | pays, type de ligne, opérateur d'origine | aucun | Local | Prototype |
 | `TEL` | Moteur de recherche (plusieurs formats) : Tavily | I1 | aucun | Clé gratuite | En place (T5) |
-| `PSEUDO` | Base de sites (WhatsMyName et Maigret, figée dans le dépôt) | F1 F2 | `PROFIL` | Gratuit | À refaire |
+| `PSEUDO` | Base de sites (WhatsMyName figé dans le dépôt, 569 sites ; Maigret plus tard) | F2 | aucun | Gratuit | En place (WhatsMyName, T7) |
 | `PSEUDO` | Fiches de fuites (`SOURCES.md`, section 1.1) | A1 B1 B2 B3 H1 H2 H3 | `EMAIL` `TEL` | Payant | Retenu |
 | `NOM` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | A2 B1 B2 B3 H1 H2 | `EMAIL` `TEL` (seulement si la fiche est « confirmé ») | Payant | Retenu |
 | `IP` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | H2 | `EMAIL` | Payant | Retenu |
@@ -371,6 +371,9 @@ Règles :
   existe, il est courant (valeur de départ, T4). Pas de
   liste de prénoms ou de mots courants : elle sera ajoutée seulement si les
   essais sur volontaires montrent des homonymes (T2).
+- Un compte trouvé par une liste de sites (WhatsMyName) n'a que son adresse.
+  Il est « probable » si le pseudo cherché est confirmé, rare et pas courant,
+  et il ne relance pas de recherche (T7).
 - Un site qui ne répond pas clairement donne « inconnu », jamais « trouvé ».
 - Chaque constat garde son chemin, pour que l'écran explique « trouvé grâce
   à… ».

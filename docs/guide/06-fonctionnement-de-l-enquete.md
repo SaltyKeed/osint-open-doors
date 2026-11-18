@@ -6,13 +6,13 @@ quand il relance une recherche. Le détail complet est dans
 [CADRAGE.md](../CADRAGE.md), les sources dans [SOURCES.md](../SOURCES.md).
 
 État au 2026-11-18 : le modèle de données (issue #63), XposedOrNot sur le
-port `Source` (#64) et le moteur d'enquête (#65) sont en place. Cinq
-sources sont branchées : XposedOrNot, Gravatar, Hudson Rock, GitHub et la
-recherche web Tavily (avec sa clé). Les
-pseudos trouvés (par Gravatar ou GitHub) sont cherchés chez Hudson Rock et
-GitHub ; l'email public et le site d'un compte GitHub repartent aussi dans la
-file. Les comptes vérifiés (`PROFIL`) et les domaines seront cherchés quand
-des sources pour ces types seront branchées.
+port `Source` (#64) et le moteur d'enquête (#65) sont en place. Six
+sources sont branchées : XposedOrNot, Gravatar, Hudson Rock, GitHub, la
+recherche web Tavily (avec sa clé) et WhatsMyName. Les pseudos trouvés (par
+Gravatar ou GitHub) sont cherchés chez Hudson Rock, GitHub et WhatsMyName ;
+l'email public et le site d'un compte GitHub repartent aussi dans la file.
+Les comptes vérifiés (`PROFIL`) et les domaines seront cherchés quand des
+sources pour ces types seront branchées.
 
 ## L'idée en une phrase
 
@@ -129,6 +129,12 @@ lettre (`pseudo.ts`). Un mot courant comme `thomas` passe ce premier filtre ;
 le moteur l'attrape parce qu'il existe sur trop de sites : une source de
 pseudos dit combien de sites elle teste, et un pseudo présent sur plus de
 10 % d'entre eux n'est pas rare (`evidence.ts`).
+
+WhatsMyName vérifie un pseudo sur 569 sites. Un compte trouvé n'a que son
+adresse, sans rien à comparer. Il est quand même affiché, au niveau
+« probable », si le pseudo est confirmé, rare et pas courant (T7). Par
+exemple, `octocat` existe sur 105 sites de la liste (18 %) : c'est un pseudo
+courant, ses comptes sont seulement comptés.
 
 ## Les rebonds
 
