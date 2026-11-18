@@ -71,13 +71,17 @@ src/
 │   │   └── source.ts
 │   └── providers/
 │       ├── registry.ts
-│       └── xposedornot/
-│           ├── index.ts
-│           ├── client.ts
-│           ├── schema.ts
-│           └── mapper.ts
+│       ├── http.ts
+│       ├── xposedornot/
+│       │   ├── index.ts
+│       │   ├── client.ts
+│       │   ├── schema.ts
+│       │   └── mapper.ts
+│       └── gravatar/
+│           └── (mêmes fichiers)
 └── tests/
     ├── fixtures/xposedornot/
+    ├── fixtures/gravatar/
     └── server-only-stub.ts
 ```
 
@@ -102,6 +106,9 @@ src/
   (champs de la fiche, identifiants, pseudo rare, niveaux de confiance,
   constats, port `Source` et détails d'une fuite). Le fonctionnement est expliqué dans
   [Fonctionnement de l'enquête](06-fonctionnement-de-l-enquete.md).
+- `server/providers/http.ts` fait l'appel HTTP commun à toutes les sources :
+  `null` sur une réponse 404, `SourceQuotaError` sur une 429, et des erreurs au
+  message fixe, sans la saisie du visiteur.
 - `server/providers/` contient une source de données par dossier. `registry.ts`
   liste les sources actives (`SOURCES`) ; une source qui a besoin d'une clé
   n'y est ajoutée que si la clé est configurée. Le chemin des données dans une

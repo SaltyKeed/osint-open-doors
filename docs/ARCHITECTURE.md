@@ -68,13 +68,15 @@ src/
 ├── server/                       ← code serveur uniquement (import "server-only")
 │   ├── providers/
 │   │   ├── registry.ts           ← liste des sources actives (SOURCES)
+│   │   ├── http.ts               ← appel HTTP commun : 404, 429 (quota), erreurs au message fixe
 │   │   ├── xposedornot/
 │   │   │   ├── index.ts          ← la source : client, schéma et mapper assemblés
 │   │   │   ├── client.ts         ← appel HTTP (fetch, timeout, clé)
 │   │   │   ├── schema.ts         ← zod : forme de la réponse brute
 │   │   │   └── mapper.ts         ← brut → fiches du domaine (liste blanche)
-│   │   ├── snusbase/             ← même structure
-│   │   └── dehashed/             ← même structure
+│   │   ├── gravatar/             ← même structure
+│   │   ├── snusbase/             ← même structure (prévu)
+│   │   └── dehashed/             ← même structure (prévu)
 │   │
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
 │   │   ├── types.ts              ← SearchQuery, PersonName, DataCategory

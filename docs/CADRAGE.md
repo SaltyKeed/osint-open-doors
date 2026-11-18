@@ -213,7 +213,7 @@ Statuts :
 | `EMAIL` | XposedOrNot | H1 | aucun | Gratuit, quota | En place |
 | `EMAIL` | Have I Been Pwned Core 1, catalogue HIBP | H1 | aucun | Abonnement et gratuit | Retenu |
 | `EMAIL` | Infostealers et combolists : Hudson Rock, LeakRadar Enterprise | H3 H5 | `DOMAINE` `PROFIL` | Gratuit et payant | Prototype et retenu |
-| `EMAIL` | Gravatar, Libravatar | A1 A5 F2 | `PSEUDO` `PROFIL` | Gratuit | Prototype |
+| `EMAIL` | Gravatar (en place), Libravatar | A1 A5 C1 E1 F1 F2 | `PSEUDO` `PROFIL` | Gratuit | En place (Gravatar) |
 | `EMAIL` | GitHub (utilisateurs et commits) | A1 C1 E1 E3 F2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Prototype |
 | `EMAIL` | Serveurs de clés PGP | A1 B1 | `EMAIL` | Gratuit | Prototype |
 | `EMAIL` | Moteur de recherche (valeur exacte) | I1 I3 | `PROFIL` | Clé gratuite | Prototype |

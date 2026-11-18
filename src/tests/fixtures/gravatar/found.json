@@ -1,0 +1,31 @@
+{
+  "hash": "4b2f0c3e8d1a9f7e6c5b4a3928170615f4e3d2c1b0a99887766554433221100f",
+  "display_name": "Léa Martin",
+  "profile_url": "https://gravatar.com/lmartin06",
+  "avatar_url": "https://0.gravatar.com/avatar/4b2f0c3e8d1a9f7e6c5b4a3928170615f4e3d2c1b0a99887766554433221100f",
+  "avatar_alt_text": "",
+  "location": "Neuchâtel",
+  "description": "Texte libre de la bio, jamais gardé",
+  "job_title": "Apprentie informaticienne",
+  "company": "Exemple SA",
+  "verified_accounts": [
+    {
+      "service_type": "github",
+      "service_label": "GitHub",
+      "service_icon": "https://gravatar.com/icons/github.svg",
+      "url": "https://github.com/lmartin06",
+      "is_hidden": false
+    },
+    {
+      "service_type": "mastodon",
+      "service_label": "Mastodon",
+      "service_icon": "https://gravatar.com/icons/mastodon.svg",
+      "url": "https://mastodon.example/@lmartin",
+      "is_hidden": true
+    }
+  ],
+  "pronunciation": "",
+  "pronouns": "elle",
+  "header_image": "url(https://0.gravatar.com/header.jpg)",
+  "background_color": "#ffffff"
+}
