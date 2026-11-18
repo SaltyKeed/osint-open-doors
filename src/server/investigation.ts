@@ -43,6 +43,8 @@ export async function* investigate(
   const confirmedValues = new Set<string>();
   const findings = new Map<string, Finding>();
   const quotaReached = new Set<string>();
+  /** Calls made to each source, for sources with maxCallsPerInvestigation. */
+  const calls = new Map<string, number>();
   const hidden = { possible: 0, namesake: 0 };
 
   function enqueue(identifier: Identifier, confidence: Confidence, path: Identifier[]): boolean {
@@ -61,7 +63,13 @@ export async function* investigate(
   }
 
   for (let item = queue.shift(); item && !signal.aborted; item = queue.shift()) {
-    const active = sources.filter((s) => s.accepts.includes(item.identifier.type) && !quotaReached.has(s.id));
+    const active = sources.filter(
+      (s) =>
+        s.accepts.includes(item.identifier.type) &&
+        !quotaReached.has(s.id) &&
+        (calls.get(s.id) ?? 0) < (s.maxCallsPerInvestigation ?? Infinity),
+    );
+    for (const s of active) calls.set(s.id, (calls.get(s.id) ?? 0) + 1);
     const settled = await Promise.allSettled(
       active.map((s) => s.investigate(item.identifier, AbortSignal.any([signal, AbortSignal.timeout(callTimeoutMs)]))),
     );

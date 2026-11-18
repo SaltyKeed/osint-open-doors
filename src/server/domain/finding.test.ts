@@ -102,6 +102,14 @@ describe("mergeFindings", () => {
     expect(merged[0]?.infection).toEqual(infection);
   });
 
+  it("keeps the page title of the first source that has it", () => {
+    const merged = mergeFindings([
+      finding({ field: "I1", value: "https://club.example/resultats" }),
+      finding({ field: "I1", value: "https://club.example/resultats", page: { title: "Résultats 10 km" } }),
+    ]);
+    expect(merged[0]?.page).toEqual({ title: "Résultats 10 km" });
+  });
+
   it("does not modify the findings it receives", () => {
     const first = finding({ sources: ["a"] });
     mergeFindings([first, finding({ sources: ["b"] })]);

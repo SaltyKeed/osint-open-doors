@@ -29,6 +29,11 @@ export interface InfectionDetails {
   stolenCredentials: number | null;
 }
 
+/** Details of a web page that cites an identifier (field I1): its title, never its text. */
+export interface PageDetails {
+  title: string;
+}
+
 export interface SourceField {
   field: FieldCode;
   value: string;
@@ -36,6 +41,8 @@ export interface SourceField {
   breach?: BreachDetails;
   /** Only on H5: the value is the infection date. */
   infection?: InfectionDetails;
+  /** Only on I1: the value is the page address. */
+  page?: PageDetails;
 }
 
 /** One record returned by a source: a leak line, a profile. */
@@ -66,6 +73,8 @@ export interface Source {
   accepts: readonly IdentifierType[];
   /** Pseudo sources only: number of sites in the source's list, to spot common pseudos (T4). */
   sitesChecked?: number;
+  /** Paid by the request (web search): the engine stops calling it after this many calls in one investigation. */
+  maxCallsPerInvestigation?: number;
   investigate(input: Identifier, signal: AbortSignal): Promise<SourceRecord[]>;
   inspect(input: Identifier, signal: AbortSignal): Promise<SourceInspection>;
 }

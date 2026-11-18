@@ -684,6 +684,73 @@ Sur une réponse HTTP 429, le client d'une source lève `SourceQuotaError`. Le
 moteur saute alors cette source jusqu'à la fin de l'enquête. Une panne
 ordinaire ne saute que l'appel en cours.
 
+## T5. Recherche web
+
+Date : 2026-11-18
+
+Les grands réseaux (LinkedIn, Instagram, TikTok) n'ont plus d'API publique :
+un moteur de recherche est le seul moyen gratuit de trouver les pages qui
+citent un identifiant (I1). Les API de chaque plateforme (GitLab, Codeberg,
+Minecraft…) ne sont pas codées : trop de sources à écrire pour des profils
+qui ne concernent qu'une partie des visiteurs.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Tavily (retenu)** | 1000 crédits gratuits par mois, sans carte bancaire. Recherche de la valeur exacte (`exact_match`). | 1000 recherches par mois pour environ 200 visiteurs : juste. |
+| Brave Search API | Index propre, environ 1000 requêtes par mois avec le crédit offert. | Carte bancaire exigée même pour l'offre gratuite : risque de débit avant l'acceptation du budget (T1). |
+
+Règles :
+
+- La source accepte `EMAIL` et `TEL` seulement. Une page trouvée par un
+  pseudo n'a aucun champ à comparer : le moteur la classerait « possible » et
+  la compterait sans l'afficher, pour un crédit dépensé.
+- Au plus 3 recherches par enquête (`maxCallsPerInvestigation`, compté par le
+  moteur), soit environ 600 pour 200 visiteurs. Les identifiants saisis
+  passent en premier, car la file les traite d'abord.
+- Une page n'est gardée que si son titre ou son extrait contient vraiment
+  l'identifiant. Seuls l'adresse et le titre sont gardés (`PageDetails`),
+  jamais le texte de la page, qui peut citer d'autres personnes.
+- Les codes 432 et 433 de Tavily (limite du plan atteinte) comptent comme un
+  quota atteint (T4).
+- Le quota de janvier est réservé aux portes ouvertes : les tests utilisent des
+  fixtures, les essais avec `/dev` restent rares.
+
+## T6. Recherche web ciblée par le nom
+
+Date : 2026-11-18
+
+Statut : décidée, pas encore codée (issue #80).
+
+Une recherche par le nom seul ne donne que des homonymes : avec T2, chaque
+page serait « homonyme probable », comptée sans être affichée, pour un crédit
+dépensé. Tavily ne cherche donc pas le nom seul (T5). En revanche, le nom
+complété par une information déjà confirmée (`"Léa Martin" "Neuchâtel"`,
+`"Léa Martin" "CPNE"`) trouve des pages sur la personne : presse, résultats
+sportifs, listes de membres, profil LinkedIn. Ce sont les champs les plus
+vides de la fiche (C, D, E, G).
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Ne pas chercher le nom | Aucun risque d'homonyme, aucun crédit dépensé. | Lieux, formation, travail et activités restent vides. |
+| Nom seul, total affiché | Message de sensibilisation (« votre nom apparaît sur 40 pages »). | Un crédit pour un chiffre qui mélange le visiteur et ses homonymes. |
+| **Nom et information confirmée (retenu)** | Peu d'homonymes ; remplit C, D, E, G. | Change une règle de T2 ; ne marche que si une ville, une école ou un employeur est déjà confirmé. |
+
+Règles à appliquer :
+
+- La recherche ciblée part du nom saisi et d'une valeur confirmée : ville (C1),
+  école (D1), employeur (E1) ou organisation (`ORGA`). Les filtres de domaines
+  de `SOURCES.md` (section 4) sont repris : presse, sport et clubs, LinkedIn.
+- Exception à T2 : une page trouvée ainsi est affichée, au niveau
+  « probable », seulement si son titre ou son extrait contient le nom **et**
+  la valeur confirmée. Sinon, elle est comptée comme avant.
+- Elle ne relance jamais de recherche : un `NOM` ne sert jamais de rebond (T1).
+- Elle partage le plafond de recherches web de T5 ; l'email et le téléphone
+  passent d'abord. Le plafond pourra être revu après la mesure du quota.
+
+À préciser en codant (#80) : comment le moteur construit la requête (le port
+`Source` reçoit un seul identifiant), le nombre de recherches ciblées par
+enquête, et quelles valeurs confirmées passent en premier.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -711,3 +778,5 @@ ordinaire ne saute que l'appel en cours.
 | Pseudo rare | 6 caractères et une lettre, puis nombre de sites mesuré par le moteur (T2) | Liste de mots, modèle de Markov |
 | Détails d'un événement | Un type fermé par sorte d'événement, ajouté avec sa source : `BreachDetails` pour H1 (T3) | Détail générique |
 | Moteur d'enquête | Générateur d'événements envoyés en direct (NDJSON), 8 s par appel, quota = source sautée, pseudo non rare au-delà d'une part des sites testés (T4) | Une seule réponse à la fin |
+| Recherche web | Tavily, email et téléphone seulement, 3 recherches par enquête (T5) | Brave Search API |
+| Recherche par le nom | Seulement complétée par une information confirmée, page affichée si elle contient les deux (T6, à coder) | Nom seul |

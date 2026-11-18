@@ -6,8 +6,9 @@ quand il relance une recherche. Le détail complet est dans
 [CADRAGE.md](../CADRAGE.md), les sources dans [SOURCES.md](../SOURCES.md).
 
 État au 2026-11-18 : le modèle de données (issue #63), XposedOrNot sur le
-port `Source` (#64) et le moteur d'enquête (#65) sont en place. Quatre
-sources sont branchées : XposedOrNot, Gravatar, Hudson Rock et GitHub. Les
+port `Source` (#64) et le moteur d'enquête (#65) sont en place. Cinq
+sources sont branchées : XposedOrNot, Gravatar, Hudson Rock, GitHub et la
+recherche web Tavily (avec sa clé). Les
 pseudos trouvés (par Gravatar ou GitHub) sont cherchés chez Hudson Rock et
 GitHub ; l'email public et le site d'un compte GitHub repartent aussi dans la
 file. Les comptes vérifiés (`PROFIL`) et les domaines seront cherchés quand
@@ -209,6 +210,15 @@ Pour un ordinateur infecté par un logiciel espion (H5), la valeur est la date
 de l'infection, et `infection` donne le système d'exploitation et le nombre
 d'identifiants volés. Le nom de l'ordinateur, son adresse IP et les
 identifiants eux-mêmes ne sont jamais gardés.
+
+Pour une page web qui cite l'email ou le téléphone (I1), la valeur est
+l'adresse de la page, et `page` donne son titre. Le texte de la page n'est
+jamais gardé : il peut citer d'autres personnes. La recherche web coûte un
+crédit par appel, donc le moteur la limite à 3 recherches par enquête.
+
+Prévu (T6, #80) : chercher aussi le nom avec une information déjà confirmée,
+par exemple `"Léa Martin" "Neuchâtel"`. Une page sera affichée si elle
+contient les deux, au niveau « probable ».
 
 ## En direct
 

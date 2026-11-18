@@ -16,6 +16,10 @@ describe("loadEnv", () => {
     expect(loadEnv({ GITHUB_TOKEN: "" })).toEqual({});
   });
 
+  it("reads the Tavily key", () => {
+    expect(loadEnv({ TAVILY_API_KEY: "tvly-exemple123" })).toEqual({ TAVILY_API_KEY: "tvly-exemple123" });
+  });
+
   it("rejects a malformed token without echoing its value", () => {
     expect(() => loadEnv({ GITHUB_TOKEN: "pas un jeton" })).toThrow("Invalid environment: GITHUB_TOKEN");
     expect(() => loadEnv({ GITHUB_TOKEN: "pas un jeton" })).not.toThrow(/jeton/);

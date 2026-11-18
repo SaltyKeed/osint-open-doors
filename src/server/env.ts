@@ -11,6 +11,8 @@ const optionalKey = z
 const envSchema = z.object({
   /** Token without any permission: raises the GitHub quota, optional. */
   GITHUB_TOKEN: optionalKey,
+  /** Web search (Tavily, free plan without credit card): without it, the source is skipped. */
+  TAVILY_API_KEY: optionalKey,
 });
 
 export type Env = z.infer<typeof envSchema>;

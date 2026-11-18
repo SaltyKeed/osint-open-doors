@@ -82,13 +82,16 @@ src/
 │       │   └── (mêmes fichiers)
 │       ├── hudsonrock/
 │       │   └── (mêmes fichiers)
-│       └── github/
+│       ├── github/
+│       │   └── (mêmes fichiers)
+│       └── tavily/
 │           └── (mêmes fichiers)
 └── tests/
     ├── fixtures/xposedornot/
     ├── fixtures/gravatar/
     ├── fixtures/hudsonrock/
     ├── fixtures/github/
+    ├── fixtures/tavily/
     └── server-only-stub.ts
 ```
 
@@ -214,7 +217,8 @@ fichiers générés par TypeScript et les fichiers personnels de Claude Code
 Tous les fichiers `.env*` sont ignorés, car ils contiendront les clés API.
 Seul `.env.example` est versionné : il liste les variables attendues, sans
 valeur. Pour travailler avec des clés, le copier en `.env.local` et le
-compléter. Seule clé aujourd'hui : `GITHUB_TOKEN`, optionnelle.
+compléter. Clés aujourd'hui : `GITHUB_TOKEN` (optionnelle) et `TAVILY_API_KEY`
+(sans elle, la recherche web est sautée).
 
 ## next-env.d.ts
 

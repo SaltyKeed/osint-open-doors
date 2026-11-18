@@ -172,6 +172,13 @@ describe("investigate", () => {
     expect(ofType(events, "done")).toEqual([]);
   });
 
+  it("stops calling a source after its maximum number of calls for one investigation", async () => {
+    const byEmail = fake("a", ["EMAIL"], () => [record({ identifiers: [tel] })]);
+    const limited = fake("web", ["EMAIL", "TEL"], () => [], { maxCallsPerInvestigation: 1 });
+    await run([email], [byEmail, limited]);
+    expect(limited.investigate).toHaveBeenCalledExactlyOnceWith(email, expect.any(AbortSignal));
+  });
+
   it("ends with a done event", async () => {
     const events = await run([email], [fake("a", ["EMAIL"], () => [])]);
     expect(events).toEqual([{ type: "done", hidden: { possible: 0, namesake: 0 } }]);
