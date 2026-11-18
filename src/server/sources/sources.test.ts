@@ -6,6 +6,8 @@ import { toGravatarRecord } from "./gravatar/mapper";
 import { gravatarProfileSchema } from "./gravatar/schema";
 import { toHudsonRockRecords } from "./hudsonrock/mapper";
 import { hudsonRockSchema } from "./hudsonrock/schema";
+import { toLeakCheckRecords } from "./leakcheck/mapper";
+import { leakCheckPublicSchema } from "./leakcheck/schema";
 import { toXposedRecords } from "./xposedornot/mapper";
 
 // All values below are invented test data.
@@ -158,5 +160,36 @@ describe("xposedornot", () => {
       { label: "Comptes touchés", value: "1300000", known: true },
     ]);
     expect(types(records[0]!.identifiers)).toEqual(["EMAIL:lea@example.ch"]);
+  });
+});
+
+describe("leakcheck public", () => {
+  it("one H1 value per breach with its date, and the data types found", () => {
+    const body = leakCheckPublicSchema.parse({
+      success: true,
+      found: 3,
+      fields: ["username", "password", "phone", "ssn_like_unknown"],
+      sources: [
+        { name: "Pandabuy.com", date: "2024-03" },
+        { name: "OldForum", date: "" },
+      ],
+    });
+    const records = toLeakCheckRecords(body, email);
+    expect(records.map((r) => r.origin)).toEqual(["Pandabuy.com", "OldForum", "LeakCheck"]);
+    expect(records[0]?.values[0]).toEqual({
+      field: "H1",
+      value: "Pandabuy.com",
+      attributes: [{ label: "Date", value: "2024-03", known: true }],
+    });
+    expect(records[1]?.values[0]?.attributes).toEqual([]);
+    expect(records[2]?.values[0]).toEqual({
+      field: "H2",
+      value: "Données présentes dans ces fuites : pseudo, mot de passe, téléphone, ssn_like_unknown",
+    });
+    expect(types(records[0]!.identifiers)).toEqual(["EMAIL:lea@example.ch"]);
+  });
+
+  it("not found gives no record", () => {
+    expect(toLeakCheckRecords(leakCheckPublicSchema.parse({ success: false, error: "Not found" }), email)).toEqual([]);
   });
 });

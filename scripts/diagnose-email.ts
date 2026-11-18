@@ -48,6 +48,10 @@ await call("XposedOrNot (analyse)", `https://api.xposedornot.com/v1/breach-analy
 await call("XposedOrNot (check-email)", `https://api.xposedornot.com/v1/check-email/${q}`, {}, (b) =>
   JSON.stringify(b).slice(0, 160),
 );
+await call("LeakCheck (public)", `https://leakcheck.io/api/public?check=${q}`, {}, (b) => {
+  const sources = (b as Json)?.sources;
+  return Array.isArray(sources) ? `${sources.length} fuite(s) : ${sources.map((x) => (x as Json).name).slice(0, 15).join(", ")}` : "aucune fuite";
+});
 await call("Hudson Rock", `https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-email?email=${q}`, {}, (b) => {
   const stealers = (b as Json)?.stealers;
   return Array.isArray(stealers) ? `${stealers.length} ordinateur(s) infecté(s)` : "rien";
