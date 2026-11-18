@@ -54,6 +54,7 @@ src/
 │   │   └── dev-console.tsx
 │   └── api/dev/search/route.ts
 ├── server/
+│   ├── env.ts
 │   ├── investigation.ts
 │   ├── dev/
 │   │   ├── inspect-sources.ts
@@ -79,12 +80,15 @@ src/
 │       │   └── mapper.ts
 │       ├── gravatar/
 │       │   └── (mêmes fichiers)
-│       └── hudsonrock/
+│       ├── hudsonrock/
+│       │   └── (mêmes fichiers)
+│       └── github/
 │           └── (mêmes fichiers)
 └── tests/
     ├── fixtures/xposedornot/
     ├── fixtures/gravatar/
     ├── fixtures/hudsonrock/
+    ├── fixtures/github/
     └── server-only-stub.ts
 ```
 
@@ -109,6 +113,10 @@ src/
   (champs de la fiche, identifiants, pseudo rare, niveaux de confiance,
   constats, port `Source` et détails d'une fuite). Le fonctionnement est expliqué dans
   [Fonctionnement de l'enquête](06-fonctionnement-de-l-enquete.md).
+- `server/env.ts` lit les clés d'API dans `process.env` et les valide avec zod.
+  C'est le seul fichier qui lit `process.env`. Toutes les clés sont
+  optionnelles ; une erreur ne donne que le nom de la variable, jamais sa
+  valeur.
 - `server/providers/http.ts` fait l'appel HTTP commun à toutes les sources :
   `null` sur une réponse 404, `SourceQuotaError` sur une 429, et des erreurs au
   message fixe, sans la saisie du visiteur.
@@ -205,7 +213,8 @@ fichiers générés par TypeScript et les fichiers personnels de Claude Code
 
 Tous les fichiers `.env*` sont ignorés, car ils contiendront les clés API.
 Seul `.env.example` est versionné : il liste les variables attendues, sans
-valeur. Aucune source actuelle n'a de clé ; la première arrive avec #66.
+valeur. Pour travailler avec des clés, le copier en `.env.local` et le
+compléter. Seule clé aujourd'hui : `GITHUB_TOKEN`, optionnelle.
 
 ## next-env.d.ts
 

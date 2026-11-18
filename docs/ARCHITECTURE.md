@@ -76,6 +76,7 @@ src/
 │   │   │   └── mapper.ts         ← brut → fiches du domaine (liste blanche)
 │   │   ├── gravatar/             ← même structure
 │   │   ├── hudsonrock/           ← même structure
+│   │   ├── github/               ← même structure, jeton optionnel
 │   │   ├── snusbase/             ← même structure (prévu)
 │   │   └── dehashed/             ← même structure (prévu)
 │   │
@@ -94,7 +95,8 @@ src/
 │   │   └── actions.ts            ← catégories exposées → plan d'action
 │   │
 │   ├── investigation.ts          ← moteur d'enquête : file, rebonds, événements (T4)
-│   └── dev/                      ← inspection des sources pour la console (D18)
+│   ├── dev/                      ← inspection des sources pour la console (D18)
+│   └── env.ts                    ← clés d'API lues et validées par zod (seul accès à process.env)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
 └── tests/
@@ -164,7 +166,8 @@ Règles du contrat, vérifiées par les tests de `xposedornot/` :
   et `[]` si la personne n'est pas trouvée.
 - Elle transmet `signal` à `fetch`. Le moteur annule chaque appel après
   8 secondes ; une source qui ignore `signal` bloquerait l'enquête.
-- Sur une réponse HTTP 429, elle lève `SourceQuotaError` : le moteur ne
+- Sur une réponse HTTP 429, ou 403 sans appel restant (GitHub), elle lève
+  `SourceQuotaError` : le moteur ne
   l'appelle plus jusqu'à la fin de l'enquête.
 - En cas d'échec, il lève une erreur au message fixe
   (`xposedornot: HTTP 500`, `xposedornot: invalid response`), sans la saisie
@@ -306,10 +309,16 @@ Le choix de Docker compose en local est expliqué dans
   le disque.
 - Une seule image et un seul mode : les sources actives sont celles dont la
   clé d'API est configurée (T3).
-- `compose.yaml` transmet les variables au conteneur avec `env_file: .env`.
-- Les clés API sont dans `.env`, non versionné. Le fichier `.env.example` est
-  versionné et liste toutes les variables attendues, sans valeur. Aucune
-  source actuelle n'a de clé : la première arrive avec #66.
+- `compose.yaml` transmet les variables au conteneur avec
+  `env_file: .env.local`. Un `.dockerignore` exclut `.env*`, pour que les
+  clés n'entrent jamais dans l'image. Les clés ne sont jamais passées en
+  paramètre d'une commande.
+- Les clés API sont dans `.env.local`, non versionné. Le fichier `.env.example`
+  est versionné et liste toutes les variables attendues, sans valeur. Elles
+  sont lues et validées par `src/server/env.ts`, le seul fichier qui lit
+  `process.env` ; une erreur ne donne que le nom de la variable. Aucune clé ne
+  porte le préfixe `NEXT_PUBLIC_`, qui l'enverrait au navigateur.
+- Seule clé aujourd'hui : `GITHUB_TOKEN`, optionnelle.
 - Le navigateur du poste est lancé avec
   `--kiosk --incognito http://localhost:3000`.
 
