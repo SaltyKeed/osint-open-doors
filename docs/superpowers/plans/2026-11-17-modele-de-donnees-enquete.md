@@ -300,7 +300,7 @@ comparaison des valeurs passe par `normalizeEmail` pour `B1`, par
 garde la première forme rencontrée de la valeur, l'union des sources sans
 doublon, la confiance la plus haute et le chemin le plus court.
 
-- [ ] **Étape 1 : tests**
+- [x] **Étape 1 : tests**
 
 | Cas | Attendu |
 | --- | --- |
@@ -313,11 +313,11 @@ doublon, la confiance la plus haute et le chemin le plus court.
 | même source deux fois | elle apparaît une fois |
 | liste vide | liste vide |
 
-- [ ] **Étape 2 :** le test échoue.
-- [ ] **Étape 3 :** écrire `finding.ts` (une `Map` dont la clé est le champ
+- [x] **Étape 2 :** le test échoue.
+- [x] **Étape 3 :** écrire `finding.ts` (une `Map` dont la clé est le champ
   et la valeur comparée).
-- [ ] **Étape 4 :** le test passe.
-- [ ] **Étape 5 :** commit `feat(domain): add findings and merge rule`.
+- [x] **Étape 4 :** le test passe.
+- [x] **Étape 5 :** commit `feat(domain): add findings and merge rule`.
 
 ## Tâche 6 : port Source
 

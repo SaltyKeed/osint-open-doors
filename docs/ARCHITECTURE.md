@@ -84,6 +84,7 @@ src/
 │   │   ├── identifier.ts         ← types d'identifiants et normalisation
 │   │   ├── pseudo.ts             ← règle du pseudo rare
 │   │   ├── confidence.ts         ← niveaux de confiance et règle de rebond
+│   │   ├── finding.ts            ← constats et fusion des doublons
 │   │   ├── masking.ts            ← masquage des valeurs
 │   │   ├── severity.ts           ← score d'exposition
 │   │   └── actions.ts            ← catégories exposées → plan d'action

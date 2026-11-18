@@ -140,6 +140,30 @@ flowchart LR
 Chaque information garde ce chemin, pour que l'écran puisse dire « trouvé
 grâce à… ».
 
+## Les constats
+
+Un constat est une information de la fiche avec sa provenance : le champ
+(`B2`), la valeur, les sources qui l'ont renvoyée, le niveau de confiance et
+le chemin.
+
+Plusieurs sources peuvent renvoyer la même information, écrite autrement.
+Avant l'affichage, `mergeFindings` (`finding.ts`) regroupe les constats qui
+ont le même champ et la même valeur :
+
+| Champ | Deux valeurs sont identiques quand… |
+| --- | --- |
+| `B1` emails | elles sont égales en minuscules, sans espaces |
+| `B2` téléphones | elles donnent le même numéro au format `+41` |
+| Autres champs | elles sont égales en minuscules, sans espaces autour |
+
+Le constat fusionné garde la première écriture rencontrée, toutes les sources
+(chacune une fois), le niveau de confiance le plus haut et le chemin le plus
+court.
+
+Deux valeurs différentes pour le même champ (`Neuchâtel` et `Lausanne` en
+ville de résidence) restent deux constats : l'outil ne choisit pas à la place
+du visiteur.
+
 Règles (`shouldRebound` dans `confidence.ts`) :
 
 - un `NOM` ne relance jamais de recherche : c'était la principale source de
@@ -159,5 +183,6 @@ Règles (`shouldRebound` dans `confidence.ts`) :
 | `src/server/domain/identifier.ts` | Types d'identifiants, nettoyage, clé `TYPE:valeur` |
 | `src/server/domain/pseudo.ts` | Règle du pseudo rare |
 | `src/server/domain/confidence.ts` | Niveaux de confiance et règle de rebond |
+| `src/server/domain/finding.ts` | Constats et fusion des doublons |
 
 Chaque fichier a ses tests à côté (`*.test.ts`), avec des valeurs inventées.
