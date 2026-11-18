@@ -144,7 +144,7 @@ Ajouter une source : créer son dossier dans `providers/` (`schema.ts`,
 l'ajouter à `SOURCES` dans `registry.ts`. Une source qui a besoin d'une clé
 d'API n'y est ajoutée que si la clé est configurée (T3).
 Pour changer ce qu'une source garde ou affiche, voir le guide
-[Flux des données d'une source](guide/04-flux-des-donnees.md).
+[Flux des données d'une source](guide/05-flux-des-donnees.md).
 
 ### Modèle de l'enquête
 
@@ -223,7 +223,7 @@ constats (`Finding`), puis regroupe les doublons.
 | `source.ts` | Le port `Source`, les fiches renvoyées et `BreachDetails` |
 
 Explication simple, avec des exemples :
-[Fonctionnement de l'enquête](guide/05-fonctionnement-de-l-enquete.md).
+[Fonctionnement de l'enquête](guide/06-fonctionnement-de-l-enquete.md).
 
 ### Bonnes pratiques appliquées
 

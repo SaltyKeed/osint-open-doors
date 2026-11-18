@@ -27,14 +27,16 @@ Guide, à lire dans l'ordre :
    GitHub CLI et première installation.
 2. [Commandes du projet](docs/guide/02-commandes.md) : rôle et résultat de
    chaque commande npm.
-3. [Fichiers du projet](docs/guide/03-fichiers-du-projet.md) : rôle de chaque
+3. [Comment marche une application web](docs/guide/03-application-web.md) :
+   client et serveur, requêtes HTTP, routage de Next.js, ce qui tourne où.
+4. [Fichiers du projet](docs/guide/04-fichiers-du-projet.md) : rôle de chaque
    fichier et dossier du dépôt.
-4. [Flux des données d'une source](docs/guide/04-flux-des-donnees.md) :
+5. [Flux des données d'une source](docs/guide/05-flux-des-donnees.md) :
    chemin des données d'une API jusqu'à l'écran et fichier à modifier.
-5. [Fonctionnement de l'enquête](docs/guide/05-fonctionnement-de-l-enquete.md) :
+6. [Fonctionnement de l'enquête](docs/guide/06-fonctionnement-de-l-enquete.md) :
    identifiants, niveaux de confiance, rebonds, constats et sources,
    expliqués simplement.
-6. [Glossaire](docs/guide/glossaire.md) : définition des termes techniques.
+7. [Glossaire](docs/guide/glossaire.md) : définition des termes techniques.
 
 Documents de référence :
 

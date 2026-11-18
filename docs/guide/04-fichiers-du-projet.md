@@ -100,11 +100,11 @@ src/
   validation de la saisie, masquage des valeurs, et le modèle de l'enquête
   (champs de la fiche, identifiants, pseudo rare, niveaux de confiance,
   constats, port `Source` et détails d'une fuite). Le fonctionnement est expliqué dans
-  [Fonctionnement de l'enquête](05-fonctionnement-de-l-enquete.md).
+  [Fonctionnement de l'enquête](06-fonctionnement-de-l-enquete.md).
 - `server/providers/` contient une source de données par dossier. `registry.ts`
   liste les sources actives (`SOURCES`) ; une source qui a besoin d'une clé
   n'y est ajoutée que si la clé est configurée. Le chemin des données dans une
-  source est décrit dans [Flux des données](04-flux-des-donnees.md).
+  source est décrit dans [Flux des données](05-flux-des-donnees.md).
 - `server/search-service.ts` donne chaque identifiant aux sources qui
   acceptent son type, en parallèle, et garde les résultats de celles qui
   répondent, même si une autre est en panne.
@@ -112,8 +112,10 @@ src/
 - `tests/server-only-stub.ts` est un fichier vide. Dans les tests, il remplace
   le paquet `server-only`, qui lève une erreur hors du serveur Next.js.
 
-Avec l'App Router, chaque dossier de `src/app/` correspond à une route, et le
-fichier `page.tsx` qu'il contient est la page affichée.
+Avec l'App Router, chaque dossier de `src/app/` correspond à une adresse :
+`page.tsx` est la page affichée, `route.ts` une adresse qui renvoie des
+données. Le principe est expliqué dans
+[Comment marche une application web](03-application-web.md#le-routage--quel-code-répond-à-quelle-adresse).
 
 ## Le dossier src prévu
 
