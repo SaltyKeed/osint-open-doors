@@ -6,9 +6,10 @@ quand il relance une recherche. Le détail complet est dans
 [CADRAGE.md](../CADRAGE.md), les sources dans [SOURCES.md](../SOURCES.md).
 
 État au 2026-11-18 : le modèle de données (issue #63), XposedOrNot sur le
-port `Source` (#64) et le moteur d'enquête (#65) sont en place. Seule
-XposedOrNot est branchée pour l'instant : les rebonds apparaîtront avec les
-sources suivantes (#66).
+port `Source` (#64) et le moteur d'enquête (#65) sont en place. Deux sources
+sont branchées : XposedOrNot et Gravatar. Gravatar donne déjà des rebonds
+(pseudo, comptes vérifiés), qui seront cherchés quand des sources de pseudos
+et de profils seront branchées (#66, #68).
 
 ## L'idée en une phrase
 

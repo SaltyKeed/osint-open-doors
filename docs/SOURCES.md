@@ -133,7 +133,7 @@ l'apport unique, le prix et, quand c'est possible, la couverture mesurée.
 
 | Source | Appel | Renvoie | Remplit | Rebonds | Accès | Statut |
 | --- | --- | --- | --- | --- | --- | --- |
-| Gravatar | `GET https://api.gravatar.com/v3/profiles/{sha256 de l'email}` et `https://www.gravatar.com/avatar/{hash}?d=404` | Nom affiché, photo, bio, lieu, comptes liés | A1 A5 C1 F2 | `PSEUDO` `PROFIL` | Gratuit | Prototype |
+| Gravatar | `GET https://api.gravatar.com/v3/profiles/{sha256 de l'email}` : Gravatar reçoit l'empreinte, jamais l'email | Nom affiché, photo, lieu, poste et employeur, nom d'utilisateur, comptes vérifiés publics. La bio (texte libre) et les comptes masqués par la personne ne sont pas gardés | A1 A5 C1 E1 F1 F2 | `PSEUDO` `PROFIL` | Gratuit, sans clé | En place |
 | Libravatar | `GET https://seccdn.libravatar.org/avatar/{hash}?d=404` | Photo | A5 | aucun | Gratuit | Nouveau |
 | GitHub | `GET https://api.github.com/search/commits?q=author-email:{email}` puis `GET https://api.github.com/users/{login}` | Compte qui a commité avec cet email : nom, ville, employeur, site, bio | A1 C1 E1 E3 F2 F3 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit (jeton sans droit conseillé) | Prototype |
 | Clés PGP | `GET https://keys.openpgp.org/vks/v1/by-email/{email}` | Nom et autres emails de la clé | A1 B1 | `EMAIL` | Gratuit | Prototype |
