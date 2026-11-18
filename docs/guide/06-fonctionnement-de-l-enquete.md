@@ -6,11 +6,12 @@ quand il relance une recherche. Le détail complet est dans
 [CADRAGE.md](../CADRAGE.md), les sources dans [SOURCES.md](../SOURCES.md).
 
 État au 2026-11-18 : le modèle de données (issue #63), XposedOrNot sur le
-port `Source` (#64) et le moteur d'enquête (#65) sont en place. Trois sources
-sont branchées : XposedOrNot, Gravatar et Hudson Rock. Premier rebond réel :
-le pseudo trouvé par Gravatar est cherché chez Hudson Rock. Les comptes
-vérifiés (`PROFIL`) seront cherchés quand des sources de profils seront
-branchées (#68).
+port `Source` (#64) et le moteur d'enquête (#65) sont en place. Quatre
+sources sont branchées : XposedOrNot, Gravatar, Hudson Rock et GitHub. Les
+pseudos trouvés (par Gravatar ou GitHub) sont cherchés chez Hudson Rock et
+GitHub ; l'email public et le site d'un compte GitHub repartent aussi dans la
+file. Les comptes vérifiés (`PROFIL`) et les domaines seront cherchés quand
+des sources pour ces types seront branchées.
 
 ## L'idée en une phrase
 

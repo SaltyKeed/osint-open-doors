@@ -1,8 +1,13 @@
 import "server-only";
 import type { Source } from "@/server/domain/source";
+import { loadEnv } from "@/server/env";
+import { github } from "./github";
 import { gravatar } from "./gravatar";
 import { hudsonRock } from "./hudsonrock";
 import { xposedOrNot } from "./xposedornot";
 
+const env = loadEnv();
+
 // A source that needs an API key is added here only when its key is set: without a key it is skipped (T3).
-export const SOURCES: readonly Source[] = [xposedOrNot, gravatar, hudsonRock];
+// GitHub works without its token, with a smaller quota.
+export const SOURCES: readonly Source[] = [xposedOrNot, gravatar, hudsonRock, github(env.GITHUB_TOKEN)];

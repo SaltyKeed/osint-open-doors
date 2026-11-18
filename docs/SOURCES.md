@@ -135,7 +135,7 @@ l'apport unique, le prix et, quand c'est possible, la couverture mesurée.
 | --- | --- | --- | --- | --- | --- | --- |
 | Gravatar | `GET https://api.gravatar.com/v3/profiles/{sha256 de l'email}` : Gravatar reçoit l'empreinte, jamais l'email | Nom affiché, photo, lieu, poste et employeur, nom d'utilisateur, comptes vérifiés publics. La bio (texte libre) et les comptes masqués par la personne ne sont pas gardés | A1 A5 C1 E1 F1 F2 | `PSEUDO` `PROFIL` | Gratuit, sans clé | En place |
 | Libravatar | `GET https://seccdn.libravatar.org/avatar/{hash}?d=404` | Photo | A5 | aucun | Gratuit | Nouveau |
-| GitHub | `GET https://api.github.com/search/commits?q=author-email:{email}` puis `GET https://api.github.com/users/{login}` | Compte qui a commité avec cet email : nom, ville, employeur, site, bio | A1 C1 E1 E3 F2 F3 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit (jeton sans droit conseillé) | Prototype |
+| GitHub | `GET https://api.github.com/search/commits?q=author-email:{email}` puis `GET https://api.github.com/users/{login}` (3 comptes au plus) | Compte qui a commité avec cet email : nom, photo, email public, ville, employeur, dépôts, pseudo X, site. La bio et les messages de commit ne sont pas gardés ; les comptes fictifs de GitHub (`invalid-email-address`, `ghost`) comptent comme « aucun compte » | A1 A5 B1 C1 E1 E3 F1 F2 F3 | `PSEUDO` `EMAIL` `DOMAINE` | Gratuit ; jeton optionnel (`GITHUB_TOKEN`) : sans jeton, 60 appels par heure et 10 recherches par minute par adresse IP | En place |
 | Clés PGP | `GET https://keys.openpgp.org/vks/v1/by-email/{email}` | Nom et autres emails de la clé | A1 B1 | `EMAIL` | Gratuit | Prototype |
 | Keybase | `GET https://keybase.io/_/api/1.0/user/lookup.json?…` | Comptes prouvés (GitHub, domaine, réseaux) | F1 F2 F3 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Prototype |
 | Domaine de l'email | Calcul local, puis RDAP (section 8) si ce n'est pas un webmail | Organisation (école, employeur) | E1 D1 | `ORGA` `DOMAINE` | Gratuit | Nouveau |
@@ -156,7 +156,7 @@ la réponse est plus sûre et donne plus de champs.
 
 | Plateforme | Appel | Renvoie | Remplit | Accès | Statut |
 | --- | --- | --- | --- | --- | --- |
-| GitHub | `GET https://api.github.com/users/{pseudo}` | Nom, ville, employeur, site, bio, date de création | A1 C1 E1 F2 F3 | Gratuit | Prototype |
+| GitHub | `GET https://api.github.com/users/{pseudo}` | Nom, ville, employeur, site (pas la bio) | A1 A5 B1 C1 E1 F1 F2 F3 | Gratuit | En place |
 | GitLab | `GET https://gitlab.com/api/v4/users?username={pseudo}` | Nom, photo | A1 A5 F2 | Gratuit | Prototype |
 | Codeberg | `GET https://codeberg.org/api/v1/users/{pseudo}` | Nom, lieu, site | A1 C1 F2 | Gratuit | Prototype |
 | Mastodon | `GET https://mastodon.social/api/v1/accounts/lookup?acct={pseudo}` | Nom, bio, liens, date | A1 F2 | Gratuit | Prototype |

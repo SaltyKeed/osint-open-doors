@@ -13,7 +13,9 @@ export async function fetchJson(
 ): Promise<unknown | null> {
   const response = await fetch(url, { signal, headers, cache: "no-store" });
   if (response.status === 404) return null;
-  if (response.status === 429) throw new SourceQuotaError(sourceId);
+  // 429, or 403 with no request left (the GitHub way to say the quota is reached).
+  const quota = response.status === 429 || (response.status === 403 && response.headers.get("x-ratelimit-remaining") === "0");
+  if (quota) throw new SourceQuotaError(sourceId);
   if (!response.ok) throw new Error(`${sourceId}: HTTP ${response.status}`);
   // A JSON SyntaxError quotes part of the body: replace it with a fixed message.
   return response.json().catch(() => {

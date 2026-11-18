@@ -1,0 +1,17 @@
+{
+  "login": "lmartin06",
+  "id": 1,
+  "avatar_url": "https://avatars.githubusercontent.com/u/1?v=4",
+  "html_url": "https://github.com/lmartin06",
+  "type": "User",
+  "name": "Léa Martin",
+  "company": "@exemple-sa",
+  "blog": "https://leamartin.ch",
+  "location": "Neuchâtel, Suisse",
+  "email": "contact@leamartin.ch",
+  "bio": "Texte libre de la bio, jamais gardé",
+  "twitter_username": "lea_martin_ne",
+  "public_repos": 12,
+  "followers": 4,
+  "created_at": "2020-09-01T08:00:00Z"
+}

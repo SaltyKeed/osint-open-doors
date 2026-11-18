@@ -604,7 +604,8 @@ deuxième source de fuites.
   clé, elle est sautée.
 - `env.ts` est supprimé : sans `APP_MODE`, il ne validait plus rien. Il sera
   recréé avec la première clé d'API (#66), avec la même règle : seuls les noms
-  des variables invalides apparaissent dans l'erreur.
+  des variables invalides apparaissent dans l'erreur. Recréé le 2026-11-18
+  avec `GITHUB_TOKEN`, optionnel ; les clés vivent dans `.env.local`.
 - `/api/search` interroge, pour chaque identifiant saisi, les sources qui
   acceptent son type, et renvoie leurs fiches, sans rebond. Le moteur (#65)
   ajoutera les rebonds dans le même service.

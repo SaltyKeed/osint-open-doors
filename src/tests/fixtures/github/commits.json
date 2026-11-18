@@ -1,0 +1,33 @@
+{
+  "total_count": 3,
+  "incomplete_results": false,
+  "items": [
+    {
+      "sha": "a1b2c3",
+      "commit": {
+        "author": { "name": "Léa Martin", "email": "lea.martin@exemple.ch", "date": "2026-05-02T10:00:00Z" },
+        "message": "Message de commit, jamais gardé"
+      },
+      "author": { "login": "lmartin06", "html_url": "https://github.com/lmartin06", "id": 1 },
+      "repository": { "full_name": "lmartin06/projet-cpne", "html_url": "https://github.com/lmartin06/projet-cpne", "private": false }
+    },
+    {
+      "sha": "d4e5f6",
+      "commit": {
+        "author": { "name": "Léa Martin", "email": "lea.martin@exemple.ch", "date": "2026-04-01T10:00:00Z" },
+        "message": "Autre message"
+      },
+      "author": { "login": "lmartin06", "html_url": "https://github.com/lmartin06", "id": 1 },
+      "repository": { "full_name": "exemple-org/site-club", "html_url": "https://github.com/exemple-org/site-club", "private": false }
+    },
+    {
+      "sha": "g7h8i9",
+      "commit": {
+        "author": { "name": "L. Martin", "email": "lea.martin@exemple.ch", "date": "2025-01-01T10:00:00Z" },
+        "message": "Commit fait avant de lier l'email au compte"
+      },
+      "author": null,
+      "repository": { "full_name": "ancien/projet", "html_url": "https://github.com/ancien/projet", "private": false }
+    }
+  ]
+}
