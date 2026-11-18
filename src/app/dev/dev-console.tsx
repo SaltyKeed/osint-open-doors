@@ -1,17 +1,17 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
-import type { ProviderReport } from "@/server/dev/inspect-providers";
+import type { SourceReport } from "@/server/dev/inspect-sources";
+import type { SourceField } from "@/server/domain/source";
 
-interface ProviderInfo {
+interface SourceInfo {
   id: string;
-  supports: string[];
-  mode: "surface" | "deep";
+  accepts: string[];
 }
 
 interface Result {
   query: unknown;
-  reports: ProviderReport[];
+  reports: SourceReport[];
 }
 
 const FIELDS = [
@@ -21,16 +21,16 @@ const FIELDS = [
   { name: "lastName", label: "Nom", type: "text" },
 ] as const;
 
-const STATUS_STYLE: Record<ProviderReport["status"], string> = {
+const STATUS_STYLE: Record<SourceReport["status"], string> = {
   ok: "bg-green-100 text-green-900",
   error: "bg-red-100 text-red-900",
   skipped: "bg-zinc-200 text-zinc-800",
 };
 
-const COLUMNS = ["Source", "Domaine", "Année", "Catégories", "Enregistrements", "Vérifiée"];
+const COLUMNS = ["Fiche", "Champ", "Valeur", "Détails", "Nouveaux identifiants"];
 
-export function DevConsole({ providers, appMode }: { providers: ProviderInfo[]; appMode: string }) {
-  const [selected, setSelected] = useState(() => new Set(providers.map((p) => p.id)));
+export function DevConsole({ sources }: { sources: SourceInfo[] }) {
+  const [selected, setSelected] = useState(() => new Set(sources.map((s) => s.id)));
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +48,7 @@ export function DevConsole({ providers, appMode }: { providers: ProviderInfo[]; 
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     // Empty fields are left out: the schema refuses an empty string.
-    const body: Record<string, unknown> = { consent: form.get("consent") === "on", providers: [...selected] };
+    const body: Record<string, unknown> = { consent: form.get("consent") === "on", sources: [...selected] };
     for (const field of FIELDS) {
       const value = String(form.get(field.name) ?? "").trim();
       if (value) body[field.name] = value;
@@ -75,10 +75,10 @@ export function DevConsole({ providers, appMode }: { providers: ProviderInfo[]; 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-6 p-6 font-sans text-sm">
       <header>
-        <h1 className="text-xl font-semibold">Console de test des providers</h1>
+        <h1 className="text-xl font-semibold">Console de test des sources</h1>
         <p className="text-zinc-600">
-          Outil de développement, disponible uniquement avec <code>npm run dev</code>. Mode actuel :{" "}
-          <code>{appMode}</code>. Rien n&apos;est enregistré : recharger la page efface tout.
+          Outil de développement, disponible uniquement avec <code>npm run dev</code>. Rien n&apos;est
+          enregistré : recharger la page efface tout.
         </p>
       </header>
 
@@ -98,15 +98,13 @@ export function DevConsole({ providers, appMode }: { providers: ProviderInfo[]; 
         </div>
 
         <fieldset className="space-y-1">
-          <legend className="font-medium">Providers</legend>
-          {providers.length === 0 && <p>Aucun provider dans le registry.</p>}
-          {providers.map((p) => (
-            <label key={p.id} className="flex items-center gap-2">
-              <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
-              <span className="font-mono">{p.id}</span>
-              <span className="text-zinc-600">
-                ({p.mode}, accepte : {p.supports.join(", ")})
-              </span>
+          <legend className="font-medium">Sources</legend>
+          {sources.length === 0 && <p>Aucune source dans le registre.</p>}
+          {sources.map((s) => (
+            <label key={s.id} className="flex items-center gap-2">
+              <input type="checkbox" checked={selected.has(s.id)} onChange={() => toggle(s.id)} />
+              <span className="font-mono">{s.id}</span>
+              <span className="text-zinc-600">(accepte : {s.accepts.join(", ")})</span>
             </label>
           ))}
         </fieldset>
@@ -138,7 +136,7 @@ export function DevConsole({ providers, appMode }: { providers: ProviderInfo[]; 
             <pre className="mt-2 overflow-auto text-xs">{JSON.stringify(result.query, null, 2)}</pre>
           </details>
           {result.reports.map((report) => (
-            <ProviderBlock key={report.id} report={report} />
+            <SourceBlock key={`${report.id}-${report.input}`} report={report} />
           ))}
         </section>
       )}
@@ -146,11 +144,21 @@ export function DevConsole({ providers, appMode }: { providers: ProviderInfo[]; 
   );
 }
 
-function ProviderBlock({ report }: { report: ProviderReport }) {
+function details(field: SourceField): string {
+  const b = field.breach;
+  if (!b) return "-";
+  const records = b.records?.toLocaleString("fr-CH") ?? "?";
+  return `${b.domain ?? "-"}, ${b.year ?? "-"}, ${b.dataTypes.join(" ")}, ${records} comptes, ${b.verified ? "vérifiée" : "non vérifiée"}`;
+}
+
+function SourceBlock({ report }: { report: SourceReport }) {
   return (
     <article className="space-y-3 rounded border border-zinc-300 p-4">
       <header className="flex flex-wrap items-center gap-3">
-        <h2 className="font-mono text-base font-semibold">{report.id}</h2>
+        <h2 className="font-mono text-base font-semibold">
+          {report.id}
+          {report.input && <span className="font-normal text-zinc-600"> ← {report.input}</span>}
+        </h2>
         <span className={`rounded px-2 py-0.5 text-xs ${STATUS_STYLE[report.status]}`}>{report.status}</span>
         <span className="text-zinc-600">{report.durationMs} ms</span>
         {report.message && <span className="text-zinc-700">{report.message}</span>}
@@ -159,8 +167,8 @@ function ProviderBlock({ report }: { report: ProviderReport }) {
       {report.status === "ok" && (
         <>
           <div>
-            <h3 className="font-medium">Résultat mappé : {report.exposures.length} fuite(s)</h3>
-            {report.exposures.length > 0 && (
+            <h3 className="font-medium">Résultat mappé : {report.records.length} fiche(s)</h3>
+            {report.records.length > 0 && (
               <div className="mt-2 max-h-96 overflow-auto">
                 <table className="w-full border-collapse text-left text-xs">
                   <thead className="sticky top-0 bg-zinc-100 text-zinc-900">
@@ -173,16 +181,22 @@ function ProviderBlock({ report }: { report: ProviderReport }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {report.exposures.map((e, i) => (
-                      <tr key={`${e.source}-${i}`} className="border-b border-zinc-200">
-                        <td className="px-2 py-1">{e.source}</td>
-                        <td className="px-2 py-1">{e.domain ?? "-"}</td>
-                        <td className="px-2 py-1">{e.year ?? "-"}</td>
-                        <td className="px-2 py-1">{e.categories.join(", ")}</td>
-                        <td className="px-2 py-1">{e.recordCount?.toLocaleString("fr-CH") ?? "-"}</td>
-                        <td className="px-2 py-1">{e.verified ? "oui" : "non"}</td>
-                      </tr>
-                    ))}
+                    {report.records.flatMap((record, r) =>
+                      record.fields.map((field, f) => (
+                        <tr key={`${r}-${f}`} className="border-b border-zinc-200">
+                          <td className="px-2 py-1">
+                            {r + 1}
+                            {record.about === "relative" && " (proche)"}
+                          </td>
+                          <td className="px-2 py-1 font-mono">{field.field}</td>
+                          <td className="px-2 py-1">{field.value}</td>
+                          <td className="px-2 py-1">{details(field)}</td>
+                          <td className="px-2 py-1">
+                            {record.identifiers.map((i) => `${i.type}:${i.value}`).join(", ") || "-"}
+                          </td>
+                        </tr>
+                      )),
+                    )}
                   </tbody>
                 </table>
               </div>

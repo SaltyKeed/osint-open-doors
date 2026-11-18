@@ -1,13 +1,13 @@
-# Flux des données d'un provider
+# Flux des données d'une source
 
-Cette page suit les données d'un provider, de la réponse brute de l'API
+Cette page suit les données d'une source, de la réponse brute de l'API
 jusqu'à ce que voit le visiteur. Elle indique aussi quel fichier modifier pour
 changer ce qui est gardé ou affiché. La structure des dossiers est décrite dans
 [ARCHITECTURE.md, section 4](../ARCHITECTURE.md#4-structure-du-code-ports--adapters)
 et la console de test dans
 [DECISIONS.md, D18](../DECISIONS.md#d18-console-de-test-des-providers).
 
-Les exemples utilisent le provider XposedOrNot, dans
+Les exemples utilisent la source XposedOrNot, dans
 `src/server/providers/xposedornot/`.
 
 ## Le chemin des données
@@ -20,20 +20,20 @@ Réponse brute de l'API (client.ts)
         ▼
 Réponse filtrée (type XonResponse)
         │
-        │ (2) mapper.ts : toExposures traduit chaque fuite
-        │     en objet du domaine.
+        │ (2) mapper.ts : toRecords traduit chaque fuite
+        │     en fiche du domaine.
         ▼
-Exposure[]
-        │ (3) domain/types.ts définit les champs d'Exposure
-        │     et les catégories possibles (DataCategory).
+SourceRecord[] (une fiche par fuite, champ H1 avec ses détails)
+        │ (3) domain/source.ts définit SourceRecord et BreachDetails ;
+        │     domain/types.ts les types de données possibles (DataCategory).
         ▼
 /api/search (visiteur)  et  console /dev (développement)
 ```
 
 `index.ts` assemble ces étapes dans la méthode `inspect`, qui renvoie trois
 valeurs : `raw` (la réponse brute), `parsed` (la réponse filtrée par le
-schéma) et `exposures`. Seule la console `/dev` reçoit `raw` et `parsed`. La
-méthode `search`, utilisée par `/api/search`, ne renvoie que `exposures`.
+schéma) et `records`. Seule la console `/dev` reçoit `raw` et `parsed`. La
+méthode `investigate`, utilisée par `/api/search`, ne renvoie que `records`.
 
 ## Deux listes blanches
 
@@ -42,15 +42,15 @@ Une donnée doit passer deux filtres avant d'arriver à l'écran.
 1. Le schéma zod de `schema.ts`. `z.object` ne garde que les clés déclarées.
    Un champ absent du schéma, par exemple `password_risk` ou `logo`, n'existe
    plus après le parsing.
-2. Le mapper de `mapper.ts`. `toExposures` construit chaque `Exposure` champ
-   par champ. Un champ lu par le schéma mais pas recopié par le mapper ne sort
-   pas du provider.
+2. Le mapper de `mapper.ts`. `toRecords` construit chaque fiche champ par
+   champ. Un champ lu par le schéma mais pas recopié par le mapper ne sort pas
+   de la source.
 
 Le mapper fait aussi un peu de traduction :
 
 - chaque libellé de `xposed_data` est cherché dans la table `CATEGORIES` ; un
   libellé inconnu devient `"other"` ;
-- les catégories en double sont supprimées ;
+- les types de données en double sont supprimés ;
 - un `domain` vide (`""`) devient `null` ; une date qui ne commence pas par
   quatre chiffres donne `year: null`.
 
@@ -66,12 +66,12 @@ l'invariant « jamais de mot de passe ni de hash affiché »
 | Lire un nouveau champ de la réponse brute (par exemple `password_risk` ou `BreachMetrics.risk`) | `schema.ts` | Ajouter le champ avec son type zod. Sinon, il n'existe plus après le parsing. |
 | Classer un libellé autrement (par exemple « Credit card details », qui devient aujourd'hui `other`) | `mapper.ts` | Ajouter une ligne dans `CATEGORIES`. |
 | Créer une nouvelle catégorie (par exemple `credit_card`) | `domain/types.ts` | Ajouter la valeur à l'union `DataCategory`. TypeScript refuse ensuite une faute de frappe dans `CATEGORIES`. |
-| Ajouter une information à chaque fuite (par exemple `passwordRisk`) | `domain/types.ts`, puis `schema.ts`, puis `mapper.ts` | Ajouter le champ à `Exposure`, le lire dans le schéma, le remplir dans `toExposures`. `npm run typecheck` liste tous les endroits à compléter. |
-| Retirer une information affichée | `mapper.ts`, puis `domain/types.ts` | Ne plus remplir le champ dans `toExposures`, puis le retirer d'`Exposure`. |
-| Voir le changement dans la console | `src/app/dev/dev-console.tsx` | Ajouter une colonne dans `COLUMNS` et une cellule `<td>` dans `ProviderBlock`. |
+| Ajouter une information à chaque fuite (par exemple `passwordRisk`) | `domain/source.ts`, puis `schema.ts`, puis `mapper.ts` | Ajouter le champ à `BreachDetails`, le lire dans le schéma, le remplir dans `toRecords`. Décider comment `mergeFindings` (`domain/finding.ts`) fusionne ce champ quand deux sources décrivent la même fuite. `npm run typecheck` liste tous les endroits à compléter. |
+| Retirer une information affichée | `mapper.ts`, puis `domain/source.ts` | Ne plus remplir le champ dans `toRecords`, puis le retirer de `BreachDetails`. |
+| Voir le changement dans la console | `src/app/dev/dev-console.tsx` | Compléter la fonction `details`, qui affiche les détails d'une fuite dans la colonne « Détails ». |
 
 `domain/types.ts` est `src/server/domain/types.ts`. `schema.ts` et `mapper.ts`
-sont dans le dossier du provider.
+sont dans le dossier de la source.
 
 ## À mettre à jour en même temps
 
@@ -82,7 +82,7 @@ sont dans le dossier du provider.
   d'une nouvelle valeur. La valeur est inventée : les fixtures ne contiennent
   jamais de vraie donnée.
 - La documentation, dans la même pull request : `ARCHITECTURE.md` si
-  `Exposure` ou `DataCategory` change, `DECISIONS.md` si une donnée sensible
+  `BreachDetails` ou `DataCategory` change, `DECISIONS.md` si une donnée sensible
   devient visible.
 
 ## Méthode avec la console /dev
@@ -105,7 +105,8 @@ quota : 100 recherches par jour pour XposedOrNot
 
 ## Avant d'ajouter un champ
 
-Tout ce qui est dans `Exposure` est envoyé au navigateur du visiteur. Avant
+Tout ce qui est dans une fiche (`SourceRecord`) est envoyé au navigateur du
+visiteur. Avant
 d'ajouter un champ, il faut se demander :
 
 - s'il aide le visiteur à construire son plan d'action ;
@@ -127,7 +128,7 @@ classer le libellé « Credit card details » dans une nouvelle catégorie
    attendues pour la fuite `ForumDemo`. `npm test` échoue.
 
    ```ts
-   categories: ["email", "other", "credit_card"],
+   dataTypes: ["email", "other", "credit_card"],
    ```
 
 2. Fixture : dans `found.json`, ajouter le libellé à `xposed_data` de
@@ -156,13 +157,15 @@ classer le libellé « Credit card details » dans une nouvelle catégorie
    ```
 
 5. Console : relancer une recherche dans `/dev` et vérifier que les fuites
-   concernées affichent `credit_card` dans la colonne « Catégories ».
+   concernées affichent `credit_card` dans la colonne « Détails ».
 
 Comme `DataCategory` change, `ARCHITECTURE.md` est mis à jour dans la même
 pull request.
 
-## Pour les autres providers
+## Pour les autres sources
 
-Chaque dossier de provider aura les mêmes fichiers `schema.ts` et `mapper.ts`,
-et tous utilisent les types du domaine de `domain/types.ts`. La méthode de
-cette page s'applique donc à chaque nouveau provider.
+Chaque dossier de source aura les mêmes fichiers `schema.ts` et `mapper.ts`,
+et toutes renvoient les fiches définies dans `domain/source.ts`. La méthode de
+cette page s'applique donc à chaque nouvelle source. Une source qui décrit un
+autre événement qu'une fuite (une infection pour Hudson Rock, #66) ajoute son
+propre type de détails à côté de `BreachDetails` (T3).

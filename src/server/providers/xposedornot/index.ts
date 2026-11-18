@@ -1,22 +1,23 @@
 import "server-only";
-import type { BreachProvider, Inspection } from "@/server/providers/types";
+import type { Identifier } from "@/server/domain/identifier";
+import type { Source, SourceInspection } from "@/server/domain/source";
 import { fetchBreachAnalytics } from "./client";
-import { toExposures } from "./mapper";
+import { toRecords } from "./mapper";
 import { xonResponseSchema } from "./schema";
 
-async function inspect(query: Parameters<BreachProvider["search"]>[0], signal: AbortSignal): Promise<Inspection> {
-  if (query.email === undefined) return { raw: null, parsed: null, exposures: [] };
-  const raw = await fetchBreachAnalytics(query.email, signal);
-  if (raw === null) return { raw: null, parsed: null, exposures: [] };
+async function inspect(input: Identifier, signal: AbortSignal): Promise<SourceInspection> {
+  if (input.type !== "EMAIL") return { raw: null, parsed: null, records: [] };
+  const raw = await fetchBreachAnalytics(input.value, signal);
+  if (raw === null) return { raw: null, parsed: null, records: [] };
   const parsed = xonResponseSchema.safeParse(raw);
   if (!parsed.success) throw new Error("xposedornot: invalid response");
-  return { raw, parsed: parsed.data, exposures: toExposures(parsed.data) };
+  return { raw, parsed: parsed.data, records: toRecords(parsed.data) };
 }
 
-export const xposedOrNot: BreachProvider = {
+export const xposedOrNot: Source = {
   id: "xposedornot",
-  supports: ["email"],
+  accepts: ["EMAIL"],
   inspect,
-  // The public search keeps only the mapped exposures: raw and parsed stay here.
-  search: async (query, signal) => (await inspect(query, signal)).exposures,
+  // The investigation keeps only the mapped records: raw and parsed stay here.
+  investigate: async (input, signal) => (await inspect(input, signal)).records,
 };

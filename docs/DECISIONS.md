@@ -552,6 +552,63 @@ des homonymes.
 - L'ancien modèle (`Exposure`, `BreachProvider`) reste en place jusqu'à ce
   que XposedOrNot soit branché sur le port `Source` (#64).
 
+## T3. XposedOrNot sur le port Source
+
+Date : 2026-11-18
+
+XposedOrNot est la première source branchée sur le port `Source` (#64). Elle
+montre ce que le port de T2 ne savait pas transporter.
+
+### Détails d'une fuite
+
+Pour chaque fuite, XposedOrNot renvoie un nom, une date, les types de données
+exposées, le nombre de comptes et si la fuite est vérifiée. Le champ H1 de la
+fiche demande « nom, date, types de données exposées » (`CADRAGE.md`,
+section 5). Avec T2, une source ne renvoie qu'un texte par champ : le mapper
+avait ces informations mais aucune place pour les ranger.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Nom seul | Port inchangé. Le nom sert à fusionner la même fuite vue par deux sources. | Date, types et nombre de comptes perdus : moins d'informations qu'avant la migration. |
+| Texte formaté (`ExampleShop (2019) : email, mot de passe`) | Port inchangé, tout est affiché. | Deux sources qui décrivent la même fuite autrement ne fusionnent plus ; l'écran ne peut pas trier ni colorer les types. |
+| Détail générique pour tous les champs (`extra: Record<string, string>`) | Prévu une fois pour toutes. | Le moteur et l'écran devinent les clés ; une donnée sensible peut passer sans être déclarée : la liste blanche s'arrête au mapper. |
+| **Un type de détails fermé par sorte d'événement (retenu)** | Typé et testé ; rien ne passe sans être déclaré. | Un type à ajouter pour chaque nouvelle sorte d'événement. |
+
+Règle : un champ qui décrit un événement (une fuite, une infection) reçoit son
+propre type de détails, ajouté avec la première source qui le remplit. Un
+champ dont la valeur suffit (email, ville, pseudo) reste un texte. Pour H1 :
+`breach` (`BreachDetails` : site concerné, année, types de données, nombre
+de comptes, vérifiée). Pour H5, Hudson Rock ajoutera le sien (#66). Les proches (J1) n'ont
+pas besoin de détails : un proche est une fiche entière avec
+`about: "relative"`.
+
+Les détails ne contiennent que des métadonnées : « un mot de passe a fuité »,
+jamais le mot de passe. Le contenu des fiches de fuites (H2, H3) arrivera avec
+les sources payantes, comme valeurs de champs masquées.
+
+Quand deux sources décrivent la même fuite, `mergeFindings` garde l'union des
+types de données, le premier site, la première année et le premier nombre de
+comptes connus, et « vérifiée » si une des sources le dit.
+
+Limite acceptée : la même fuite sous deux noms (`Pandabuy` et
+`PandaBuy 2024`) donne deux lignes. Le problème n'apparaîtra qu'avec une
+deuxième source de fuites.
+
+### Fin des modes et du fichier d'environnement
+
+- `APP_MODE`, `SURFACE_PROVIDERS` et `DEEP_PROVIDERS` sont supprimés (T1
+  remplace D10). Le registre est une seule liste de sources. Une source qui a
+  besoin d'une clé y est ajoutée seulement si la clé est configurée ; sans
+  clé, elle est sautée.
+- `env.ts` est supprimé : sans `APP_MODE`, il ne validait plus rien. Il sera
+  recréé avec la première clé d'API (#66), avec la même règle : seuls les noms
+  des variables invalides apparaissent dans l'erreur.
+- `/api/search` interroge, pour chaque identifiant saisi, les sources qui
+  acceptent son type, et renvoie leurs fiches, sans rebond. Le moteur (#65)
+  ajoutera les rebonds dans le même service.
+- L'ancien modèle (`BreachProvider`, `Exposure`, `QueryKind`, `PersonRecord`)
+  est supprimé.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -577,3 +634,4 @@ des homonymes.
 | Plan d'action | Règles écrites à l'avance (T1) | IA à tester plus tard |
 | Confiance des informations | Calculée par le moteur ; ce qu'un « probable » trouve relance seulement s'il est « confirmé » (T2) | |
 | Pseudo rare | 6 caractères et une lettre, puis nombre de sites mesuré par le moteur (T2) | Liste de mots, modèle de Markov |
+| Détails d'un événement | Un type fermé par sorte d'événement, ajouté avec sa source : `BreachDetails` pour H1 (T3) | Détail générique |

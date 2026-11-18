@@ -3,21 +3,11 @@ import { POST } from "./route";
 
 // All values below are invented test data.
 vi.mock("@/server/providers/registry", () => ({
-  getProviders: () => [
+  SOURCES: [
     {
       id: "fake",
-      supports: ["email"],
-      search: async () => [
-        {
-          providerId: "fake",
-          source: "ExampleShop",
-          domain: null,
-          year: 2019,
-          categories: ["email"],
-          recordCount: null,
-          verified: true,
-        },
-      ],
+      accepts: ["EMAIL"],
+      investigate: async () => [{ about: "subject", fields: [{ field: "H1", value: "ExampleShop" }], identifiers: [] }],
     },
   ],
 }));
@@ -38,12 +28,12 @@ describe("POST /api/search", () => {
     expect(await response.text()).not.toContain("jean");
   });
 
-  it("returns 200 with exposures for a valid email", async () => {
+  it("returns 200 with records for a valid email", async () => {
     const response = await post(JSON.stringify({ email: "Jean@Exemple.ch", consent: true }));
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.exposures).toHaveLength(1);
-    expect(body.failedProviders).toEqual([]);
+    expect(body.records).toHaveLength(1);
+    expect(body.failedSources).toEqual([]);
   });
 
   it.each([

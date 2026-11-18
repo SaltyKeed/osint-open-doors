@@ -5,10 +5,11 @@ cherche, comment il décide qu'une information appartient bien au visiteur et
 quand il relance une recherche. Le détail complet est dans
 [CADRAGE.md](../CADRAGE.md), les sources dans [SOURCES.md](../SOURCES.md).
 
-État au 2026-11-17 : le modèle de données est en place dans
-`src/server/domain/` (issue #63). Le moteur qui enchaîne les recherches
-arrive avec l'issue #65. Jusque-là, `/api/search` interroge seulement
-XposedOrNot.
+État au 2026-11-18 : le modèle de données est en place dans
+`src/server/domain/` (issue #63) et XposedOrNot est branché dessus (#64).
+`/api/search` donne chaque identifiant saisi aux sources qui l'acceptent,
+sans rebond. Le moteur qui enchaîne les recherches et calcule la confiance
+arrive avec l'issue #65.
 
 ## L'idée en une phrase
 
@@ -193,6 +194,12 @@ identifiants et indique si elle concerne le visiteur ou un proche. La source
 ne donne pas de niveau de confiance : c'est le moteur qui le calcule, parce que
 lui seul sait quels identifiants sont déjà confirmés. Le moteur transforme
 ensuite chaque fiche en constats.
+
+Un champ qui décrit un événement porte aussi ses détails. Pour une fuite (H1),
+la valeur est le nom de la fuite, et `breach` donne le site, l'année, les
+types de données exposées, le nombre de comptes et si la fuite est vérifiée.
+Ce sont des métadonnées : « un mot de passe a fuité », jamais le mot de passe.
+Quand deux sources décrivent la même fuite, les détails sont fusionnés.
 
 ## Où est le code
 

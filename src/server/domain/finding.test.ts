@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mergeFindings, type Finding } from "./finding";
 import type { Identifier } from "./identifier";
+import type { BreachDetails } from "./source";
 
 // All values below are invented test data.
 
@@ -58,6 +59,38 @@ describe("mergeFindings", () => {
 
   it("returns an empty list for an empty list", () => {
     expect(mergeFindings([])).toEqual([]);
+  });
+
+  describe("breach details", () => {
+    const breach = (details: Partial<BreachDetails>): Finding =>
+      finding({
+        field: "H1",
+        value: "ExampleShop",
+        breach: { domain: null, year: null, dataTypes: [], records: null, verified: false, ...details },
+      });
+
+    it("joins the data types of both sources, each once", () => {
+      const merged = mergeFindings([breach({ dataTypes: ["email", "password"] }), breach({ dataTypes: ["password", "phone"] })]);
+      expect(merged[0]?.breach?.dataTypes).toEqual(["email", "password", "phone"]);
+    });
+
+    it("keeps the first known domain, year and record count", () => {
+      const merged = mergeFindings([
+        breach({ domain: null, year: null, records: 1200 }),
+        breach({ domain: "exampleshop.test", year: 2019, records: 900 }),
+      ]);
+      expect(merged[0]?.breach).toMatchObject({ domain: "exampleshop.test", year: 2019, records: 1200 });
+    });
+
+    it("is verified when one source says so", () => {
+      const merged = mergeFindings([breach({ verified: false }), breach({ verified: true })]);
+      expect(merged[0]?.breach?.verified).toBe(true);
+    });
+
+    it("keeps the details when only the second source has them", () => {
+      const merged = mergeFindings([finding({ field: "H1", value: "ExampleShop" }), breach({ year: 2019 })]);
+      expect(merged[0]?.breach?.year).toBe(2019);
+    });
   });
 
   it("does not modify the findings it receives", () => {

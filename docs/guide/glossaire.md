@@ -68,10 +68,10 @@ données de fuite. Voir
 
 ## Liste blanche (whitelist)
 
-Liste des seuls champs gardés ; tout le reste est supprimé. Dans un provider,
+Liste des seuls champs gardés ; tout le reste est supprimé. Dans une source,
 le schéma zod puis le mapper appliquent chacun une liste blanche, ce qui
 empêche un mot de passe ou un hash d'arriver jusqu'à l'écran. Voir
-[Flux des données d'un provider](04-flux-des-donnees.md#deux-listes-blanches).
+[Flux des données d'une source](04-flux-des-donnees.md#deux-listes-blanches).
 
 ## Lockfile
 
@@ -120,10 +120,10 @@ le code et de lancer la CI avant la fusion. Voir
 
 ## Registry
 
-Fichier `src/server/providers/registry.ts` qui liste les providers actifs. En
-mode `surface`, seuls les providers gratuits sont utilisés ; en mode `deep`,
-les providers payants s'ajoutent. Voir
-[DECISIONS.md, D10](../DECISIONS.md#d10-modes-surface-et-deep).
+Fichier `src/server/providers/registry.ts` qui liste les sources actives
+(`SOURCES`). Une source qui a besoin d'une clé d'API n'y est ajoutée que si la
+clé est configurée. Voir
+[DECISIONS.md, T3](../DECISIONS.md#t3-xposedornot-sur-le-port-source).
 
 ## Route handler
 

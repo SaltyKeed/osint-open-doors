@@ -18,7 +18,7 @@ ensuite un plan d'action concret.
 
 | Invariant | Mise en œuvre |
 | --- | --- |
-| Jamais de mot de passe ni de hash affiché | Les mappers des providers appliquent une liste blanche de champs. Le type brut ne sort jamais de l'adaptateur. |
+| Jamais de mot de passe ni de hash affiché | Les mappers des sources appliquent une liste blanche de champs. Le type brut ne sort jamais de l'adaptateur. |
 | Pas d'exposition de tiers (homonymes) | Une fiche trouvée par nom n'est détaillée que si elle contient aussi un autre identifiant saisi par le visiteur (téléphone ou email). Sinon, seul un agrégat est affiché (« N fiches portent ce nom »). |
 | Valeurs masquées | Les fiches correspondantes sont aussi masquées : `+41 79 ••• •• 42`, « Adresse : présente ». |
 | Zéro stockage | Pas de base de données, pas de fichier, pas de `localStorage` ni de cookie contenant des données personnelles. Le conteneur est en `read_only`. |
@@ -39,8 +39,8 @@ ensuite un plan d'action concret.
  ┌───────────────────────────▼──────────────────────────────────┐
  │  Route API Next.js (sans état)                               │
  │  1. valide l'input (zod) + consentement                      │
- │  2. search-service lance les providers en parallèle          │
- │  3. chaque provider : appel HTTP → parse zod → mapper        │
+ │  2. search-service lance les sources en parallèle            │
+ │  3. chaque source : appel HTTP → parse zod → mapper          │
  │     (liste blanche, la réponse brute n'est pas transmise)    │
  │  4. domaine : niveaux de confiance, masquage, score,         │
  │     plan d'action                                            │
@@ -52,34 +52,33 @@ ensuite un plan d'action concret.
 
 ## 4. Structure du code (Ports & Adapters)
 
-Chaque API externe est un adaptateur qui implémente une interface commune (le
-port). Le reste de l'application ne connaît que cette interface. Pour changer
-ou ajouter une API, il suffit d'ajouter un dossier dans `providers/` et une
-ligne dans `registry.ts`.
+Chaque API externe est une source : un adaptateur qui implémente une
+interface commune, le port `Source`. Le reste de l'application ne connaît que
+cette interface. Pour changer ou ajouter une API, il suffit d'ajouter un
+dossier dans `providers/` et une ligne dans `registry.ts`.
 
 ```text
 src/
 ├── app/                          ← Next.js : UI + routes, aussi léger que possible
 │   ├── page.tsx                  ← formulaire + consentement
 │   ├── api/search/route.ts       ← valide l'input, appelle le service, répond
-│   ├── dev/                      ← console de test des providers (npm run dev uniquement, D18)
+│   ├── dev/                      ← console de test des sources (npm run dev uniquement, D18)
 │   └── api/dev/search/route.ts   ← réponses brutes pour la console (404 en production)
 │
 ├── server/                       ← code serveur uniquement (import "server-only")
 │   ├── providers/
-│   │   ├── types.ts              ← le port : interface BreachProvider
-│   │   ├── registry.ts           ← providers actifs selon `APP_MODE` (D10)
+│   │   ├── registry.ts           ← liste des sources actives (SOURCES)
 │   │   ├── xposedornot/
-│   │   │   ├── index.ts          ← le provider : client, schéma et mapper assemblés
+│   │   │   ├── index.ts          ← la source : client, schéma et mapper assemblés
 │   │   │   ├── client.ts         ← appel HTTP (fetch, timeout, clé)
 │   │   │   ├── schema.ts         ← zod : forme de la réponse brute
-│   │   │   └── mapper.ts         ← brut → modèle du domaine (liste blanche)
+│   │   │   └── mapper.ts         ← brut → fiches du domaine (liste blanche)
 │   │   ├── snusbase/             ← même structure
 │   │   └── dehashed/             ← même structure
 │   │
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
-│   │   ├── types.ts              ← Exposure, DataCategory, SearchQuery, QueryKind…
-│   │   ├── search-query.ts       ← normalisation et schéma zod de la saisie
+│   │   ├── types.ts              ← SearchQuery, PersonName, DataCategory
+│   │   ├── search-query.ts       ← normalisation, schéma zod de la saisie, identifiants saisis
 │   │   ├── fiche-fields.ts       ← codes des champs de la fiche (A1 à J1)
 │   │   ├── identifier.ts         ← types d'identifiants et normalisation
 │   │   ├── pseudo.ts             ← règle du pseudo rare
@@ -91,8 +90,7 @@ src/
 │   │   └── actions.ts            ← catégories exposées → plan d'action
 │   │
 │   ├── search-service.ts         ← orchestration (Promise.allSettled + timeout)
-│   ├── dev/                      ← inspection des providers pour la console (D18)
-│   └── env.ts                    ← variables d'environnement validées par zod (APP_MODE)
+│   └── dev/                      ← inspection des sources pour la console (D18)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
 └── tests/
@@ -101,57 +99,58 @@ src/
 ```
 
 Chaque test est placé à côté du fichier qu'il teste et porte le même nom avec
-`.test.ts` (`env.ts` et `env.test.ts`). Vitest est configuré dans
+`.test.ts` (`finding.ts` et `finding.test.ts`). Vitest est configuré dans
 `vitest.config.mts`.
 
-L'interface commune à tous les providers est la suivante. `QueryKind` est
-défini dans `domain/types.ts`, car `queryKinds()` du domaine en a besoin et le
-domaine ne dépend pas des providers.
+Le port est défini dans le domaine, car le moteur d'enquête en a besoin et le
+domaine ne dépend pas des sources.
 
 ```ts
-// src/server/providers/types.ts
-import type { Exposure, QueryKind, SearchQuery } from "@/server/domain/types";
-
-export interface Inspection {
+// src/server/domain/source.ts
+export interface SourceInspection {
   raw: unknown;          // réponse de l'API telle quelle
   parsed: unknown;       // la même après le schéma zod
-  exposures: Exposure[];
+  records: SourceRecord[];
 }
 
-export interface BreachProvider {
+export interface Source {
   id: string;
-  supports: readonly QueryKind[];
-  search(query: SearchQuery, signal: AbortSignal): Promise<Exposure[]>;
-  inspect(query: SearchQuery, signal: AbortSignal): Promise<Inspection>;
+  accepts: readonly IdentifierType[];
+  investigate(input: Identifier, signal: AbortSignal): Promise<SourceRecord[]>;
+  inspect(input: Identifier, signal: AbortSignal): Promise<SourceInspection>;
 }
 ```
 
-`inspect` sert uniquement à la console de test (D18). `search` appelle
-`inspect` et ne garde que `exposures` : la réponse brute ne quitte le
-provider que vers la console, jamais vers `/api/search`.
+`inspect` sert uniquement à la console de test (D18). `investigate` appelle
+`inspect` et ne garde que `records` : la réponse brute ne quitte la source que
+vers la console, jamais vers `/api/search`.
+
+`/api/search` transforme la saisie en identifiants (`queryIdentifiers`), puis
+`searchAll` donne chaque identifiant aux sources qui acceptent son type et
+renvoie leurs fiches, sans rebond. Le moteur (#65) ajoutera les rebonds.
 
 Règles du contrat, vérifiées par les tests de `xposedornot/` :
 
-- `search` renvoie `[]` si la requête ne contient pas un type qu'il accepte,
+- `investigate` renvoie `[]` pour un type d'identifiant qu'elle n'accepte pas,
   et `[]` si la personne n'est pas trouvée.
-- Il transmet `signal` à `fetch`. Le service annule tous les providers après
-  8 secondes ; un provider qui ignore `signal` bloquerait la réponse.
+- Elle transmet `signal` à `fetch`. Le service annule toutes les sources après
+  8 secondes ; une source qui ignore `signal` bloquerait la réponse.
 - En cas d'échec, il lève une erreur au message fixe
   (`xposedornot: HTTP 500`, `xposedornot: invalid response`), sans la saisie
   du visiteur ni le corps de la réponse.
 
-Ajouter un provider : créer son dossier dans `providers/` (`schema.ts`,
+Ajouter une source : créer son dossier dans `providers/` (`schema.ts`,
 `mapper.ts`, `client.ts`, `index.ts`, tests et fixtures inventées), puis
-l'ajouter à `SURFACE_PROVIDERS` ou `DEEP_PROVIDERS` dans `registry.ts`.
-Pour changer ce qu'un provider garde ou affiche, voir le guide
-[Flux des données d'un provider](guide/04-flux-des-donnees.md).
+l'ajouter à `SOURCES` dans `registry.ts`. Une source qui a besoin d'une clé
+d'API n'y est ajoutée que si la clé est configurée (T3).
+Pour changer ce qu'une source garde ou affiche, voir le guide
+[Flux des données d'une source](guide/04-flux-des-donnees.md).
 
 ### Modèle de l'enquête
 
-Le modèle de l'outil d'enquête (T1, T2) est prêt dans `domain/`, mais pas
-encore utilisé par l'application. L'ancien modèle (`Exposure`,
-`BreachProvider`) reste en place jusqu'à ce que XposedOrNot soit branché sur
-le port `Source` (issue #64).
+Le modèle de l'outil d'enquête (T1, T2, T3) est dans `domain/`. XposedOrNot,
+`/api/search` et la console `/dev` l'utilisent ; le moteur qui calcule la
+confiance et les constats arrive avec #65.
 
 ```mermaid
 classDiagram
@@ -164,8 +163,20 @@ classDiagram
     }
     class SourceRecord {
         about: subject ou relative
-        fields: champ et valeur[]
+        fields: SourceField[]
         identifiers: Identifier[]
+    }
+    class SourceField {
+        field: FieldCode
+        value: string
+        breach: BreachDetails optionnel
+    }
+    class BreachDetails {
+        domain: string
+        year: number
+        dataTypes: DataCategory[]
+        records: number
+        verified: boolean
     }
     class Identifier {
         type: IdentifierType
@@ -177,6 +188,7 @@ classDiagram
         sources: string[]
         confidence: Confidence
         path: Identifier[]
+        breach: BreachDetails optionnel
     }
     class Confidence {
         <<enumeration>>
@@ -187,13 +199,17 @@ classDiagram
     }
     Source ..> Identifier : reçoit
     Source ..> SourceRecord : renvoie
+    SourceRecord --> SourceField
+    SourceField --> BreachDetails : H1 seulement
     SourceRecord --> Identifier : nouveaux identifiants
     Finding --> Identifier : chemin
     Finding --> Confidence
 ```
 
-Une source reçoit un identifiant et renvoie des fiches (`SourceRecord`). Elle
-ne calcule pas la confiance : le moteur (#65) le fait, parce que lui seul
+Une source reçoit un identifiant et renvoie des fiches (`SourceRecord`). Un
+champ qui décrit un événement porte ses détails dans un type fermé :
+`BreachDetails` pour une fuite (H1, T3). Une source ne calcule pas la
+confiance : le moteur (#65) le fait, parce que lui seul
 connaît les identifiants déjà confirmés (T2). Il transforme les fiches en
 constats (`Finding`), puis regroupe les doublons.
 
@@ -204,7 +220,7 @@ constats (`Finding`), puis regroupe les doublons.
 | `pseudo.ts` | Règle du pseudo rare (6 caractères et une lettre) |
 | `confidence.ts` | `assessConfidence`, `isDetailed`, `shouldRebound` |
 | `finding.ts` | `Finding` et `mergeFindings` (fusion des doublons) |
-| `source.ts` | Le port `Source` et les fiches renvoyées |
+| `source.ts` | Le port `Source`, les fiches renvoyées et `BreachDetails` |
 
 Explication simple, avec des exemples :
 [Fonctionnement de l'enquête](guide/05-fonctionnement-de-l-enquete.md).
@@ -216,7 +232,7 @@ Explication simple, avec des exemples :
 | Parse, don't validate (zod aux frontières) | `schema.ts`, `route.ts` | Tout ce qui entre (visiteur, API) est vérifié une seule fois. À l'intérieur de l'application, les types sont fiables. |
 | Le type brut ne sort jamais de l'adaptateur | `mapper.ts` | Le mot de passe est retiré à cet endroit et ne peut donc pas être affiché par erreur plus loin. Seule exception : la console `/dev`, absente du build de production (D18). |
 | Domaine pur | `domain/` | Le domaine n'utilise pas `fetch` et peut être testé avec Vitest sans réseau. |
-| Défaillance partielle | `search-service.ts` | Avec `Promise.allSettled` et un timeout, les autres providers répondent même si l'un d'eux est en panne. |
+| Défaillance partielle | `search-service.ts` | Avec `Promise.allSettled` et un timeout, les autres sources répondent même si l'un d'eux est en panne. |
 | `server-only` | tout `src/server/` | Le build échoue si du code serveur (et donc une clé) se retrouve dans le bundle client. |
 | Tests sur fixtures fictives | `tests/fixtures/` | Aucune vraie donnée de fuite n'est versionnée. |
 
@@ -237,7 +253,7 @@ correspondante.
 | Runtime | Node.js 24 LTS | [D16](DECISIONS.md#d16-version-de-nodejs) |
 | Exécution | Docker compose, en local | [D7](DECISIONS.md#d7-exécution-et-déploiement) |
 | Provider | XposedOrNot (email) ; Snusbase et Dehashed prévus (nom, téléphone) | [D8](DECISIONS.md#d8-sources-de-données-providers) |
-| Modes | `surface` et `deep`, une image, `APP_MODE` à l'exécution | [D10](DECISIONS.md#d10-modes-surface-et-deep) |
+| Sources | Un seul port `Source`, une seule liste ; une source sans clé est sautée | [T1](DECISIONS.md#t1-outil-denquête-à-partir-des-propositions-denzo), [T3](DECISIONS.md#t3-xposedornot-sur-le-port-source) |
 
 ## 6. Exécution
 
@@ -249,16 +265,12 @@ Le choix de Docker compose en local est expliqué dans
 - Le conteneur tourne avec un utilisateur non-root.
 - `read_only: true` et `tmpfs` sur `/tmp` : le conteneur ne peut pas écrire sur
   le disque.
-- Une seule image pour les deux modes. La variable `APP_MODE` (`surface` ou
-  `deep`) choisit au lancement les providers actifs
-  ([DECISIONS.md, D10](DECISIONS.md#d10-modes-surface-et-deep)). Elle est
-  validée par zod au démarrage. Sans précision, le conteneur démarre en
-  `surface`.
-- `compose.yaml` transmet les variables au conteneur avec
-  `env_file: ${ENV_FILE:-.env.surface}`.
-- Les clés API sont dans `.env.surface` et `.env.deep`, non versionnés. Le
-  fichier `.env.example` est versionné et liste toutes les variables attendues,
-  sans valeur.
+- Une seule image et un seul mode : les sources actives sont celles dont la
+  clé d'API est configurée (T3).
+- `compose.yaml` transmet les variables au conteneur avec `env_file: .env`.
+- Les clés API sont dans `.env`, non versionné. Le fichier `.env.example` est
+  versionné et liste toutes les variables attendues, sans valeur. Aucune
+  source actuelle n'a de clé : la première arrive avec #66.
 - Le navigateur du poste est lancé avec
   `--kiosk --incognito http://localhost:3000`.
 

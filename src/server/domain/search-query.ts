@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
-import type { QueryKind, SearchQuery } from "./types";
+import type { Identifier } from "./identifier";
+import type { SearchQuery } from "./types";
 
 export function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
@@ -15,10 +16,13 @@ export function normalizeSwissPhone(value: string): string | null {
   return /^\+41\d{9}$/.test(compact) ? compact : null;
 }
 
-const KIND_ORDER: readonly QueryKind[] = ["email", "phone", "name"];
-
-export function queryKinds(query: SearchQuery): QueryKind[] {
-  return KIND_ORDER.filter((kind) => query[kind] !== undefined);
+/** The visitor's input as identifiers, already normalized by the request schema. */
+export function queryIdentifiers(query: SearchQuery): Identifier[] {
+  return [
+    ...(query.email !== undefined ? [{ type: "EMAIL" as const, value: query.email }] : []),
+    ...(query.phone !== undefined ? [{ type: "TEL" as const, value: query.phone }] : []),
+    ...(query.name !== undefined ? [{ type: "NOM" as const, value: `${query.name.first} ${query.name.last}` }] : []),
+  ];
 }
 
 const nameField = z.string().trim().min(1).optional();
