@@ -76,7 +76,7 @@ function Value({ item }: { item: ViewValue }) {
   );
 }
 
-export function Investigation() {
+export function Investigation({ services }: { services: string[] }) {
   const [view, setView] = useState<InvestigationView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -201,7 +201,7 @@ export function Investigation() {
         <label className="flex items-start gap-2 text-sm sm:col-span-2">
           <input name="consent" type="checkbox" className="mt-1" />
           Je certifie que ces informations sont les miennes et j&apos;accepte qu&apos;elles soient envoyées aux services
-          interrogés (XposedOrNot, LeakCheck, Leak-Lookup, Hudson Rock, Gravatar, GitHub) le temps de l&apos;enquête.
+          interrogés ({services.join(", ")}) le temps de l&apos;enquête.
         </label>
         <button
           type="submit"

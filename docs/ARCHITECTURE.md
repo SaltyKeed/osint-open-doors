@@ -191,7 +191,10 @@ src/
         ├── xposedornot/  (réutilise providers/xposedornot)
         ├── hudsonrock/
         ├── gravatar/
-        └── github/
+        ├── github/
+        ├── leakcheck/, leaklookup/    (API publiques, noms des fuites)
+        ├── websearch/                 (Tavily : pages et profils, source des rebonds)
+        └── wayback/                   (archives des profils et domaines)
 ```
 
 Une source décrit ce qu'elle a trouvé (`SourceRecord` : valeurs de la fiche et
