@@ -7,6 +7,8 @@ import { gravatarProfileSchema } from "./gravatar/schema";
 import { toHudsonRockRecords } from "./hudsonrock/mapper";
 import { hudsonRockSchema } from "./hudsonrock/schema";
 import { toLeakCheckRecords } from "./leakcheck/mapper";
+import { toLeakLookupResult } from "./leaklookup/mapper";
+import { leakLookupSchema } from "./leaklookup/schema";
 import { leakCheckPublicSchema } from "./leakcheck/schema";
 import { toXposedRecords } from "./xposedornot/mapper";
 
@@ -191,5 +193,24 @@ describe("leakcheck public", () => {
 
   it("not found gives no record", () => {
     expect(toLeakCheckRecords(leakCheckPublicSchema.parse({ success: false, error: "Not found" }), email)).toEqual([]);
+  });
+});
+
+describe("leak-lookup public", () => {
+  it("one H1 value per breach name; the public key gives no record content", () => {
+    const body = leakLookupSchema.parse({ error: "false", message: { "pandabuy.com": [], "dfb.de": [] } });
+    const result = toLeakLookupResult(body, email);
+    expect(result.status).toBe("found");
+    expect(result.records.map((r) => r.values[0]?.value)).toEqual(["pandabuy.com", "dfb.de"]);
+    expect(result.records.map((r) => r.origin)).toEqual(["pandabuy.com", "dfb.de"]);
+  });
+
+  it("an empty answer is not found", () => {
+    expect(toLeakLookupResult(leakLookupSchema.parse({ error: "false", message: {} }), email).status).toBe("not_found");
+  });
+
+  it("the daily limit is reported as a quota, not as nothing found", () => {
+    const body = leakLookupSchema.parse({ error: "true", message: "REQUEST LIMIT REACHED" });
+    expect(toLeakLookupResult(body, email).status).toBe("quota");
   });
 });
