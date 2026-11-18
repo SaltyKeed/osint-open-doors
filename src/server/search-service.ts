@@ -1,34 +1,36 @@
 import "server-only";
-import { queryKinds } from "@/server/domain/search-query";
-import type { Exposure, SearchQuery } from "@/server/domain/types";
-import type { BreachProvider } from "@/server/providers/types";
+import type { Identifier } from "@/server/domain/identifier";
+import type { Source, SourceRecord } from "@/server/domain/source";
 
 export interface SearchResult {
-  exposures: Exposure[];
-  failedProviders: string[];
+  records: SourceRecord[];
+  failedSources: string[];
 }
 
-// A failing or slow provider does not block the others: the visitor gets a partial result.
+// Each identifier goes to the sources that accept its type, without rebound (the engine adds them, #65).
+// A failing or slow source does not block the others: the visitor gets a partial result.
 export async function searchAll(
-  query: SearchQuery,
-  providers: readonly BreachProvider[],
+  identifiers: readonly Identifier[],
+  sources: readonly Source[],
   timeoutMs = 8000,
 ): Promise<SearchResult> {
-  const kinds = queryKinds(query);
-  const relevant = providers.filter((p) => p.supports.some((kind) => kinds.includes(kind)));
+  const calls = identifiers.flatMap((input) =>
+    sources.filter((s) => s.accepts.includes(input.type)).map((source) => ({ source, input })),
+  );
   const signal = AbortSignal.timeout(timeoutMs);
-  const settled = await Promise.allSettled(relevant.map((p) => p.search(query, signal)));
+  const settled = await Promise.allSettled(calls.map(({ source, input }) => source.investigate(input, signal)));
 
-  const result: SearchResult = { exposures: [], failedProviders: [] };
+  const records: SourceRecord[] = [];
+  const failed = new Set<string>();
   settled.forEach((outcome, i) => {
-    const id = relevant[i]!.id;
+    const id = calls[i]!.source.id;
     if (outcome.status === "fulfilled") {
-      result.exposures.push(...outcome.value);
-    } else {
-      result.failedProviders.push(id);
-      // Provider id only: an error message could contain the visitor's input.
-      console.error(`[search] provider failed: ${id}`);
+      records.push(...outcome.value);
+    } else if (!failed.has(id)) {
+      failed.add(id);
+      // Source id only: an error message could contain the visitor's input.
+      console.error(`[search] source failed: ${id}`);
     }
   });
-  return result;
+  return { records, failedSources: [...failed] };
 }

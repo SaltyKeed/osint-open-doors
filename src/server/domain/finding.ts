@@ -3,6 +3,7 @@ import { CONFIDENCE_LEVELS, type Confidence } from "./confidence";
 import type { FieldCode } from "./fiche-fields";
 import type { Identifier } from "./identifier";
 import { normalizeEmail, normalizeSwissPhone } from "./search-query";
+import type { BreachDetails } from "./source";
 
 /** One piece of the fiche, with where it came from. */
 export interface Finding {
@@ -13,6 +14,8 @@ export interface Finding {
   confidence: Confidence;
   /** From the visitor's input to the identifier whose search gave this finding. */
   path: Identifier[];
+  /** Only on H1, see SourceField. */
+  breach?: BreachDetails;
 }
 
 /** The form used to decide whether two values are the same. */
@@ -24,6 +27,17 @@ function comparedValue(field: FieldCode, value: string): string {
 
 function surer(a: Confidence, b: Confidence): Confidence {
   return CONFIDENCE_LEVELS.indexOf(a) <= CONFIDENCE_LEVELS.indexOf(b) ? a : b;
+}
+
+function mergeBreach(a: BreachDetails | undefined, b: BreachDetails | undefined): BreachDetails | undefined {
+  if (!a || !b) return a ?? b;
+  return {
+    domain: a.domain ?? b.domain,
+    year: a.year ?? b.year,
+    dataTypes: [...new Set([...a.dataTypes, ...b.dataTypes])],
+    records: a.records ?? b.records,
+    verified: a.verified || b.verified,
+  };
 }
 
 export function mergeFindings(findings: Finding[]): Finding[] {
@@ -39,6 +53,8 @@ export function mergeFindings(findings: Finding[]): Finding[] {
     existing.sources = [...new Set([...existing.sources, ...finding.sources])];
     existing.confidence = surer(existing.confidence, finding.confidence);
     if (finding.path.length < existing.path.length) existing.path = finding.path;
+    const breach = mergeBreach(existing.breach, finding.breach);
+    if (breach) existing.breach = breach;
   }
   return [...merged.values()];
 }

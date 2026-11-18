@@ -1,6 +1,5 @@
-import { searchRequestSchema } from "@/server/domain/search-query";
-import { loadEnv } from "@/server/env";
-import { getProviders } from "@/server/providers/registry";
+import { queryIdentifiers, searchRequestSchema } from "@/server/domain/search-query";
+import { SOURCES } from "@/server/providers/registry";
 import { searchAll } from "@/server/search-service";
 
 // The answer contains personal data: no browser or proxy may keep a copy.
@@ -22,6 +21,6 @@ export async function POST(request: Request): Promise<Response> {
   const query = searchRequestSchema.safeParse(body);
   if (!query.success) return invalidRequest();
 
-  const result = await searchAll(query.data, getProviders(loadEnv().APP_MODE));
+  const result = await searchAll(queryIdentifiers(query.data), SOURCES);
   return Response.json(result, { headers: NO_STORE });
 }

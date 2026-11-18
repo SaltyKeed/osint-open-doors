@@ -49,7 +49,7 @@ permettent, une fois assemblées, d'en apprendre beaucoup sur une personne.
 | Annuaires et registres | search.ch, Zefix, Feuille officielle suisse du commerce | Gratuit |
 | Presse, sport, associations | Recherche ciblée (presse locale, résultats sportifs) | Via Tavily |
 | Publications | ORCID, Wikidata | Gratuit |
-| Fuites | XposedOrNot (`surface`), service payant (`deep`, voir D10) | Selon le mode |
+| Fuites | XposedOrNot, services payants après acceptation du budget (T1) | Gratuit, puis payant |
 
 Ajout possible au formulaire : un champ « pseudo » optionnel, car le pseudo est
 souvent la donnée qui mène au plus grand nombre de profils.

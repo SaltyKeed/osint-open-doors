@@ -8,7 +8,7 @@ ne sont pas versionnés. L'organisation du code est décrite dans
 
 | Élément | Rôle | Versionné |
 | --- | --- | --- |
-| `.env.example` | Liste des variables d'environnement attendues, sans secret ; modèle pour `.env.surface` et `.env.deep` | Oui |
+| `.env.example` | Liste des variables d'environnement attendues, sans secret ; modèle pour `.env` | Oui |
 | `.claude/` | Réglages de Claude Code pour le projet et sous-agents | Oui |
 | `.git/` | Historique Git du dépôt, géré par Git | Non |
 | `.gitattributes` | Fins de ligne : tous les fichiers texte sont enregistrés en LF | Oui |
@@ -54,10 +54,9 @@ src/
 │   │   └── dev-console.tsx
 │   └── api/dev/search/route.ts
 ├── server/
-│   ├── env.ts
 │   ├── search-service.ts
 │   ├── dev/
-│   │   ├── inspect-providers.ts
+│   │   ├── inspect-sources.ts
 │   │   └── field-paths.ts
 │   ├── domain/
 │   │   ├── types.ts
@@ -70,7 +69,6 @@ src/
 │   │   ├── finding.ts
 │   │   └── source.ts
 │   └── providers/
-│       ├── types.ts
 │       ├── registry.ts
 │       └── xposedornot/
 │           ├── index.ts
@@ -90,26 +88,26 @@ src/
   de base.
 - `favicon.ico` est l'icône affichée dans l'onglet du navigateur.
 
-- `server/env.ts` lit la variable `APP_MODE` et la valide avec zod au
-  démarrage. Sans valeur, le mode est `surface` ; une valeur inconnue arrête
-  l'application (voir [DECISIONS.md, D10](../DECISIONS.md#d10-modes-surface-et-deep)).
-- `server/env.test.ts` contient les tests de `env.ts`. Chaque test est placé
-  à côté du fichier qu'il teste.
+- Chaque test est placé à côté du fichier qu'il teste, avec le même nom et
+  `.test.ts`.
 - `app/api/search/route.ts` reçoit la recherche en `POST`, la valide avec
-  zod, interroge les providers et renvoie les fuites trouvées en JSON.
+  zod, la transforme en identifiants, interroge les sources et renvoie leurs
+  fiches en JSON.
 - `app/dev/` et `app/api/dev/search/` forment la console de test des
-  providers, et `server/dev/` prépare ses données. Elle n'existe qu'avec
+  sources, et `server/dev/` prépare ses données. Elle n'existe qu'avec
   `npm run dev` (voir [Commandes du projet](02-commandes.md#npm-run-dev)).
 - `server/domain/` contient la logique métier sans réseau : normalisation et
   validation de la saisie, masquage des valeurs, et le modèle de l'enquête
   (champs de la fiche, identifiants, pseudo rare, niveaux de confiance,
-  constats, port `Source`). Le fonctionnement est expliqué dans
+  constats, port `Source` et détails d'une fuite). Le fonctionnement est expliqué dans
   [Fonctionnement de l'enquête](05-fonctionnement-de-l-enquete.md).
 - `server/providers/` contient une source de données par dossier. `registry.ts`
-  choisit les sources actives selon `APP_MODE`. Le chemin des données dans un
-  provider est décrit dans [Flux des données](04-flux-des-donnees.md).
-- `server/search-service.ts` interroge les providers en parallèle et garde les
-  résultats de ceux qui répondent, même si un autre est en panne.
+  liste les sources actives (`SOURCES`) ; une source qui a besoin d'une clé
+  n'y est ajoutée que si la clé est configurée. Le chemin des données dans une
+  source est décrit dans [Flux des données](04-flux-des-donnees.md).
+- `server/search-service.ts` donne chaque identifiant aux sources qui
+  acceptent son type, en parallèle, et garde les résultats de celles qui
+  répondent, même si une autre est en panne.
 - `tests/fixtures/` contient des réponses d'API inventées pour les tests.
 - `tests/server-only-stub.ts` est un fichier vide. Dans les tests, il remplace
   le paquet `server-only`, qui lève une erreur hors du serveur Next.js.
@@ -191,8 +189,8 @@ fichiers générés par TypeScript et les fichiers personnels de Claude Code
 (`CLAUDE.local.md`, `.claude/settings.local.json`).
 
 Tous les fichiers `.env*` sont ignorés, car ils contiendront les clés API.
-Seul `.env.example` est versionné : il listera les variables attendues, sans
-valeur.
+Seul `.env.example` est versionné : il liste les variables attendues, sans
+valeur. Aucune source actuelle n'a de clé ; la première arrive avec #66.
 
 ## next-env.d.ts
 

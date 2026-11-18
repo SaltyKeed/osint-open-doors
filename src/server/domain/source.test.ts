@@ -5,7 +5,10 @@ import type { Source, SourceRecord } from "./source";
 
 const record: SourceRecord = {
   about: "subject",
-  fields: [{ field: "B2", value: "+41791234567" }],
+  fields: [
+    { field: "B2", value: "+41791234567" },
+    { field: "H1", value: "ExampleShop", breach: { domain: "exampleshop.test", year: 2019, dataTypes: ["email"], records: 1200, verified: true } },
+  ],
   identifiers: [{ type: "TEL", value: "+41791234567" }],
 };
 

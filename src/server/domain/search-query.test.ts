@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeEmail, normalizeSwissPhone, queryKinds, searchRequestSchema } from "./search-query";
+import { normalizeEmail, normalizeSwissPhone, queryIdentifiers, searchRequestSchema } from "./search-query";
 
 // All values below are invented test data.
 
@@ -95,14 +95,18 @@ describe("searchRequestSchema", () => {
   });
 });
 
-describe("queryKinds", () => {
-  it("lists the kinds present in the query", () => {
-    expect(queryKinds({ email: "a@b.ch", name: { first: "A", last: "B" } })).toEqual(["email", "name"]);
+describe("queryIdentifiers", () => {
+  it("turns each part of the query into an identifier, in a fixed order", () => {
+    expect(
+      queryIdentifiers({ name: { first: "Léa", last: "Martin" }, phone: "+41791234567", email: "lea@exemple.ch" }),
+    ).toEqual([
+      { type: "EMAIL", value: "lea@exemple.ch" },
+      { type: "TEL", value: "+41791234567" },
+      { type: "NOM", value: "Léa Martin" },
+    ]);
   });
 
-  it("lists all three kinds in a fixed order", () => {
-    expect(
-      queryKinds({ name: { first: "A", last: "B" }, phone: "+41791234567", email: "a@b.ch" }),
-    ).toEqual(["email", "phone", "name"]);
+  it("leaves out what the visitor did not give", () => {
+    expect(queryIdentifiers({ email: "lea@exemple.ch" })).toEqual([{ type: "EMAIL", value: "lea@exemple.ch" }]);
   });
 });
