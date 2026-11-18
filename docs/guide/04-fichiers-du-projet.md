@@ -77,11 +77,14 @@ src/
 │       │   ├── client.ts
 │       │   ├── schema.ts
 │       │   └── mapper.ts
-│       └── gravatar/
+│       ├── gravatar/
+│       │   └── (mêmes fichiers)
+│       └── hudsonrock/
 │           └── (mêmes fichiers)
 └── tests/
     ├── fixtures/xposedornot/
     ├── fixtures/gravatar/
+    ├── fixtures/hudsonrock/
     └── server-only-stub.ts
 ```
 

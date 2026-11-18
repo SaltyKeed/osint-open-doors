@@ -75,6 +75,7 @@ src/
 │   │   │   ├── schema.ts         ← zod : forme de la réponse brute
 │   │   │   └── mapper.ts         ← brut → fiches du domaine (liste blanche)
 │   │   ├── gravatar/             ← même structure
+│   │   ├── hudsonrock/           ← même structure
 │   │   ├── snusbase/             ← même structure (prévu)
 │   │   └── dehashed/             ← même structure (prévu)
 │   │
@@ -199,6 +200,12 @@ classDiagram
         field: FieldCode
         value: string
         breach: BreachDetails optionnel
+        infection: InfectionDetails optionnel
+    }
+    class InfectionDetails {
+        date: string
+        operatingSystem: string
+        stolenCredentials: number
     }
     class BreachDetails {
         domain: string
@@ -218,6 +225,7 @@ classDiagram
         confidence: Confidence
         path: Identifier[]
         breach: BreachDetails optionnel
+        infection: InfectionDetails optionnel
     }
     class Confidence {
         <<enumeration>>
@@ -230,6 +238,7 @@ classDiagram
     Source ..> SourceRecord : renvoie
     SourceRecord --> SourceField
     SourceField --> BreachDetails : H1 seulement
+    SourceField --> InfectionDetails : H5 seulement
     SourceRecord --> Identifier : nouveaux identifiants
     Finding --> Identifier : chemin
     Finding --> Confidence

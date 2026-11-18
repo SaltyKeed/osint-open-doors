@@ -6,10 +6,11 @@ quand il relance une recherche. Le détail complet est dans
 [CADRAGE.md](../CADRAGE.md), les sources dans [SOURCES.md](../SOURCES.md).
 
 État au 2026-11-18 : le modèle de données (issue #63), XposedOrNot sur le
-port `Source` (#64) et le moteur d'enquête (#65) sont en place. Deux sources
-sont branchées : XposedOrNot et Gravatar. Gravatar donne déjà des rebonds
-(pseudo, comptes vérifiés), qui seront cherchés quand des sources de pseudos
-et de profils seront branchées (#66, #68).
+port `Source` (#64) et le moteur d'enquête (#65) sont en place. Trois sources
+sont branchées : XposedOrNot, Gravatar et Hudson Rock. Premier rebond réel :
+le pseudo trouvé par Gravatar est cherché chez Hudson Rock. Les comptes
+vérifiés (`PROFIL`) seront cherchés quand des sources de profils seront
+branchées (#68).
 
 ## L'idée en une phrase
 
@@ -202,6 +203,11 @@ la valeur est le nom de la fuite, et `breach` donne le site, l'année, les
 types de données exposées, le nombre de comptes et si la fuite est vérifiée.
 Ce sont des métadonnées : « un mot de passe a fuité », jamais le mot de passe.
 Quand deux sources décrivent la même fuite, les détails sont fusionnés.
+
+Pour un ordinateur infecté par un logiciel espion (H5), la valeur est la date
+de l'infection, et `infection` donne le système d'exploitation et le nombre
+d'identifiants volés. Le nom de l'ordinateur, son adresse IP et les
+identifiants eux-mêmes ne sont jamais gardés.
 
 ## En direct
 

@@ -212,7 +212,7 @@ Statuts :
 | `EMAIL` | Fiches de fuites (`SOURCES.md`, section 1.1) | A1 A2 A3 B2 B3 H1 H2 H3 H4 | `TEL` `PSEUDO` `NOM` `IP` `EMAIL` | Payant | Retenu |
 | `EMAIL` | XposedOrNot | H1 | aucun | Gratuit, quota | En place |
 | `EMAIL` | Have I Been Pwned Core 1, catalogue HIBP | H1 | aucun | Abonnement et gratuit | Retenu |
-| `EMAIL` | Infostealers et combolists : Hudson Rock, LeakRadar Enterprise | H3 H5 | `DOMAINE` `PROFIL` | Gratuit et payant | Prototype et retenu |
+| `EMAIL` | Infostealers et combolists : Hudson Rock (en place, H5 seulement), LeakRadar Enterprise | H3 H5 | `DOMAINE` `PROFIL` | Gratuit et payant | En place (Hudson Rock) et retenu |
 | `EMAIL` | Gravatar (en place), Libravatar | A1 A5 C1 E1 F1 F2 | `PSEUDO` `PROFIL` | Gratuit | En place (Gravatar) |
 | `EMAIL` | GitHub (utilisateurs et commits) | A1 C1 E1 E3 F2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Prototype |
 | `EMAIL` | Serveurs de clés PGP | A1 B1 | `EMAIL` | Gratuit | Prototype |
@@ -227,6 +227,7 @@ Statuts :
 | `NOM` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | A2 B1 B2 B3 H1 H2 | `EMAIL` `TEL` (seulement si la fiche est « confirmé ») | Payant | Retenu |
 | `IP` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | H2 | `EMAIL` | Payant | Retenu |
 | `PSEUDO` | Moteur de recherche | I1 | `PROFIL` | Clé gratuite | Prototype |
+| `PSEUDO` | Infostealers : Hudson Rock | H5 | aucun | Gratuit | En place |
 | `PROFIL` | API publique du site (GitHub, GitLab, Mastodon, YouTube, Twitch, Steam, Chess.com...) | A1 A5 C1 E1 F2 G2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Partiel |
 | `PROFIL` | Listes publiques d'abonnés, d'amis et mentions | J1 | aucun (identifiants de tiers, jamais relancés) | Gratuit | Nouveau |
 | `PROFIL` | Wayback Machine | I2 | `PROFIL` | Gratuit | Prototype |

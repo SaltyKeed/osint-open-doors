@@ -17,11 +17,25 @@ export interface BreachDetails {
   verified: boolean;
 }
 
+/**
+ * Details of an infostealer infection (field H5). A minimal summary: never the computer name,
+ * the IP address, file paths, logins or passwords (T3, decided 2026-11-18).
+ */
+export interface InfectionDetails {
+  /** YYYY-MM-DD. */
+  date: string | null;
+  operatingSystem: string | null;
+  /** Number of credentials saved on the computer, all stolen. */
+  stolenCredentials: number | null;
+}
+
 export interface SourceField {
   field: FieldCode;
   value: string;
   /** Only on H1: the value is the breach name. */
   breach?: BreachDetails;
+  /** Only on H5: the value is the infection date. */
+  infection?: InfectionDetails;
 }
 
 /** One record returned by a source: a leak line, a profile. */
