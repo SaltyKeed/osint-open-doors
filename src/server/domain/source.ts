@@ -75,6 +75,8 @@ export interface Source {
   sitesChecked?: number;
   /** Paid by the request (web search): the engine stops calling it after this many calls in one investigation. */
   maxCallsPerInvestigation?: number;
+  /** Replaces the 8 seconds per call of the engine, for a source that checks many sites (T7). */
+  callTimeoutMs?: number;
   investigate(input: Identifier, signal: AbortSignal): Promise<SourceRecord[]>;
   inspect(input: Identifier, signal: AbortSignal): Promise<SourceInspection>;
 }

@@ -179,6 +179,35 @@ describe("investigate", () => {
     expect(limited.investigate).toHaveBeenCalledExactlyOnceWith(email, expect.any(AbortSignal));
   });
 
+  it("shows an account found on a list of sites for a confirmed rare pseudo, without searching it again", async () => {
+    const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
+    const byEmail = fake("leaks", ["EMAIL"], () => [record({ identifiers: [pseudo] })]);
+    const sites = fake("sites", ["PSEUDO"], () => [record({ fields: [{ field: "F2", value: "https://forum.example/u/lmartin_06" }] })], {
+      sitesChecked: 100,
+    });
+    const events = await run([email], [byEmail, sites]);
+    const account = ofType(events, "finding").find((e) => e.finding.field === "F2");
+    expect(account?.finding.confidence).toBe("probable");
+  });
+
+  it("gives a source its own call timeout when it declares one", async () => {
+    const slowButAllowed = fake(
+      "sites",
+      ["EMAIL"],
+      (_input, signal) =>
+        new Promise<SourceRecord[]>((resolve, reject) => {
+          const timer = setTimeout(() => resolve([record({ fields: [{ field: "H1", value: "ExampleShop" }] })]), 60);
+          signal.addEventListener("abort", () => {
+            clearTimeout(timer);
+            reject(signal.reason);
+          });
+        }),
+      { callTimeoutMs: 1000 },
+    );
+    const events = await run([email], [slowButAllowed], { callTimeoutMs: 20 });
+    expect(ofType(events, "finding")).toHaveLength(1);
+  });
+
   it("ends with a done event", async () => {
     const events = await run([email], [fake("a", ["EMAIL"], () => [])]);
     expect(events).toEqual([{ type: "done", hidden: { possible: 0, namesake: 0 } }]);

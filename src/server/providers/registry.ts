@@ -5,6 +5,7 @@ import { github } from "./github";
 import { gravatar } from "./gravatar";
 import { hudsonRock } from "./hudsonrock";
 import { tavily } from "./tavily";
+import { whatsMyName } from "./whatsmyname";
 import { xposedOrNot } from "./xposedornot";
 
 const env = loadEnv();
@@ -16,5 +17,6 @@ export const SOURCES: readonly Source[] = [
   gravatar,
   hudsonRock,
   github(env.GITHUB_TOKEN),
+  whatsMyName,
   ...(env.TAVILY_API_KEY ? [tavily(env.TAVILY_API_KEY)] : []),
 ];

@@ -25,6 +25,25 @@ describe("assessConfidence", () => {
   });
 });
 
+describe("assessConfidence for an account found on a list of sites (T7)", () => {
+  const base = { linkedToConfirmed: false, coherentHints: 0, existenceCheck: true };
+
+  it.each<[Confidence, boolean, Confidence]>([
+    // pseudo confidence, rare and not common, expected
+    ["confirmed", true, "probable"],
+    ["confirmed", false, "possible"],
+    ["probable", true, "possible"],
+  ])("confirmed pseudo %s, rare %s: %s", (confidence, rarePseudo, expected) => {
+    const evidence: Evidence = { ...base, queried: { type: "PSEUDO", confidence }, rarePseudo };
+    expect(assessConfidence(evidence)).toBe(expected);
+  });
+
+  it("does not apply to a name, even when checked on a list of sites", () => {
+    const evidence: Evidence = { ...base, queried: { type: "NOM", confidence: "confirmed" }, rarePseudo: false };
+    expect(assessConfidence(evidence)).toBe("namesake");
+  });
+});
+
 describe("isDetailed", () => {
   it.each<[Confidence, boolean]>([
     ["confirmed", true],

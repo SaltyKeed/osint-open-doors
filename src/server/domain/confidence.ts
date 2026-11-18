@@ -15,6 +15,8 @@ export interface Evidence {
   rarePseudo: boolean;
   /** Same city, same photo, same name, same year... counted by the engine. */
   coherentHints: number;
+  /** The source only checks that an account with this pseudo exists on a list of sites (T7). */
+  existenceCheck?: boolean;
 }
 
 export interface Lead {
@@ -39,7 +41,11 @@ function capAt(confidence: Confidence, ceiling: Confidence): Confidence {
 function levelFromQuery(evidence: Evidence): Confidence {
   const { queried, rarePseudo, coherentHints } = evidence;
   if (UNIQUE_TYPES.has(queried.type)) return queried.confidence;
-  if (queried.type === "PSEUDO") return rarePseudo && coherentHints > 0 ? "probable" : "possible";
+  if (queried.type === "PSEUDO") {
+    // T7: an account named after a confirmed, rare, not common pseudo is probably the visitor's.
+    const sureAccount = evidence.existenceCheck === true && queried.confidence === "confirmed";
+    return rarePseudo && (coherentHints > 0 || sureAccount) ? "probable" : "possible";
+  }
   if (queried.type === "NOM") return coherentHints > 0 ? "possible" : "namesake";
   return "possible"; // IP and ORGA are shared by many people.
 }

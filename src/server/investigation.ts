@@ -71,7 +71,9 @@ export async function* investigate(
     );
     for (const s of active) calls.set(s.id, (calls.get(s.id) ?? 0) + 1);
     const settled = await Promise.allSettled(
-      active.map((s) => s.investigate(item.identifier, AbortSignal.any([signal, AbortSignal.timeout(callTimeoutMs)]))),
+      active.map((s) =>
+        s.investigate(item.identifier, AbortSignal.any([signal, AbortSignal.timeout(s.callTimeoutMs ?? callTimeoutMs)])),
+      ),
     );
     // The visitor left during the calls: nothing more to send.
     if (signal.aborted) return;
@@ -89,7 +91,7 @@ export async function* investigate(
       const records = outcome.value;
       const commonPseudo = item.identifier.type === "PSEUDO" && isCommonPseudo(records.length, source.sitesChecked);
       for (const record of records) {
-        yield* handleRecord(record, source.id, item, commonPseudo);
+        yield* handleRecord(record, source, item, commonPseudo);
       }
     }
   }
@@ -97,7 +99,7 @@ export async function* investigate(
 
   function* handleRecord(
     record: SourceRecord,
-    sourceId: string,
+    source: Source,
     item: QueueItem,
     commonPseudo: boolean,
   ): Generator<InvestigationEvent> {
@@ -106,6 +108,8 @@ export async function* investigate(
       queried: { type: queried.type, confidence: item.confidence },
       linkedToConfirmed: isLinkedToConfirmed(record, confirmedKeys),
       rarePseudo: queried.type === "PSEUDO" && isRarePseudo(queried.value) && !commonPseudo,
+      // A source with a list of sites only checks that the account exists (T7).
+      existenceCheck: source.sitesChecked !== undefined,
       coherentHints: countHints(record, confirmedValues),
     });
     if (confidence === "possible" || confidence === "namesake") {
@@ -119,7 +123,7 @@ export async function* investigate(
       const incoming: Finding = {
         field: field.field,
         value: field.value,
-        sources: [sourceId],
+        sources: [source.id],
         confidence,
         path: item.path,
         ...(field.breach && { breach: field.breach }),

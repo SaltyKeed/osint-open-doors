@@ -78,6 +78,7 @@ src/
 │   │   ├── hudsonrock/           ← même structure
 │   │   ├── github/               ← même structure, jeton optionnel
 │   │   ├── tavily/               ← même structure, recherche web, clé obligatoire
+│   │   ├── whatsmyname/          ← pseudo sur 569 sites : copie figée de la liste, vérification par site
 │   │   ├── snusbase/             ← même structure (prévu)
 │   │   └── dehashed/             ← même structure (prévu)
 │   │
@@ -172,6 +173,9 @@ Règles du contrat, vérifiées par les tests de `xposedornot/` :
   l'appelle plus jusqu'à la fin de l'enquête.
 - Une source payée à la requête déclare `maxCallsPerInvestigation` : le
   moteur ne l'appelle pas plus souvent dans une même enquête (T5).
+- Une source qui vérifie beaucoup de sites déclare `callTimeoutMs`, qui
+  remplace les 8 secondes du moteur (WhatsMyName : 25 secondes, T7), et
+  `sitesChecked`, le nombre de sites de sa liste (T4).
 - En cas d'échec, il lève une erreur au message fixe
   (`xposedornot: HTTP 500`, `xposedornot: invalid response`), sans la saisie
   du visiteur ni le corps de la réponse.
