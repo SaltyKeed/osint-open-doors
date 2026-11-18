@@ -4,9 +4,10 @@ Outil d'enquête OSINT pour les portes ouvertes du CPNE. Un volontaire saisit
 ses propres informations (email, téléphone, pseudo, nom et prénom) sur un PC
 de l'école. L'outil rebondit d'une information à l'autre et reconstitue sa
 fiche de vie à partir de ce qui est public et légal, avec un plan d'action
-(`docs/DECISIONS.md`, T1). Aujourd'hui, deux sources sont branchées :
-XposedOrNot (fuites liées à un email) et Gravatar (profil public lié à un
-email).
+(`docs/DECISIONS.md`, T1). Aujourd'hui, trois sources sont branchées :
+XposedOrNot (fuites liées à un email), Gravatar (profil public lié à un email)
+et Hudson Rock (ordinateur infecté par un logiciel espion, par email ou
+pseudo).
 
 ## Démarrage rapide
 

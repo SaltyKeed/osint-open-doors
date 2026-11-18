@@ -167,5 +167,6 @@ pull request.
 Chaque dossier de source aura les mêmes fichiers `schema.ts` et `mapper.ts`,
 et toutes renvoient les fiches définies dans `domain/source.ts`. La méthode de
 cette page s'applique donc à chaque nouvelle source. Une source qui décrit un
-autre événement qu'une fuite (une infection pour Hudson Rock, #66) ajoute son
-propre type de détails à côté de `BreachDetails` (T3).
+autre événement qu'une fuite ajoute son propre type de détails à côté de
+`BreachDetails` (T3) : Hudson Rock a ajouté `InfectionDetails` pour les
+ordinateurs infectés (H5).

@@ -578,7 +578,9 @@ Règle : un champ qui décrit un événement (une fuite, une infection) reçoit 
 propre type de détails, ajouté avec la première source qui le remplit. Un
 champ dont la valeur suffit (email, ville, pseudo) reste un texte. Pour H1 :
 `breach` (`BreachDetails` : site concerné, année, types de données, nombre
-de comptes, vérifiée). Pour H5, Hudson Rock ajoutera le sien (#66). Les proches (J1) n'ont
+de comptes, vérifiée). Pour H5, Hudson Rock a ajouté le sien le 2026-11-18
+(#66) : `InfectionDetails` (date, système, nombre d'identifiants volés), sans
+nom d'ordinateur, adresse IP, chemin ni identifiant. Les proches (J1) n'ont
 pas besoin de détails : un proche est une fiche entière avec
 `about: "relative"`.
 

@@ -146,9 +146,13 @@ export function DevConsole({ sources }: { sources: SourceInfo[] }) {
 
 function details(field: SourceField): string {
   const b = field.breach;
-  if (!b) return "-";
-  const records = b.records?.toLocaleString("fr-CH") ?? "?";
-  return `${b.domain ?? "-"}, ${b.year ?? "-"}, ${b.dataTypes.join(" ")}, ${records} comptes, ${b.verified ? "vérifiée" : "non vérifiée"}`;
+  if (b) {
+    const records = b.records?.toLocaleString("fr-CH") ?? "?";
+    return `${b.domain ?? "-"}, ${b.year ?? "-"}, ${b.dataTypes.join(" ")}, ${records} comptes, ${b.verified ? "vérifiée" : "non vérifiée"}`;
+  }
+  const i = field.infection;
+  if (i) return `${i.date ?? "date ?"}, ${i.operatingSystem ?? "système ?"}, ${i.stolenCredentials ?? "?"} identifiants volés`;
+  return "-";
 }
 
 function SourceBlock({ report }: { report: SourceReport }) {

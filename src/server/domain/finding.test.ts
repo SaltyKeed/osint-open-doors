@@ -93,6 +93,15 @@ describe("mergeFindings", () => {
     });
   });
 
+  it("keeps the infection details of the first source that has them", () => {
+    const infection = { date: "2026-03-14", operatingSystem: "Windows 11 Home", stolenCredentials: 87 };
+    const merged = mergeFindings([
+      finding({ field: "H5", value: "2026-03-14" }),
+      finding({ field: "H5", value: "2026-03-14", infection }),
+    ]);
+    expect(merged[0]?.infection).toEqual(infection);
+  });
+
   it("does not modify the findings it receives", () => {
     const first = finding({ sources: ["a"] });
     mergeFindings([first, finding({ sources: ["b"] })]);

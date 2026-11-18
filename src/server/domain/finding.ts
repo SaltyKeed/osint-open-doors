@@ -3,7 +3,7 @@ import { CONFIDENCE_LEVELS, type Confidence } from "./confidence";
 import type { FieldCode } from "./fiche-fields";
 import type { Identifier } from "./identifier";
 import { normalizeEmail, normalizeSwissPhone } from "./search-query";
-import type { BreachDetails } from "./source";
+import type { BreachDetails, InfectionDetails } from "./source";
 
 /** One piece of the fiche, with where it came from. */
 export interface Finding {
@@ -16,6 +16,8 @@ export interface Finding {
   path: Identifier[];
   /** Only on H1, see SourceField. */
   breach?: BreachDetails;
+  /** Only on H5, see SourceField. */
+  infection?: InfectionDetails;
 }
 
 /** The form used to decide whether two values are the same. */
@@ -60,6 +62,8 @@ export function mergeFindings(findings: Finding[]): Finding[] {
     if (finding.path.length < existing.path.length) existing.path = finding.path;
     const breach = mergeBreach(existing.breach, finding.breach);
     if (breach) existing.breach = breach;
+    // Only one infostealer source today: the first details are kept.
+    existing.infection ??= finding.infection;
   }
   return [...merged.values()];
 }
