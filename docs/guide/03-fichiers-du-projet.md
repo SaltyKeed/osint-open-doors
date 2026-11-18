@@ -63,7 +63,12 @@ src/
 │   │   ├── types.ts
 │   │   ├── search-query.ts
 │   │   ├── masking.ts
-│   │   └── matching.ts
+│   │   ├── fiche-fields.ts
+│   │   ├── identifier.ts
+│   │   ├── pseudo.ts
+│   │   ├── confidence.ts
+│   │   ├── finding.ts
+│   │   └── source.ts
 │   └── providers/
 │       ├── types.ts
 │       ├── registry.ts
@@ -96,7 +101,10 @@ src/
   providers, et `server/dev/` prépare ses données. Elle n'existe qu'avec
   `npm run dev` (voir [Commandes du projet](02-commandes.md#npm-run-dev)).
 - `server/domain/` contient la logique métier sans réseau : normalisation et
-  validation de la saisie, masquage des valeurs, règle anti-homonymes.
+  validation de la saisie, masquage des valeurs, et le modèle de l'enquête
+  (champs de la fiche, identifiants, pseudo rare, niveaux de confiance,
+  constats, port `Source`). Le fonctionnement est expliqué dans
+  [Fonctionnement de l'enquête](05-fonctionnement-de-l-enquete.md).
 - `server/providers/` contient une source de données par dossier. `registry.ts`
   choisit les sources actives selon `APP_MODE`. Le chemin des données dans un
   provider est décrit dans [Flux des données](04-flux-des-donnees.md).

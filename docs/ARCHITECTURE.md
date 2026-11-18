@@ -42,7 +42,7 @@ ensuite un plan d'action concret.
  │  2. search-service lance les providers en parallèle          │
  │  3. chaque provider : appel HTTP → parse zod → mapper        │
  │     (liste blanche, la réponse brute n'est pas transmise)    │
- │  4. domaine : matching anti-homonymes, masquage, score,      │
+ │  4. domaine : niveaux de confiance, masquage, score,         │
  │     plan d'action                                            │
  │  5. réponse : métadonnées uniquement                         │
  └───────────────────────────┬──────────────────────────────────┘
@@ -80,7 +80,12 @@ src/
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
 │   │   ├── types.ts              ← Exposure, DataCategory, SearchQuery, QueryKind…
 │   │   ├── search-query.ts       ← normalisation et schéma zod de la saisie
-│   │   ├── matching.ts           ← règle anti-homonymes
+│   │   ├── fiche-fields.ts       ← codes des champs de la fiche (A1 à J1)
+│   │   ├── identifier.ts         ← types d'identifiants et normalisation
+│   │   ├── pseudo.ts             ← règle du pseudo rare
+│   │   ├── confidence.ts         ← niveaux de confiance et règle de rebond
+│   │   ├── finding.ts            ← constats et fusion des doublons
+│   │   ├── source.ts             ← port des sources de l'enquête (Source)
 │   │   ├── masking.ts            ← masquage des valeurs
 │   │   ├── severity.ts           ← score d'exposition
 │   │   └── actions.ts            ← catégories exposées → plan d'action
@@ -140,6 +145,69 @@ Ajouter un provider : créer son dossier dans `providers/` (`schema.ts`,
 l'ajouter à `SURFACE_PROVIDERS` ou `DEEP_PROVIDERS` dans `registry.ts`.
 Pour changer ce qu'un provider garde ou affiche, voir le guide
 [Flux des données d'un provider](guide/04-flux-des-donnees.md).
+
+### Modèle de l'enquête
+
+Le modèle de l'outil d'enquête (T1, T2) est prêt dans `domain/`, mais pas
+encore utilisé par l'application. L'ancien modèle (`Exposure`,
+`BreachProvider`) reste en place jusqu'à ce que XposedOrNot soit branché sur
+le port `Source` (issue #64).
+
+```mermaid
+classDiagram
+    class Source {
+        <<interface>>
+        id: string
+        accepts: IdentifierType[]
+        investigate(input, signal) SourceRecord[]
+        inspect(input, signal) SourceInspection
+    }
+    class SourceRecord {
+        about: subject ou relative
+        fields: champ et valeur[]
+        identifiers: Identifier[]
+    }
+    class Identifier {
+        type: IdentifierType
+        value: string
+    }
+    class Finding {
+        field: FieldCode
+        value: string
+        sources: string[]
+        confidence: Confidence
+        path: Identifier[]
+    }
+    class Confidence {
+        <<enumeration>>
+        confirmed
+        probable
+        possible
+        namesake
+    }
+    Source ..> Identifier : reçoit
+    Source ..> SourceRecord : renvoie
+    SourceRecord --> Identifier : nouveaux identifiants
+    Finding --> Identifier : chemin
+    Finding --> Confidence
+```
+
+Une source reçoit un identifiant et renvoie des fiches (`SourceRecord`). Elle
+ne calcule pas la confiance : le moteur (#65) le fait, parce que lui seul
+connaît les identifiants déjà confirmés (T2). Il transforme les fiches en
+constats (`Finding`), puis regroupe les doublons.
+
+| Fichier | Rôle |
+| --- | --- |
+| `fiche-fields.ts` | Codes des champs de la fiche (`A1` à `J1`) et libellés |
+| `identifier.ts` | Types d'identifiants, normalisation, clé `TYPE:valeur` des recherches déjà faites |
+| `pseudo.ts` | Règle du pseudo rare (6 caractères et une lettre) |
+| `confidence.ts` | `assessConfidence`, `isDetailed`, `shouldRebound` |
+| `finding.ts` | `Finding` et `mergeFindings` (fusion des doublons) |
+| `source.ts` | Le port `Source` et les fiches renvoyées |
+
+Explication simple, avec des exemples :
+[Fonctionnement de l'enquête](guide/05-fonctionnement-de-l-enquete.md).
 
 ### Bonnes pratiques appliquées
 
