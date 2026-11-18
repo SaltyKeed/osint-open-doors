@@ -1,19 +1,10 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
-import type { InvestigationView, SourceReport, ViewValue } from "@/server/investigation/view";
+import type { InvestigationView } from "@/server/investigation/view";
+import { Results } from "./results";
 
-const SOURCE_STATUS: Record<SourceReport["status"], { label: (r: SourceReport) => string; style: string }> = {
-  found: { label: (r) => `${r.records} résultat(s)`, style: "bg-green-100 text-green-900" },
-  not_found: { label: () => "rien trouvé", style: "bg-zinc-100 text-zinc-700" },
-  unknown: { label: () => "réponse pas claire", style: "bg-amber-100 text-amber-900" },
-  quota: { label: () => "quota atteint", style: "bg-red-100 text-red-900" },
-  error: { label: () => "erreur", style: "bg-red-100 text-red-900" },
-  no_key: { label: () => "pas de clé", style: "bg-zinc-100 text-zinc-500" },
-  not_asked: { label: () => "pas interrogé", style: "bg-zinc-100 text-zinc-500" },
-};
-
-// First version of the visitor screen (sandbox prototype). The final interface
+// Visitor screen of the sandbox prototype: input, then results. The final interface
 // is decided later (T1). Nothing is stored: reloading the page erases everything.
 
 const INPUTS = [
@@ -26,68 +17,10 @@ const INPUTS = [
   { name: "birthDate", label: "Date de naissance", type: "date" },
 ] as const;
 
-const CONFIDENCE: Record<ViewValue["confidence"], { label: string; style: string }> = {
-  confirme: { label: "confirmé", style: "bg-green-100 text-green-900" },
-  probable: { label: "probable", style: "bg-amber-100 text-amber-900" },
-};
-
-function EyeIcon({ open }: { open: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-      <circle cx="12" cy="12" r="3" />
-      {!open && <path d="M3 3l18 18" />}
-    </svg>
-  );
-}
-
-// `shown` is the "show all" switch: changing it remounts each value (key below), so
-// every eye starts from the new state and can still be toggled one by one.
-function Value({ item, shown }: { item: ViewValue; shown: boolean }) {
-  const [visible, setVisible] = useState(shown);
-  const confidence = CONFIDENCE[item.confidence];
-  return (
-    <li className="rounded border border-zinc-200 p-3">
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-sm break-all">{visible ? item.value : item.masked}</span>
-        <button
-          type="button"
-          onClick={() => setVisible((v) => !v)}
-          className="text-zinc-500 hover:text-zinc-900"
-          aria-label={visible ? "Masquer la valeur" : "Afficher la valeur"}
-        >
-          <EyeIcon open={visible} />
-        </button>
-        <span className={`ml-auto rounded px-2 py-0.5 text-xs ${confidence.style}`}>{confidence.label}</span>
-      </div>
-      <p className="mt-1 text-xs text-zinc-500">
-        Source : {item.sources.join(", ")} · trouvé grâce à : {item.path.join(" → ")}
-        {item.thirdParty && " · proche"}
-      </p>
-      {visible && item.attributes.length > 0 && (
-        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 text-xs">
-          {item.attributes.map((a) => (
-            <div key={`${a.label}:${a.value}`} className="contents">
-              <dt className="text-zinc-500">{a.label}</dt>
-              <dd className="break-all">{a.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-    </li>
-  );
-}
-
 export function Investigation({ services }: { services: string[] }) {
   const [view, setView] = useState<InvestigationView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showAll, setShowAll] = useState(false);
-
-  function finish() {
-    setView(null);
-    setShowAll(false);
-  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,97 +52,20 @@ export function Investigation({ services }: { services: string[] }) {
     }
   }
 
-  if (view) {
-    return (
-      <main className="mx-auto w-full max-w-4xl p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Ta fiche de vie</h1>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setShowAll((v) => !v)}
-              className="flex items-center gap-2 rounded border border-zinc-300 px-4 py-2 text-sm"
-            >
-              <EyeIcon open={!showAll} />
-              {showAll ? "Tout masquer" : "Tout afficher"}
-            </button>
-            <button type="button" onClick={finish} className="rounded bg-zinc-900 px-4 py-2 text-sm text-white">
-              Effacer et terminer
-            </button>
-          </div>
-        </div>
-        <p className="mt-1 text-sm text-zinc-600">
-          Les valeurs sont masquées : le bouton œil affiche chacune. Services qui ont reçu tes données :{" "}
-          {view.services.join(", ") || "aucun"}.
-        </p>
-        <section className="mt-6 rounded-lg border border-zinc-200 p-4">
-          <h2 className="font-semibold">Ce que chaque source a répondu</h2>
-          <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
-            {view.sourceReport.map((source) => {
-              const status = SOURCE_STATUS[source.status];
-              return (
-                <li key={source.label} className="flex items-center justify-between gap-2">
-                  <span>{source.label}</span>
-                  <span className={`rounded px-2 py-0.5 text-xs ${status.style}`}>
-                    {status.label(source)}
-                    {source.status === "found" && source.problems > 0 && ` · ${source.problems} erreur(s)`}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-        <div className="mt-6 grid gap-4">
-          {view.categories.map((category) => (
-            <section key={category.code} className="rounded-lg border border-zinc-200 p-4">
-              <header className="flex items-baseline justify-between">
-                <h2 className="font-semibold">
-                  {category.code}. {category.label}
-                </h2>
-                <span className="text-sm text-zinc-500">
-                  {category.filled} / {category.total} champs
-                </span>
-              </header>
-              {category.fields.length === 0 ? (
-                <p className="mt-2 text-sm text-zinc-400">Rien trouvé.</p>
-              ) : (
-                category.fields.map((field) => (
-                  <div key={field.code} className="mt-3">
-                    <h3 className="text-sm font-medium">
-                      {field.code} · {field.label}
-                    </h3>
-                    <ul className="mt-1 grid gap-2">
-                      {field.values.map((item) => (
-                        <Value key={`${item.value}:${showAll}`} item={item} shown={showAll} />
-                      ))}
-                    </ul>
-                    {field.hiddenCount > 0 && (
-                      <p className="mt-1 text-xs text-zinc-500">
-                        + {field.hiddenCount} résultat(s) peu fiable(s) ou homonyme(s), non affiché(s).
-                      </p>
-                    )}
-                  </div>
-                ))
-              )}
-            </section>
-          ))}
-        </div>
-      </main>
-    );
-  }
+  if (view) return <Results view={view} onReset={() => setView(null)} />;
 
   return (
     <main className="mx-auto w-full max-w-2xl p-6">
-      <h1 className="text-2xl font-semibold">OSINT Open Doors</h1>
-      <p className="mt-1 text-sm text-zinc-600">
+      <h1 className="text-3xl font-bold">OSINT Open Doors</h1>
+      <p className="mt-1 text-zinc-600">
         Saisis tes propres informations. L&apos;outil cherche ce qui est public sur toi et reconstitue ta fiche. Rien
         n&apos;est enregistré.
       </p>
-      <form onSubmit={onSubmit} className="mt-6 grid gap-4 rounded-lg border border-zinc-200 p-4 sm:grid-cols-2">
+      <form onSubmit={onSubmit} className="mt-6 grid gap-4 rounded-xl border border-zinc-200 p-4 sm:grid-cols-2">
         {INPUTS.map((input) => (
           <label key={input.name} className="grid gap-1 text-sm">
             {input.label}
-            <input name={input.name} type={input.type} className="rounded border border-zinc-300 px-3 py-2" />
+            <input name={input.name} type={input.type} className="rounded-lg border border-zinc-300 px-3 py-2" />
           </label>
         ))}
         <label className="flex items-start gap-2 text-sm sm:col-span-2">
@@ -220,7 +76,7 @@ export function Investigation({ services }: { services: string[] }) {
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-zinc-900 px-4 py-2 text-white disabled:opacity-50 sm:col-span-2"
+          className="rounded-lg bg-zinc-900 px-4 py-3 text-white disabled:opacity-50 sm:col-span-2"
         >
           {loading ? "Enquête en cours…" : "Lancer l'enquête"}
         </button>

@@ -84,3 +84,64 @@ describe("toView", () => {
     ]);
   });
 });
+
+describe("toView, lists of the result screen", () => {
+  const at = (field: Parameters<typeof addSighting>[1]["field"], value: string, attributes: { label: string; value: string }[] = []) => ({
+    field,
+    value,
+    attributes: attributes.map((a) => ({ ...a, known: true })),
+  });
+
+  function rich(): Fiche {
+    const f: Fiche = new Map();
+    const s = sighting("confirme");
+    addSighting(f, at("H1", "OldForum", [{ label: "Date de la fuite", value: "01.01.2015" }, { label: "Données exposées", value: "adresses email, noms" }]), s);
+    addSighting(
+      f,
+      at("H1", "Duolingo", [
+        { label: "Date de la fuite", value: "24.01.2023" },
+        { label: "Comptes touchés", value: "2 676 696" },
+        { label: "Données exposées", value: "adresses email, mots de passe" },
+        { label: "Description (anglais)", value: "Scraped data." },
+        { label: "Logo", value: "https://logos.example/Duolingo.png" },
+      ]),
+      s,
+    );
+    addSighting(f, at("H5", "Ordinateur infecté le 02.04.2025 (Windows 11)", [{ label: "Identifiants volés", value: "12" }]), s);
+    addSighting(f, at("I1", "Membres du club", [{ label: "Adresse", value: "https://club.example/membres" }, { label: "Extrait", value: "Léa, capitaine" }]), s);
+    addSighting(f, at("F2", "https://instagram.com/lmartin06", [{ label: "Service", value: "Instagram" }]), s);
+    addSighting(f, at("I2", "instagram.com/lmartin06", [{ label: "Première capture", value: "12.03.2019" }, { label: "Archive", value: "https://web.archive.org/web/2019/x" }]), s);
+    addSighting(f, at("C1", "Bern"), sighting("possible"));
+    return f;
+  }
+
+  const view = toView({ fiche: rich(), runs: [] }, [{ id: "github", label: "GitHub" }]);
+
+  it("breaches: password breaches first, with date, accounts, data, description and logo", () => {
+    expect(view.breaches.map((b) => b.name)).toEqual(["Duolingo", "OldForum"]);
+    expect(view.breaches[0]).toMatchObject({
+      date: "24.01.2023",
+      accounts: "2 676 696",
+      data: ["adresses email", "mots de passe"],
+      passwordExposed: true,
+      description: "Scraped data.",
+      logo: "https://logos.example/Duolingo.png",
+      sources: ["GitHub"],
+    });
+  });
+
+  it("infections, pages, profiles and archives each have their list", () => {
+    expect(view.infections[0]).toMatchObject({ label: "Ordinateur infecté le 02.04.2025 (Windows 11)" });
+    expect(view.pages[0]).toMatchObject({ title: "Membres du club", url: "https://club.example/membres", site: "club.example", excerpt: "Léa, capitaine", confidence: "confirme" });
+    expect(view.profiles[0]).toMatchObject({ platform: "Instagram", url: "https://instagram.com/lmartin06" });
+    expect(view.archives[0]).toMatchObject({ target: "instagram.com/lmartin06", link: "https://web.archive.org/web/2019/x" });
+  });
+
+  it("counts what is linked to the person, without the possible values", () => {
+    expect(view.summary).toEqual({ linked: 6, breaches: 2, passwordBreaches: 1, infections: 1, pages: 1, profiles: 1, archives: 1, unconfirmed: 1 });
+  });
+
+  it("builds the action plan from fixed rules, the most urgent first", () => {
+    expect(view.actions.map((a) => a.id)).toEqual(["infection", "passwords", "two-factor", "profiles", "pages", "archives"]);
+  });
+});

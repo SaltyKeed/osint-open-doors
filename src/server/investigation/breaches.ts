@@ -16,6 +16,7 @@ export const catalogueSchema = z.array(
     PwnCount: z.number(),
     DataClasses: z.array(z.string()),
     Description: z.string(),
+    LogoPath: z.string().optional(),
   }),
 );
 
@@ -81,6 +82,7 @@ function attributes(b: CatalogueBreach): Attribute[] {
       ? [{ label: "Données exposées", value: b.DataClasses.map((d) => DATA_LABELS[d] ?? d).join(", "), known: true }]
       : []),
     ...(b.Description ? [{ label: "Description (anglais)", value: plainText(b.Description), known: true }] : []),
+    ...(b.LogoPath?.startsWith("https://") ? [{ label: "Logo", value: b.LogoPath, known: true }] : []),
   ];
 }
 

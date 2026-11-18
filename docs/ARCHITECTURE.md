@@ -172,7 +172,8 @@ place.
 ```text
 src/
 ├── app/
-│   ├── page.tsx, investigation.tsx  ← saisie, fiche de vie, bouton « œil »
+│   ├── page.tsx, investigation.tsx  ← saisie et consentement
+│   ├── results.tsx                  ← résultats à la manière de la v1 : onglets, plan d'action
 │   └── api/investigate/route.ts     ← valide la saisie, lance l'enquête, renvoie la vue
 └── server/
     ├── domain/                      ← modèle de données, sans réseau
