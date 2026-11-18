@@ -175,6 +175,25 @@ Règles (`shouldRebound` dans `confidence.ts`) :
   « confirmé ». Sans cette règle, l'enquête pourrait passer d'un homonyme à
   l'autre.
 
+## Les sources
+
+Toutes les sources respectent le même contrat, l'interface `Source`
+(`source.ts`). Le moteur ne connaît que ce contrat : ajouter une source ne
+change pas le moteur.
+
+| Élément | Rôle |
+| --- | --- |
+| `id` | Nom court de la source, repris dans les constats |
+| `accepts` | Types d'identifiants que la source sait chercher ; le moteur ne lui envoie que ceux-là |
+| `investigate` | Cherche un identifiant et renvoie des fiches |
+| `inspect` | Même recherche, avec la réponse brute, pour la console `/dev` |
+
+Une fiche renvoyée (`SourceRecord`) contient les champs trouvés, les nouveaux
+identifiants et indique si elle concerne le visiteur ou un proche. La source
+ne donne pas de niveau de confiance : c'est le moteur qui le calcule, parce que
+lui seul sait quels identifiants sont déjà confirmés. Le moteur transforme
+ensuite chaque fiche en constats.
+
 ## Où est le code
 
 | Fichier | Rôle |
@@ -184,5 +203,6 @@ Règles (`shouldRebound` dans `confidence.ts`) :
 | `src/server/domain/pseudo.ts` | Règle du pseudo rare |
 | `src/server/domain/confidence.ts` | Niveaux de confiance et règle de rebond |
 | `src/server/domain/finding.ts` | Constats et fusion des doublons |
+| `src/server/domain/source.ts` | Contrat commun à toutes les sources |
 
 Chaque fichier a ses tests à côté (`*.test.ts`), avec des valeurs inventées.

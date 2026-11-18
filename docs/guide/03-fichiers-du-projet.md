@@ -67,7 +67,8 @@ src/
 │   │   ├── identifier.ts
 │   │   ├── pseudo.ts
 │   │   ├── confidence.ts
-│   │   └── finding.ts
+│   │   ├── finding.ts
+│   │   └── source.ts
 │   └── providers/
 │       ├── types.ts
 │       ├── registry.ts
@@ -102,7 +103,7 @@ src/
 - `server/domain/` contient la logique métier sans réseau : normalisation et
   validation de la saisie, masquage des valeurs, et le modèle de l'enquête
   (champs de la fiche, identifiants, pseudo rare, niveaux de confiance,
-  constats). Le fonctionnement est expliqué dans
+  constats, port `Source`). Le fonctionnement est expliqué dans
   [Fonctionnement de l'enquête](05-fonctionnement-de-l-enquete.md).
 - `server/providers/` contient une source de données par dossier. `registry.ts`
   choisit les sources actives selon `APP_MODE`. Le chemin des données dans un

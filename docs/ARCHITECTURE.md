@@ -85,6 +85,7 @@ src/
 │   │   ├── pseudo.ts             ← règle du pseudo rare
 │   │   ├── confidence.ts         ← niveaux de confiance et règle de rebond
 │   │   ├── finding.ts            ← constats et fusion des doublons
+│   │   ├── source.ts             ← port des sources de l'enquête (Source)
 │   │   ├── masking.ts            ← masquage des valeurs
 │   │   ├── severity.ts           ← score d'exposition
 │   │   └── actions.ts            ← catégories exposées → plan d'action
@@ -144,6 +145,23 @@ Ajouter un provider : créer son dossier dans `providers/` (`schema.ts`,
 l'ajouter à `SURFACE_PROVIDERS` ou `DEEP_PROVIDERS` dans `registry.ts`.
 Pour changer ce qu'un provider garde ou affiche, voir le guide
 [Flux des données d'un provider](guide/04-flux-des-donnees.md).
+
+Le port de l'outil d'enquête (T1) est prêt dans `domain/source.ts`, mais pas
+encore utilisé : il remplacera `BreachProvider` quand XposedOrNot y sera
+branché (issue #64). Une source reçoit un seul identifiant et renvoie des
+fiches (`SourceRecord`) : les champs trouvés, les nouveaux identifiants, et
+si la fiche concerne le visiteur ou un proche. Elle ne calcule pas la
+confiance : seul le moteur sait quels identifiants sont déjà confirmés.
+
+```ts
+// src/server/domain/source.ts
+export interface Source {
+  id: string;
+  accepts: readonly IdentifierType[];
+  investigate(input: Identifier, signal: AbortSignal): Promise<SourceRecord[]>;
+  inspect(input: Identifier, signal: AbortSignal): Promise<SourceInspection>;
+}
+```
 
 ### Bonnes pratiques appliquées
 

@@ -336,15 +336,15 @@ doublon, la confiance la plus haute et le chemin le plus court.
     même rôle que `Inspection` aujourd'hui, pour la console `/dev` (D18).
   - `interface Source { id: string; accepts: readonly IdentifierType[]; investigate(input: Identifier, signal: AbortSignal): Promise<SourceRecord[]>; inspect(input: Identifier, signal: AbortSignal): Promise<SourceInspection> }`
 
-- [ ] **Étape 1 : test.** Une source factice déclarée avec
+- [x] **Étape 1 : test.** Une source factice déclarée avec
   `satisfies Source`, qui accepte `EMAIL` et renvoie une fiche fixe. Le test
   vérifie que `investigate` renvoie cette fiche. Son vrai rôle est le
   typecheck : si le port change, la source factice ne compile plus.
-- [ ] **Étape 2 :** `npm run typecheck` échoue (module introuvable).
-- [ ] **Étape 3 :** écrire `source.ts` (types seulement, plus
+- [x] **Étape 2 :** `npm run typecheck` échoue (module introuvable).
+- [x] **Étape 3 :** écrire `source.ts` (types seulement, plus
   `import "server-only";`).
-- [ ] **Étape 4 :** le test et `npm run typecheck` passent.
-- [ ] **Étape 5 :** commit `feat(domain): add Source port`.
+- [x] **Étape 4 :** le test et `npm run typecheck` passent.
+- [x] **Étape 5 :** commit `feat(domain): add Source port`.
 
 Question : pourquoi la source renvoie-t-elle des `SourceRecord` et pas
 directement des `Finding` ?
