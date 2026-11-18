@@ -41,8 +41,10 @@ function EyeIcon({ open }: { open: boolean }) {
   );
 }
 
-function Value({ item }: { item: ViewValue }) {
-  const [visible, setVisible] = useState(false);
+// `shown` is the "show all" switch: changing it remounts each value (key below), so
+// every eye starts from the new state and can still be toggled one by one.
+function Value({ item, shown }: { item: ViewValue; shown: boolean }) {
+  const [visible, setVisible] = useState(shown);
   const confidence = CONFIDENCE[item.confidence];
   return (
     <li className="rounded border border-zinc-200 p-3">
@@ -80,6 +82,12 @@ export function Investigation({ services }: { services: string[] }) {
   const [view, setView] = useState<InvestigationView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  function finish() {
+    setView(null);
+    setShowAll(false);
+  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -116,13 +124,19 @@ export function Investigation({ services }: { services: string[] }) {
       <main className="mx-auto w-full max-w-4xl p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Ta fiche de vie</h1>
-          <button
-            type="button"
-            onClick={() => setView(null)}
-            className="rounded bg-zinc-900 px-4 py-2 text-sm text-white"
-          >
-            Effacer et terminer
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="flex items-center gap-2 rounded border border-zinc-300 px-4 py-2 text-sm"
+            >
+              <EyeIcon open={!showAll} />
+              {showAll ? "Tout masquer" : "Tout afficher"}
+            </button>
+            <button type="button" onClick={finish} className="rounded bg-zinc-900 px-4 py-2 text-sm text-white">
+              Effacer et terminer
+            </button>
+          </div>
         </div>
         <p className="mt-1 text-sm text-zinc-600">
           Les valeurs sont masquées : le bouton œil affiche chacune. Services qui ont reçu tes données :{" "}
@@ -166,7 +180,7 @@ export function Investigation({ services }: { services: string[] }) {
                     </h3>
                     <ul className="mt-1 grid gap-2">
                       {field.values.map((item) => (
-                        <Value key={item.value} item={item} />
+                        <Value key={`${item.value}:${showAll}`} item={item} shown={showAll} />
                       ))}
                     </ul>
                     {field.hiddenCount > 0 && (
