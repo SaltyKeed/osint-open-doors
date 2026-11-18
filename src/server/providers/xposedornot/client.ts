@@ -1,4 +1,5 @@
 import "server-only";
+import { SourceQuotaError } from "@/server/domain/source";
 
 const BASE_URL = "https://api.xposedornot.com/v1/breach-analytics";
 
@@ -9,6 +10,7 @@ export async function fetchBreachAnalytics(email: string, signal: AbortSignal): 
     cache: "no-store",
   });
   if (response.status === 404) return null;
+  if (response.status === 429) throw new SourceQuotaError("xposedornot");
   // Status code only: the URL and the body contain the visitor's email.
   if (!response.ok) throw new Error(`xposedornot: HTTP ${response.status}`);
   // A JSON SyntaxError quotes part of the body: replace it with a fixed message.

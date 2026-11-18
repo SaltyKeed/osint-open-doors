@@ -169,8 +169,8 @@ Commit : `feat(api): stream investigation events`.
   quota, 8 secondes par appel.
 - `ARCHITECTURE.md` : le moteur, le flux NDJSON, arbre des fichiers ;
   diagramme de séquence Mermaid d'une enquête (route, moteur, sources).
-- Guide 05 : affichage en direct, quota, limite « confirmé tard » ; état.
-- Guide 03 : arbre et description.
+- Guide 06 : affichage en direct, quota, limite « confirmé tard » ; état.
+- Guide 04 : arbre et description. Guide 03 : la section sur le streaming ne dit plus « arrive avec #65 ».
 - Glossaire : NDJSON, générateur.
 
 Vérification : `npm test`, `npm run lint`, `npm run typecheck`,

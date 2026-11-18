@@ -50,6 +50,17 @@ export interface Source {
   id: string;
   /** Identifier types this source can search. */
   accepts: readonly IdentifierType[];
+  /** Pseudo sources only: number of sites in the source's list, to spot common pseudos (T4). */
+  sitesChecked?: number;
   investigate(input: Identifier, signal: AbortSignal): Promise<SourceRecord[]>;
   inspect(input: Identifier, signal: AbortSignal): Promise<SourceInspection>;
+}
+
+/** Thrown on HTTP 429: the engine skips this source for the rest of the investigation (T4). */
+export class SourceQuotaError extends Error {
+  constructor(sourceId: string) {
+    // Fixed message: no input of the visitor.
+    super(`${sourceId}: quota reached`);
+    this.name = "SourceQuotaError";
+  }
 }

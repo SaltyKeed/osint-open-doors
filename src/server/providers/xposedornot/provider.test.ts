@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import found from "@/tests/fixtures/xposedornot/found.json";
 import notFound from "@/tests/fixtures/xposedornot/not-found.json";
 import type { Identifier } from "@/server/domain/identifier";
+import { SourceQuotaError } from "@/server/domain/source";
 import { xposedOrNot } from "./index";
 
 // All values below are invented test data.
@@ -41,7 +42,14 @@ describe("xposedOrNot source", () => {
     expect(await xposedOrNot.investigate(query, new AbortController().signal)).toEqual([]);
   });
 
-  it.each([500, 429])("throws on HTTP %i without the email", async (status) => {
+  it("throws a quota error on HTTP 429, without the email", async () => {
+    stubFetch(429);
+    const error = await xposedOrNot.investigate(query, new AbortController().signal).catch((e: Error) => e);
+    expect(error).toBeInstanceOf(SourceQuotaError);
+    expect((error as Error).message).toBe("xposedornot: quota reached");
+  });
+
+  it.each([500, 503])("throws on HTTP %i without the email", async (status) => {
     stubFetch(status);
     const error = await xposedOrNot.investigate(query, new AbortController().signal).catch((e: Error) => e);
     expect(error).toBeInstanceOf(Error);

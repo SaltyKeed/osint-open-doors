@@ -200,7 +200,9 @@ sequenceDiagram
 Chaque morceau est une ligne de JSON complète. Le navigateur lit les lignes
 une par une et affiche chaque résultat dès qu'il arrive. Si le visiteur ferme
 la page, la connexion se coupe et le serveur arrête l'enquête. Ce
-fonctionnement arrive avec le moteur d'enquête (issue #65, décision T4).
+fonctionnement est celui de `/api/search`, avec le moteur d'enquête
+(décision T4) : chaque ligne est un constat trouvé, un nouvel identifiant à
+chercher, une source en échec, ou la fin.
 
 ## Mode développement et mode production
 

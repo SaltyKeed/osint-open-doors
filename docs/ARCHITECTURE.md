@@ -39,7 +39,7 @@ ensuite un plan d'action concret.
  ┌───────────────────────────▼──────────────────────────────────┐
  │  Route API Next.js (sans état)                               │
  │  1. valide l'input (zod) + consentement                      │
- │  2. search-service lance les sources en parallèle            │
+ │  2. le moteur interroge les sources et rebondit (en direct)  │
  │  3. chaque source : appel HTTP → parse zod → mapper          │
  │     (liste blanche, la réponse brute n'est pas transmise)    │
  │  4. domaine : niveaux de confiance, masquage, score,         │
@@ -84,12 +84,13 @@ src/
 │   │   ├── pseudo.ts             ← règle du pseudo rare
 │   │   ├── confidence.ts         ← niveaux de confiance et règle de rebond
 │   │   ├── finding.ts            ← constats et fusion des doublons
+│   │   ├── evidence.ts           ← indices, rattachement, pseudo courant
 │   │   ├── source.ts             ← port des sources de l'enquête (Source)
 │   │   ├── masking.ts            ← masquage des valeurs
 │   │   ├── severity.ts           ← score d'exposition
 │   │   └── actions.ts            ← catégories exposées → plan d'action
 │   │
-│   ├── search-service.ts         ← orchestration (Promise.allSettled + timeout)
+│   ├── investigation.ts          ← moteur d'enquête : file, rebonds, événements (T4)
 │   └── dev/                      ← inspection des sources pour la console (D18)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
@@ -125,16 +126,43 @@ export interface Source {
 `inspect` et ne garde que `records` : la réponse brute ne quitte la source que
 vers la console, jamais vers `/api/search`.
 
-`/api/search` transforme la saisie en identifiants (`queryIdentifiers`), puis
-`searchAll` donne chaque identifiant aux sources qui acceptent son type et
-renvoie leurs fiches, sans rebond. Le moteur (#65) ajoutera les rebonds.
+`/api/search` transforme la saisie en identifiants (`queryIdentifiers`) et
+lance le moteur d'enquête (`investigation.ts`, T4). Le moteur donne chaque
+identifiant aux sources qui acceptent son type, calcule la confiance des
+fiches, crée les constats et relance les nouveaux identifiants fiables. Il
+émet des événements, que la route envoie au navigateur au fur et à mesure,
+une ligne JSON par événement (NDJSON).
+
+```mermaid
+sequenceDiagram
+    participant N as Navigateur
+    participant R as /api/search
+    participant M as Moteur (investigation.ts)
+    participant S as Sources
+
+    N->>R: POST (saisie, consentement)
+    R->>M: identifiants saisis, niveau « confirmé »
+    loop tant que la file n'est pas vide
+        M->>S: investigate(identifiant), 8 s par appel
+        S-->>M: fiches
+        M-->>R: événements finding, lead, source-failed
+        R-->>N: une ligne JSON par événement
+    end
+    M-->>R: done (homonymes comptés)
+    R-->>N: dernière ligne, fin de la réponse
+```
+
+Si le visiteur quitte la page, `request.signal` est annulé et le moteur
+s'arrête sans lancer de nouvel appel.
 
 Règles du contrat, vérifiées par les tests de `xposedornot/` :
 
 - `investigate` renvoie `[]` pour un type d'identifiant qu'elle n'accepte pas,
   et `[]` si la personne n'est pas trouvée.
-- Elle transmet `signal` à `fetch`. Le service annule toutes les sources après
-  8 secondes ; une source qui ignore `signal` bloquerait la réponse.
+- Elle transmet `signal` à `fetch`. Le moteur annule chaque appel après
+  8 secondes ; une source qui ignore `signal` bloquerait l'enquête.
+- Sur une réponse HTTP 429, elle lève `SourceQuotaError` : le moteur ne
+  l'appelle plus jusqu'à la fin de l'enquête.
 - En cas d'échec, il lève une erreur au message fixe
   (`xposedornot: HTTP 500`, `xposedornot: invalid response`), sans la saisie
   du visiteur ni le corps de la réponse.
@@ -149,8 +177,7 @@ Pour changer ce qu'une source garde ou affiche, voir le guide
 ### Modèle de l'enquête
 
 Le modèle de l'outil d'enquête (T1, T2, T3) est dans `domain/`. XposedOrNot,
-`/api/search` et la console `/dev` l'utilisent ; le moteur qui calcule la
-confiance et les constats arrive avec #65.
+le moteur d'enquête et la console `/dev` l'utilisent.
 
 ```mermaid
 classDiagram
@@ -209,7 +236,7 @@ classDiagram
 Une source reçoit un identifiant et renvoie des fiches (`SourceRecord`). Un
 champ qui décrit un événement porte ses détails dans un type fermé :
 `BreachDetails` pour une fuite (H1, T3). Une source ne calcule pas la
-confiance : le moteur (#65) le fait, parce que lui seul
+confiance : le moteur le fait, parce que lui seul
 connaît les identifiants déjà confirmés (T2). Il transforme les fiches en
 constats (`Finding`), puis regroupe les doublons.
 
@@ -219,8 +246,9 @@ constats (`Finding`), puis regroupe les doublons.
 | `identifier.ts` | Types d'identifiants, normalisation, clé `TYPE:valeur` des recherches déjà faites |
 | `pseudo.ts` | Règle du pseudo rare (6 caractères et une lettre) |
 | `confidence.ts` | `assessConfidence`, `isDetailed`, `shouldRebound` |
-| `finding.ts` | `Finding` et `mergeFindings` (fusion des doublons) |
-| `source.ts` | Le port `Source`, les fiches renvoyées et `BreachDetails` |
+| `finding.ts` | `Finding`, `findingKey` et `mergeFindings` (fusion des doublons) |
+| `evidence.ts` | `isLinkedToConfirmed`, `countHints` (A1, A2, C1), `isCommonPseudo` (T4) |
+| `source.ts` | Le port `Source`, les fiches renvoyées, `BreachDetails` et `SourceQuotaError` |
 
 Explication simple, avec des exemples :
 [Fonctionnement de l'enquête](guide/06-fonctionnement-de-l-enquete.md).
@@ -232,7 +260,7 @@ Explication simple, avec des exemples :
 | Parse, don't validate (zod aux frontières) | `schema.ts`, `route.ts` | Tout ce qui entre (visiteur, API) est vérifié une seule fois. À l'intérieur de l'application, les types sont fiables. |
 | Le type brut ne sort jamais de l'adaptateur | `mapper.ts` | Le mot de passe est retiré à cet endroit et ne peut donc pas être affiché par erreur plus loin. Seule exception : la console `/dev`, absente du build de production (D18). |
 | Domaine pur | `domain/` | Le domaine n'utilise pas `fetch` et peut être testé avec Vitest sans réseau. |
-| Défaillance partielle | `search-service.ts` | Avec `Promise.allSettled` et un timeout, les autres sources répondent même si l'un d'eux est en panne. |
+| Défaillance partielle | `investigation.ts` | Avec `Promise.allSettled` et un délai par appel, les autres sources répondent même si l'une d'elles est en panne. |
 | `server-only` | tout `src/server/` | Le build échoue si du code serveur (et donc une clé) se retrouve dans le bundle client. |
 | Tests sur fixtures fictives | `tests/fixtures/` | Aucune vraie donnée de fuite n'est versionnée. |
 

@@ -54,7 +54,7 @@ src/
 │   │   └── dev-console.tsx
 │   └── api/dev/search/route.ts
 ├── server/
-│   ├── search-service.ts
+│   ├── investigation.ts
 │   ├── dev/
 │   │   ├── inspect-sources.ts
 │   │   └── field-paths.ts
@@ -67,6 +67,7 @@ src/
 │   │   ├── pseudo.ts
 │   │   ├── confidence.ts
 │   │   ├── finding.ts
+│   │   ├── evidence.ts
 │   │   └── source.ts
 │   └── providers/
 │       ├── registry.ts
@@ -105,9 +106,11 @@ src/
   liste les sources actives (`SOURCES`) ; une source qui a besoin d'une clé
   n'y est ajoutée que si la clé est configurée. Le chemin des données dans une
   source est décrit dans [Flux des données](05-flux-des-donnees.md).
-- `server/search-service.ts` donne chaque identifiant aux sources qui
-  acceptent son type, en parallèle, et garde les résultats de celles qui
-  répondent, même si une autre est en panne.
+- `server/investigation.ts` est le moteur d'enquête : il donne chaque
+  identifiant aux sources qui acceptent son type, en parallèle, calcule la
+  confiance, crée les constats, relance les nouveaux identifiants fiables et
+  envoie chaque résultat dès qu'il est trouvé. Une source en panne n'arrête
+  pas l'enquête.
 - `tests/fixtures/` contient des réponses d'API inventées pour les tests.
 - `tests/server-only-stub.ts` est un fichier vide. Dans les tests, il remplace
   le paquet `server-only`, qui lève une erreur hors du serveur Next.js.

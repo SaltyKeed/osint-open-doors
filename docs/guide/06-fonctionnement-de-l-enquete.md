@@ -5,11 +5,10 @@ cherche, comment il décide qu'une information appartient bien au visiteur et
 quand il relance une recherche. Le détail complet est dans
 [CADRAGE.md](../CADRAGE.md), les sources dans [SOURCES.md](../SOURCES.md).
 
-État au 2026-11-18 : le modèle de données est en place dans
-`src/server/domain/` (issue #63) et XposedOrNot est branché dessus (#64).
-`/api/search` donne chaque identifiant saisi aux sources qui l'acceptent,
-sans rebond. Le moteur qui enchaîne les recherches et calcule la confiance
-arrive avec l'issue #65.
+État au 2026-11-18 : le modèle de données (issue #63), XposedOrNot sur le
+port `Source` (#64) et le moteur d'enquête (#65) sont en place. Seule
+XposedOrNot est branchée pour l'instant : les rebonds apparaîtront avec les
+sources suivantes (#66).
 
 ## L'idée en une phrase
 
@@ -123,7 +122,9 @@ Un pseudo court ou sans lettre (`lea`, `123456`) est porté par beaucoup de
 gens : un compte qui le porte n'est pas forcément celui du visiteur. Le
 domaine vérifie seulement deux choses : au moins 6 caractères et au moins une
 lettre (`pseudo.ts`). Un mot courant comme `thomas` passe ce premier filtre ;
-le moteur l'attrapera parce qu'il existe sur un nombre anormal de sites (#65).
+le moteur l'attrape parce qu'il existe sur trop de sites : une source de
+pseudos dit combien de sites elle teste, et un pseudo présent sur plus de
+10 % d'entre eux n'est pas rare (`evidence.ts`).
 
 ## Les rebonds
 
@@ -201,6 +202,25 @@ types de données exposées, le nombre de comptes et si la fuite est vérifiée.
 Ce sont des métadonnées : « un mot de passe a fuité », jamais le mot de passe.
 Quand deux sources décrivent la même fuite, les détails sont fusionnés.
 
+## En direct
+
+Le moteur n'attend pas la fin de l'enquête pour répondre. Il envoie un
+message au navigateur à chaque étape :
+
+| Message | Quand |
+| --- | --- |
+| `finding` | Un constat « confirmé » ou « probable » est trouvé, ou complété (nouvelle source, chemin plus court) |
+| `lead` | Un nouvel identifiant part dans la file de recherche |
+| `source-failed` | Une source est en panne (`error`) ou n'a plus de quota (`quota`) |
+| `done` | L'enquête est finie ; donne le nombre de fiches « possible » et « homonyme probable », jamais leur contenu |
+
+Une source sans quota n'est plus appelée jusqu'à la fin. Une source en panne
+est réessayée pour l'identifiant suivant. Chaque appel a 8 secondes.
+
+Limite connue : si un identifiant n'est confirmé qu'en cours d'enquête, les
+fiches déjà traitées ne sont pas recalculées. Elles gardent le niveau qu'elles
+avaient au moment où elles sont arrivées.
+
 ## Où est le code
 
 | Fichier | Rôle |
@@ -210,6 +230,8 @@ Quand deux sources décrivent la même fuite, les détails sont fusionnés.
 | `src/server/domain/pseudo.ts` | Règle du pseudo rare |
 | `src/server/domain/confidence.ts` | Niveaux de confiance et règle de rebond |
 | `src/server/domain/finding.ts` | Constats et fusion des doublons |
-| `src/server/domain/source.ts` | Contrat commun à toutes les sources |
+| `src/server/domain/source.ts` | Contrat commun à toutes les sources, erreur de quota |
+| `src/server/domain/evidence.ts` | Indices cohérents, rattachement, pseudo courant |
+| `src/server/investigation.ts` | Le moteur : file, rebonds, événements envoyés en direct |
 
 Chaque fichier a ses tests à côté (`*.test.ts`), avec des valeurs inventées.
