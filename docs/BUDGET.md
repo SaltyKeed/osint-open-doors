@@ -37,6 +37,21 @@ des fuites que les autres n'ont pas.
 | Brave Search API | Second moteur de recherche | 5 USD par 1000 requêtes, 5 USD offerts par mois | Page officielle |
 | Tavily (au-delà du gratuit) | Moteur de recherche principal | 0.008 USD par crédit ; 1000 crédits gratuits par mois ; gratuit pour les étudiants sur demande | Page officielle |
 
+## Service payant à l'essai (D26)
+
+GPT-6.2 Astra lit les pages trouvées par Tavily (`SOURCES.md`, section 4). Il
+n'est pas compris dans le total ci-dessous : il faut d'abord mesurer sur le
+prototype combien de champs il ajoute.
+
+| Service | Ce qu'il apporte | Prix | Source du prix |
+| --- | --- | --- | --- |
+| OpenAI API (GPT-6.2 Astra) | Ville, école, employeur, club et loisirs lus dans les pages web | 8 USD par million de tokens en entrée, 40 USD en sortie | Page officielle, relevée le 2026-11-20 |
+
+Estimation : environ 11 000 tokens en entrée et 3 000 en sortie par
+identifiant cherché, soit environ 0.20 USD. Avec environ 6 identifiants par
+visiteur, cela fait environ 1.20 USD par visiteur, donc environ 240 USD pour
+200 visiteurs. Ce montant est à confirmer par une mesure sur le prototype.
+
 ## Hypothèses
 
 - Portes ouvertes en janvier 2027, environ 200 visiteurs (à confirmer avec

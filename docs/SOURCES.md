@@ -215,6 +215,23 @@ Nom » entre guillemets.
 Les listes de domaines du prototype (`sandbox-v1`,
 `src/server/providers/tavily/searches.ts`) sont reprises.
 
+### Lecture des pages par GPT-6.2 Astra (prototype, D26)
+
+Les pages trouvées par Tavily disent souvent la ville, l'école, l'employeur ou
+le club de la personne, mais en texte libre : une règle écrite à l'avance ne
+sait pas le lire. Si `OPENAI_API_KEY` est configurée, les 15 premières pages
+d'un identifiant sont envoyées en un seul appel à GPT-6.2 Astra.
+
+| Point | Règle |
+| --- | --- |
+| Appel | `POST https://api.openai.com/v1/responses`, modèle `gpt-6.2-astra`, `store: false` (OpenAI ne garde pas la requête) |
+| Champs remplis | A2 A4 C1 C2 C3 D1 E1 E3 G1 G2, et aucun autre (schéma JSON strict) |
+| Preuve | Chaque information vient avec un extrait de la page. Elle est gardée seulement si l'extrait est vraiment écrit sur la page et contient la valeur. |
+| Rebond | Jamais : une information lue par l'IA remplit la fiche, mais ne relance pas l'enquête. |
+| Affichage | L'extrait et la mention « Lu par GPT-6.2 Astra » sont affichés avec la valeur. |
+| Échec | Refus du modèle, quota ou délai dépassé : les pages Tavily sont affichées sans lecture. |
+| Prix | 8 USD par million de tokens en entrée, 40 USD en sortie (`BUDGET.md`) |
+
 ## 5. Annuaires et registres suisses
 
 | Source | Appel | Entrée | Renvoie | Remplit | Rebonds | Accès | Statut |

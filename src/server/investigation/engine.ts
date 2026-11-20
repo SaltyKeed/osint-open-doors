@@ -44,7 +44,7 @@ export interface InvestigateOptions {
 const INPUT_FIELD: Partial<Record<IdentifierType, FieldCode>> = { EMAIL: "B1", TEL: "B2", PSEUDO: "F1", NOM: "A1" };
 
 async function runSafely(source: Source, lead: Lead, options: InvestigateOptions): Promise<SourceResult> {
-  const timeout = AbortSignal.timeout(options.timeoutMs ?? 15_000);
+  const timeout = AbortSignal.timeout(source.timeoutMs ?? options.timeoutMs ?? 15_000);
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
   try {
     return await source.run(lead.identifier, { signal, env: options.env });

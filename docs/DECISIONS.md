@@ -748,6 +748,43 @@ request. Les invariants qui restent : zéro stockage, aucun log de données
 personnelles, recherche en `POST`, clés API dans `src/server/`, liste blanche
 de champs dans les adaptateurs.
 
+## D26. Lecture des pages web par GPT-6.2 Astra (prototype)
+
+Date : 2026-11-20
+
+Branche `sandbox` seulement. T1 refuse l'IA dans `main`, mais prévoit qu'une
+IA soit essayée sur un prototype qui fonctionne, pour mesurer ce qu'elle
+apporte. Les pages trouvées par Tavily disent souvent la ville, l'école,
+l'employeur ou le club de la personne, mais en texte libre : le prototype ne
+garde que le titre et l'adresse de la page (champ I1).
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Règles écrites à l'avance (mots-clés, expressions régulières) | Gratuit, testable, sans IA. | Ne comprend pas une phrase comme « elle joue au VBC Colombier ». |
+| **GPT-6.2 Astra avec extrait vérifié (retenu)** | Lit le texte libre ; chaque information a une preuve vérifiable. | Payant ; les pages partent chez OpenAI ; le modèle peut refuser une demande liée à la cybersécurité. |
+| Un modèle plus petit (GPT-6.2 Sol, Claude Haiku) | Moins cher. | Pas testé ; Enzo a choisi Astra pour ce premier essai. |
+
+Règles :
+
+- La lecture est active seulement si `OPENAI_API_KEY` est configurée. Sans clé,
+  la source Tavily marche comme avant.
+- Le modèle répond avec un schéma JSON strict, limité aux champs A2, A4, C1,
+  C2, C3, D1, E1, E3, G1 et G2. Jamais les proches, la santé, la religion ou
+  les opinions.
+- Chaque information vient avec un extrait copié de la page. Le code garde
+  l'information seulement si l'extrait est sur la page et contient la valeur.
+- Une information lue par l'IA ne crée jamais d'identifiant : elle ne relance
+  pas l'enquête.
+- `store: false` : OpenAI ne garde pas la requête. Les pages partent quand même
+  aux États-Unis ; la case de consentement doit le dire avant un essai avec un
+  volontaire.
+- Aucune clé n'est achetée avant l'acceptation du budget par l'enseignant
+  (`BUDGET.md`).
+
+À mesurer sur le prototype : nombre de champs ajoutés par enquête, taux de
+refus du modèle, coût réel par visiteur. Le résultat sera proposé à Tiago pour
+une décision T.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -771,6 +808,7 @@ de champs dans les adaptateurs.
 | Protection de `main` | Ruleset, relecture des pull requests d'Enzo par Tiago (D14) | |
 | Fuites publiques | Par des services qui les indexent (D12) ; gratuits d'abord (T1) | |
 | Plan d'action | Règles écrites à l'avance (T1) | IA à tester plus tard |
+| Lecture des pages web | GPT-6.2 Astra avec extrait vérifié, prototype seulement (D26) | Règles écrites à l'avance |
 | Sources | Catalogue `SOURCES.md` ; moteurs Tavily et Brave (D20) | Tavily seul |
 | Fuites | LeakCheck Pro, Leak-Lookup, Snusbase, HackCheck, HIBP Core, LeakRadar Enterprise, Hudson Rock, catalogue HIBP (D24) | Sans Leak-Lookup s'il refuse le devis |
 | Moteur d'enquête | Port `Source`, streaming SSE, une enquête à la fois, règles de confiance fixes (D25) | Score pondéré, interrogation régulière |

@@ -36,6 +36,8 @@ export interface Source {
   accepts: readonly IdentifierType[];
   /** Environment variables needed; the source is skipped when one is missing (T1). */
   requiredEnv: readonly string[];
+  /** Time allowed for one call, when the engine's default (15 seconds) is too short. */
+  timeoutMs?: number;
   run(identifier: Identifier, context: SourceContext): Promise<SourceResult>;
 }
 

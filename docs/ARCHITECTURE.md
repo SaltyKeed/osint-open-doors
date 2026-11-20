@@ -21,7 +21,7 @@ ensuite un plan d'action concret.
 | Invariant | Mise en œuvre |
 | --- | --- |
 | Liste blanche de champs | Les mappers des sources construisent les champs de la fiche de vie (`CADRAGE.md`, section 5). Le type brut ne sort jamais de l'adaptateur. Les colonnes inconnues d'une fuite sont gardées sous « autres données de la fuite », masquées par défaut (D25). |
-| Pas d'IA | Aucune donnée trouvée n'est envoyée à une IA ; le plan d'action est construit par des règles écrites à l'avance (T1). |
+| Pas d'IA | Aucune donnée trouvée n'est envoyée à une IA ; le plan d'action est construit par des règles écrites à l'avance (T1). Seule exception, sur le prototype `sandbox` : si `OPENAI_API_KEY` est configurée, GPT-6.2 Astra lit les pages Tavily, sans rebond et avec un extrait vérifié comme preuve (D26). |
 | Niveaux de confiance (homonymes) | Chaque information est « confirmé », « probable », « possible » ou « homonyme probable » (`CADRAGE.md`, section 7). Seuls les deux premiers niveaux sont détaillés et servent au rebond ; les autres donnent un total. Un nom seul ne sert jamais de rebond. |
 | Valeurs masquées par défaut | Toute valeur, mots de passe compris, est masquée (`+41 79 ••• •• 42`) et visible avec un bouton « œil » (D19). |
 | Entourage sans enquête | Les proches sont affichés, mais leurs identifiants ne sont jamais renvoyés dans la boucle d'enquête. |
