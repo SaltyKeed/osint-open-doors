@@ -222,13 +222,14 @@ Statuts :
 | `TEL` | Annuaire search.ch | A1 B3 C1 | `NOM` | Gratuit, quota | Prototype |
 | `TEL` | Analyse locale du numéro | pays, type de ligne, opérateur d'origine | aucun | Local | Prototype |
 | `TEL` | Moteur de recherche (plusieurs formats) : Tavily | I1 | aucun | Clé gratuite | En place (T5) |
-| `PSEUDO` | Base de sites (WhatsMyName figé dans le dépôt, 569 sites ; Maigret plus tard) | F2 | aucun | Gratuit | En place (WhatsMyName, T7, T9) |
+| `PSEUDO` | Base de sites (WhatsMyName figé dans le dépôt, 569 sites ; Maigret plus tard) | A1 A5 F2 | aucun | Gratuit | En place (WhatsMyName, T7, T9, T10) |
 | `PSEUDO` | Fiches de fuites (`SOURCES.md`, section 1.1) | A1 B1 B2 B3 H1 H2 H3 | `EMAIL` `TEL` | Payant | Retenu |
 | `NOM` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | A2 B1 B2 B3 H1 H2 | `EMAIL` `TEL` (seulement si la fiche est « confirmé ») | Payant | Retenu |
 | `IP` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | H2 | `EMAIL` | Payant | Retenu |
 | `PSEUDO` | Moteur de recherche | I1 | `PROFIL` | Clé gratuite | Pas pour l'instant : aucun champ à comparer (T5) |
 | `PSEUDO` | Infostealers : Hudson Rock | H5 | aucun | Gratuit | En place |
 | `PSEUDO` | GitHub (compte du même nom) | A1 A5 B1 C1 E1 F1 F2 F3 | `PSEUDO` `EMAIL` `DOMAINE` | Gratuit | En place |
+| `PROFIL` | Page de profil d'un compte confirmé (balises `og:`, domaines de WhatsMyName seulement) | A1 A5 | `PROFIL` `EMAIL` (de la bio, « probable » au plus) | Gratuit | En place (T10) |
 | `PROFIL` | API publique du site (GitHub, GitLab, Mastodon, YouTube, Twitch, Steam, Chess.com...) | A1 A5 C1 E1 F2 G2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Partiel |
 | `PROFIL` | Listes publiques d'abonnés, d'amis et mentions | J1 | aucun (identifiants de tiers, jamais relancés) | Gratuit | Nouveau |
 | `PROFIL` | Wayback Machine | I2 | `PROFIL` | Gratuit | Prototype |
@@ -319,7 +320,7 @@ panne ne saute que l'appel en cours.
 | --- | --- | --- | --- |
 | Confirmé | La fiche contient aussi un `EMAIL`, un `TEL` ou un `PROFIL` déjà confirmé, ou elle a été trouvée par un identifiant unique confirmé (`EMAIL`, `TEL`, `PROFIL`, `DOMAINE`) | Oui | Oui |
 | Probable | `PSEUDO` rare et au moins un indice cohérent : même nom (A1), même date de naissance (A2) ou même ville (C1) qu'un constat confirmé | Oui, marqué « probable » | Oui, sauf si l'identifiant qui l'a trouvé était lui-même « probable » |
-| À confirmer | `PSEUDO` rare et pas courant, sans indice cohérent, compte trouvé par une source à liste de sites (seulement son adresse) | À la fin, pour confirmation par le visiteur | Non (oui une fois confirmé, T9) |
+| À confirmer | `PSEUDO` rare et pas courant, sans indice cohérent, compte trouvé par une source à liste de sites (son adresse, avec nom affiché et photo comme détails) | À la fin, pour confirmation par le visiteur | Non (oui une fois confirmé, T9) |
 | Possible | `PSEUDO` court ou courant, `IP`, `ORGA`, ou `NOM` avec un indice | Total seulement | Non |
 | Homonyme probable | `NOM` seul | Total seulement | Non |
 
@@ -365,6 +366,10 @@ Règles :
   de recherche.
 - Un indice cohérent est une valeur de A1, A2 ou C1 identique à celle d'un
   constat confirmé ; le nom saisi par le visiteur compte comme A1 confirmé.
+  Pour le nom (A1), « identique » veut dire : chaque mot du nom confirmé
+  (prénom et nom) est un mot entier du nom affiché, sans tenir compte des
+  majuscules ni des accents. « Léa Martin (@lmartin_06) • Instagram »
+  correspond à « Lea Martin », « Léa Martinez » non (T10).
   La photo (A5) sera ajoutée avec une source qui donne une empreinte
   comparable (T4).
 - Une fiche est rattachée au visiteur si ses identifiants contiennent un
@@ -377,13 +382,19 @@ Règles :
   existe, il est courant (valeur de départ, T4). Pas de
   liste de prénoms ou de mots courants : elle sera ajoutée seulement si les
   essais sur volontaires montrent des homonymes (T2).
-- Un compte trouvé par une liste de sites (WhatsMyName) n'a que son adresse,
-  donc aucun indice cohérent. Il est « à confirmer » si le pseudo cherché est
-  rare et pas courant : le visiteur dit à la fin s'il est à lui (T9, qui
-  remplace l'exception de T7). Il ne relance pas de recherche tant qu'il n'est
-  pas confirmé. Un profil complet trouvé par pseudo sur une autre source
+- Un compte trouvé par une liste de sites (WhatsMyName) a son adresse, et le
+  nom affiché et la photo de sa page quand elle les publie (T10). Si le nom
+  affiché correspond au nom confirmé, c'est un indice cohérent. Sans indice,
+  il est « à confirmer » si le pseudo cherché est rare et pas courant : le
+  visiteur dit à la fin s'il est à lui (T9, qui remplace l'exception de T7).
+  Une fiche « à confirmer » n'envoie que son adresse (F2), avec le nom et la
+  photo comme détails de cette adresse, jamais comme constats séparés. Il ne
+  relance pas de recherche tant qu'il n'est pas confirmé. Un profil complet trouvé par pseudo sur une autre source
   (GitHub, Hudson Rock) reste « possible » sans indice : les données d'un
   inconnu ne sont jamais affichées.
+- Les identifiants cités dans le texte libre d'une page (la bio d'un compte
+  confirmé) sont au plus « probable », même si la page est celle d'un compte
+  confirmé : une bio cite aussi d'autres personnes (T10).
 - Un site qui ne répond pas clairement donne « inconnu », jamais « trouvé ».
 - Chaque constat garde son chemin, pour que l'écran explique « trouvé grâce
   à… ».

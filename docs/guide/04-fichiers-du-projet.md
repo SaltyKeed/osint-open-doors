@@ -71,11 +71,14 @@ src/
 │   │   ├── confidence.ts
 │   │   ├── finding.ts
 │   │   ├── evidence.ts
+│   │   ├── name-match.ts
 │   │   ├── follow-up.ts
 │   │   └── source.ts
 │   └── providers/
 │       ├── registry.ts
 │       ├── http.ts
+│       ├── og-tags.ts
+│       ├── public-ip.ts
 │       ├── xposedornot/
 │       │   ├── index.ts
 │       │   ├── client.ts
@@ -89,6 +92,8 @@ src/
 │       │   └── (mêmes fichiers)
 │       ├── tavily/
 │       │   └── (mêmes fichiers)
+│       ├── profile-page/
+│       │   └── index.ts
 │       └── whatsmyname/
 │           ├── index.ts
 │           ├── check.ts
@@ -132,7 +137,14 @@ src/
   valeur.
 - `server/providers/whatsmyname/wmn-data.json` est une copie figée de la liste
   de sites de WhatsMyName (projet archivé, licence CC BY-SA 4.0). `check.ts`
-  vérifie un site ; `index.ts` les vérifie tous, 30 à la fois.
+  vérifie un site et lit les balises `og:` de la page d'un compte trouvé ; `index.ts` les vérifie tous, 30 à la fois et liste leurs domaines (`WMN_HOSTS`).
+- `server/providers/profile-page/index.ts` lit la page d'un compte confirmé. Il
+  n'ouvre que les domaines de WhatsMyName qui se résolvent vers des adresses
+  publiques, et ne suit que trois redirections, chacune revérifiée.
+- `server/providers/public-ip.ts` dit si une adresse IP est publique (`isPublicIp`).
+- `server/providers/og-tags.ts` lit les balises `og:title`, `og:image` et
+  `og:description` d'une page HTML, extrait le nom affiché d'un titre et lit
+  au plus un nombre d'octets d'une réponse.
 - `server/providers/http.ts` fait l'appel HTTP commun à toutes les sources :
   `null` sur une réponse 404, `SourceQuotaError` sur une 429, et des erreurs au
   message fixe, sans la saisie du visiteur.

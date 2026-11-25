@@ -6,13 +6,14 @@ quand il relance une recherche. Le détail complet est dans
 [CADRAGE.md](../CADRAGE.md), les sources dans [SOURCES.md](../SOURCES.md).
 
 État au 2026-11-18 : le modèle de données (issue #63), XposedOrNot sur le
-port `Source` (#64) et le moteur d'enquête (#65) sont en place. Six
+port `Source` (#64) et le moteur d'enquête (#65) sont en place. Sept
 sources sont branchées : XposedOrNot, Gravatar, Hudson Rock, GitHub, la
-recherche web Tavily (avec sa clé) et WhatsMyName. Les pseudos trouvés (par
+recherche web Tavily (avec sa clé), WhatsMyName et la page de profil. Les pseudos trouvés (par
 Gravatar ou GitHub) sont cherchés chez Hudson Rock, GitHub et WhatsMyName ;
 l'email public et le site d'un compte GitHub repartent aussi dans la file.
-Les comptes vérifiés (`PROFIL`) et les domaines seront cherchés quand des
-sources pour ces types seront branchées.
+Les comptes que le visiteur confirme (`PROFIL`) sont lus par la source page de
+profil (T10) ; les domaines seront cherchés quand une source pour ce type sera
+branchée.
 
 ## L'idée en une phrase
 
@@ -93,7 +94,7 @@ confiance.
 | Niveau | Quand | Affiché en détail | Relance une recherche |
 | --- | --- | --- | --- |
 | Confirmé | La fiche contient aussi un email, un téléphone ou un profil déjà confirmé, ou elle a été trouvée avec un email, un téléphone, un profil ou un domaine confirmé | Oui | Oui |
-| Probable | Trouvé par un pseudo rare, avec au moins un indice cohérent (même ville, même photo, même année) | Oui, marqué « probable » | Oui, une seule fois |
+| Probable | Trouvé par un pseudo rare, avec au moins un indice cohérent (même ville, même nom affiché, même année) | Oui, marqué « probable » | Oui, une seule fois |
 | À confirmer | Compte trouvé par un pseudo rare et pas courant sur une liste de sites (WhatsMyName), sans indice cohérent | À la fin, pour que le visiteur dise s'il est à lui | Non (oui une fois confirmé) |
 | Possible | Trouvé par un pseudo court ou courant, une IP, une organisation, ou un nom avec un indice | Non, compté dans un total | Non |
 | Homonyme probable | Trouvé par un nom seul | Non, compté dans un total | Non |
@@ -125,10 +126,16 @@ Sauf dans le cas « confirmé », un résultat n'est jamais plus sûr que
 l'identifiant qui l'a trouvé : ce qu'un identifiant « probable » trouve est au
 mieux « probable ». Le niveau « à confirmer » se place entre « probable » et
 « possible » : un pseudo rare ne dit pas que ce compte-là est celui du
-visiteur, alors c'est lui qui répond (T9). Seulement pour un compte dont on
-ne connaît que l'adresse : un profil complet (nom, email, ville) trouvé par
+visiteur, alors c'est lui qui répond (T9). Seulement pour un compte dont
+on ne garde que l'adresse (avec le nom affiché et la photo comme détails de
+cette adresse, pour aider le visiteur à reconnaître le compte) : un profil complet (nom, email, ville) trouvé par
 pseudo sur GitHub ou Hudson Rock reste « possible », pour ne jamais montrer
 les données d'un inconnu.
+
+Un nom affiché sur un compte est un indice quand chaque mot du nom confirmé
+est un mot entier du nom affiché, sans tenir compte des majuscules ni des
+accents (`name-match.ts`). « Léa Martin (@lmartin_06) • Instagram »
+correspond à « Lea Martin » ; « Léa Martinez » ne correspond pas.
 
 ## Le pseudo rare
 
@@ -140,8 +147,10 @@ le moteur l'attrape parce qu'il existe sur trop de sites : une source de
 pseudos dit combien de sites elle teste, et un pseudo présent sur plus de
 10 % d'entre eux n'est pas rare (`evidence.ts`).
 
-WhatsMyName vérifie un pseudo sur 569 sites. Un compte trouvé n'a que son
-adresse, sans rien à comparer. Si le pseudo est rare et pas courant, il est
+WhatsMyName vérifie un pseudo sur 569 sites. Un compte trouvé a son
+adresse, et le nom affiché et la photo de sa page quand elle les publie
+(balises `og:title` et `og:image`, T10) : le nom affiché peut servir
+d'indice (voir plus haut). Si le pseudo est rare et pas courant, il est
 « à confirmer » : il est envoyé au navigateur à la fin de l'enquête, mais ne
 fait pas partie de la fiche tant que le visiteur ne le confirme pas (T9). Par
 exemple, `octocat` existe sur 105 sites de la liste (18 %) : c'est un pseudo
@@ -266,12 +275,18 @@ requêtes : le navigateur renvoie donc la saisie de départ et deux listes.
 | Liste | Contenu | Limite |
 | --- | --- | --- |
 | `confirmedProfiles` | Adresses des comptes cochés, traitées comme une saisie « confirmé » | 60 |
-| `searched` | Identifiants déjà cherchés au premier tour (la saisie et tous les rebonds) | 300 |
+| `searched` | Identifiants déjà cherchés au premier tour (la saisie et tous les rebonds), chacun avec `confirmed: true` si le premier tour l'a confirmé | 300 |
 
 Le moteur ne redonne jamais aux sources un identifiant de `searched`, même
 quand une source le trouve de nouveau : les 569 sites de WhatsMyName et le
 quota de Tavily ne servent pas deux fois pour la même valeur. Un compte
-confirmé ne relance rien tant qu'aucune source n'accepte `PROFIL`. Le serveur
+confirmé est lu par la source page de profil (T10) : son nom, sa photo et les
+liens de sa bio sont des indices. Les adresses et emails de la bio sont
+« probable » au plus, jamais « confirmé » : une bio cite souvent une autre
+personne. Ils relancent l'enquête une seule fois. Les identifiants marqués `confirmed` comptent comme confirmés pour
+le moteur (`alreadyConfirmed`), sans être cherchés de nouveau : une fiche du
+deuxième tour qui contient un email trouvé et confirmé au premier tour est
+reconnue comme confirmée. Le serveur
 refuse une liste trop longue ou une valeur invalide avec une erreur 400 au
 message fixe, sans répéter la saisie (`follow-up.ts`). Un compte décoché est
 retiré de l'écran, et le visiteur certifie que les comptes cochés sont à lui
@@ -286,7 +301,8 @@ retiré de l'écran, et le visiteur certifie que les comptes cochés sont à lui
 | `src/server/domain/pseudo.ts` | Règle du pseudo rare |
 | `src/server/domain/confidence.ts` | Niveaux de confiance et règle de rebond |
 | `src/server/domain/finding.ts` | Constats et fusion des doublons |
-| `src/server/domain/follow-up.ts` | Schéma du deuxième tour : comptes confirmés et identifiants déjà cherchés |
+| `src/server/domain/follow-up.ts` | Schéma du deuxième tour : comptes confirmés, identifiants déjà cherchés et déjà confirmés |
+| `src/server/domain/name-match.ts` | Compare un nom affiché au nom confirmé |
 | `src/server/domain/source.ts` | Contrat commun à toutes les sources, erreur de quota |
 | `src/server/domain/evidence.ts` | Indices cohérents, rattachement, pseudo courant |
 | `src/server/investigation.ts` | Le moteur : file, rebonds, événements envoyés en direct |

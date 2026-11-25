@@ -14,6 +14,8 @@ export interface FollowUp {
   confirmedProfiles: Identifier[];
   /** Identifiers the first round already searched. */
   searched: Identifier[];
+  /** Among them, the ones the first round confirmed (T10): they count as confirmed, without a new search. */
+  alreadyConfirmed: Identifier[];
 }
 
 const confirmedProfilesSchema = z
@@ -32,20 +34,33 @@ const confirmedProfilesSchema = z
   });
 
 const searchedSchema = z
-  .array(z.object({ type: z.enum(IDENTIFIER_TYPES), value: z.string().max(MAX_VALUE_LENGTH) }))
+  .array(
+    z.object({
+      type: z.enum(IDENTIFIER_TYPES),
+      value: z.string().max(MAX_VALUE_LENGTH),
+      confirmed: z.boolean().optional(),
+    }),
+  )
   .max(MAX_SEARCHED)
   .default([])
-  .transform((items, ctx): Identifier[] => {
-    const identifiers: Identifier[] = [];
+  .transform((items, ctx) => {
+    const searched: Identifier[] = [];
+    const alreadyConfirmed: Identifier[] = [];
     for (const item of items) {
       const identifier = normalizeIdentifier(item.type, item.value);
-      if (identifier === null) ctx.addIssue({ code: "custom", message: "Invalid identifier" });
-      else identifiers.push(identifier);
+      if (identifier === null) {
+        ctx.addIssue({ code: "custom", message: "Invalid identifier" });
+        continue;
+      }
+      searched.push(identifier);
+      if (item.confirmed) alreadyConfirmed.push(identifier);
     }
-    return identifiers;
+    return { searched, alreadyConfirmed };
   });
 
-export const followUpSchema = z.object({
-  confirmedProfiles: confirmedProfilesSchema,
-  searched: searchedSchema,
-});
+export const followUpSchema = z
+  .object({
+    confirmedProfiles: confirmedProfilesSchema,
+    searched: searchedSchema,
+  })
+  .transform(({ confirmedProfiles, searched }): FollowUp => ({ confirmedProfiles, ...searched }));

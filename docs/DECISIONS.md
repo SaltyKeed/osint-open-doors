@@ -923,7 +923,7 @@ un profil trouvé, un nom ou une ville) n'est envoyé que comme « déjà
 cherché ». Une fiche du deuxième tour qui contient une de ces valeurs n'est
 donc pas reconnue comme confirmée. Sans effet tant qu'aucune source
 n'accepte `PROFIL` (le deuxième tour ne cherche rien) ; à régler avec la
-partie 3.
+partie 3. Réglée par T10.
 
 ### Ordre du travail
 
@@ -939,6 +939,131 @@ partie 3.
 
 Jusqu'à la partie 3, un compte confirmé ne relance rien : aucune source
 n'accepte encore `PROFIL`.
+
+## T10. Lecture des pages de profil
+
+Date : 2026-11-25
+
+Partie 3 de T9. Un compte trouvé par pseudo n'avait que son adresse : le
+visiteur devait le reconnaître sans rien voir, et un compte confirmé ne
+relançait rien, aucune source n'acceptant `PROFIL`. La plupart des sites
+publient dans leur page des balises standard pour les aperçus de liens :
+`og:title` (nom affiché), `og:image` (photo), `og:description` (bio). Elles se
+lisent de la même façon sur tous les sites. Cette décision remplace, dans T7,
+« la page du profil n'est jamais lue » : seules ces trois balises sont lues.
+
+### Où lire les balises
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Dans la page que WhatsMyName télécharge déjà, plus une source pour les comptes confirmés (retenu)** | Aucune requête de plus au premier tour ; le nom arrive avec la fiche, au moment où le moteur compare les indices. | Rien pour les sites que WhatsMyName vérifie par une API JSON, sauf une réponse oEmbed (nom seulement). |
+| Seulement une source « page de profil » | Un seul endroit qui lit les pages. | Il faudrait relancer les comptes « à confirmer » (contraire à T9), deux requêtes vers le même site, et le nom arriverait après le classement. |
+| Une API par plateforme | Données plus riches. | Écartée le 2026-11-18 : trop lourd, trop spécifique à certains publics. |
+
+Un module partagé lit les trois balises dans une page HTML. Les valeurs sont
+nettoyées (entités HTML décodées, espaces réduits) et tronquées : 200
+caractères pour le nom, 500 pour la bio. La photo est gardée seulement si
+c'est une adresse `https` dont le domaine est un nom (ni adresse IP, ni
+`localhost`) ; une adresse relative ou sans protocole est complétée avec
+l'adresse de la page. Le résultat passe par un schéma zod. Le champ A1 garde
+le nom, pas le titre entier de la page : la partie avant la première
+parenthèse ou le premier séparateur (` | `, ` • `, ` · `, ` - `, ` — `), pour
+que « Léa Martin (@lmartin_06) • Instagram » devienne « Léa Martin ».
+
+### Premier tour : WhatsMyName
+
+Quand un compte est trouvé et que la réponse est une page HTML, la fiche du
+compte reçoit, en plus de son adresse (F2) : le nom affiché (A1) et la photo
+(A5). La bio n'est pas un champ de la fiche (`CADRAGE.md`, section 5) : elle
+n'est pas gardée au premier tour. Le moteur compare le nom avec le nom saisi
+par le visiteur.
+
+Certains sites sont vérifiés par leur API oEmbed (oembed.com), qui répond en
+JSON et sans balise `og:`. C'est le cas de TikTok : sa page de profil est
+construite dans le navigateur et ne publie aucune balise `og:` (vérifié le
+2026-11-25 sur un compte public). Pour une réponse oEmbed, le nom affiché est
+lu dans `author_name` et la photo dans `thumbnail_url`, avec les mêmes règles
+que les balises. TikTok donne ainsi le nom dès le premier tour, mais pas de
+photo.
+
+### Nom affiché comme indice
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Le nom affiché est un indice cohérent (retenu)** | Un compte au bon nom est affiché sans question : moins de clics pour le visiteur. | Un homonyme qui a le même pseudo et le même nom passerait, ce qui est rare. |
+| Le nom aide seulement le visiteur | Aucun risque d'erreur automatique. | Tous les comptes passent par la confirmation. |
+
+Un nom affiché correspond au nom confirmé quand chaque mot du nom confirmé
+(prénom et nom) apparaît comme un mot entier dans le nom affiché, sans tenir
+compte des majuscules ni des accents. « Léa Martin (@lmartin_06) •
+Instagram » correspond à « Lea Martin » ; « Léa Martinez » ne correspond pas.
+La règle vaut pour tout champ A1 comparé par le moteur, pas seulement pour
+WhatsMyName. Un nom qui ne correspond pas ne fait rien baisser : beaucoup de
+profils affichent un pseudo, le compte reste « à confirmer ».
+
+La carte « c'est toi ? » montre le nom affiché et la photo du compte. Ce
+peuvent être ceux d'une autre personne : comme l'adresse (T9), ils sont
+affichés seulement pour la confirmation, avec l'élève présent, et effacés à
+la fin. La photo est chargée directement par le navigateur depuis le site,
+sans envoyer l'adresse de la page (`referrerPolicy="no-referrer"`).
+
+### Deuxième tour : source « page de profil »
+
+Nouvelle source, qui accepte `PROFIL`. Pour un compte confirmé, elle ouvre la
+page du profil et lit les mêmes balises. Dans la bio, elle cherche les
+adresses `http` ou `https` et les emails : ils deviennent des identifiants
+(`PROFIL`, `EMAIL`). Ils sont « probable » et non « confirmé » : une bio cite
+souvent une autre personne (l'email d'une agence, le compte d'un ami), et le
+visiteur n'a confirmé que le compte, pas ce qui est écrit dedans. Le moteur
+plafonne à « probable » tout ce qui vient d'un enregistrement marqué
+`mentioned` ; ce que ces identifiants trouvent est au mieux « probable »
+aussi, et ils relancent une seule fois (T2).
+
+La source n'ouvre que des adresses dont le domaine est dans la liste des
+sites de WhatsMyName. Sans cette liste, le navigateur pourrait faire ouvrir au
+serveur n'importe quelle adresse, y compris une machine du réseau de l'école
+(attaque SSRF). Un domaine de la liste peut pourtant pointer vers une adresse
+privée, ou un site à sous-domaine par compte (`{compte}.exemple.ch`) en
+donner une : avant chaque appel, le nom est résolu et la source refuse si une
+seule des adresses obtenues est locale, privée, de lien local, de réseau
+partagé (CGNAT) ou une adresse IPv4 enveloppée dans une adresse IPv6. Un nom
+écrit comme une adresse IP, un port ou des identifiants dans l'adresse sont
+refusés. Limite connue : le nom est résolu une fois par la source et une
+fois par `fetch`, donc un changement de réponse DNS entre les deux
+(DNS rebinding) reste possible ; l'éviter demande de fixer l'adresse avec un
+`dispatcher` undici propre, à faire si la source est un jour exposée à un DNS
+hostile. L'adresse `http` reste permise : certains sites de la liste n'ont pas
+de `https`.
+
+Les redirections sont suivies à la main, trois au plus (barre oblique finale,
+passage de `http` à `https`, ajout de `www`). Chaque étape repasse toutes les
+vérifications ci-dessus ; si l'une échoue, ou à la quatrième redirection, la
+source ne donne rien. La page est lue sur 512 Ko au plus. Délai : 8 secondes
+(T4) pour l'ensemble.
+
+Les rebonds depuis la bio restent modestes : `og:description` donne le texte
+de la bio, pas toujours ses liens.
+
+### Deuxième tour : ce que le premier a confirmé
+
+Limite de T9 réglée : chaque identifiant déjà cherché peut être marqué
+« confirmé » par le navigateur (confiance reçue dans l'événement `lead`).
+Le moteur les ajoute aux identifiants confirmés sans les rechercher : une
+fiche du deuxième tour qui contient un email trouvé et confirmé au premier
+tour est reconnue comme confirmée.
+
+### Hors de cette décision
+
+- Comparer les photos entre elles (même photo sur deux comptes) : plus tard.
+- Une requête de plus vers la page du profil pour les sites que WhatsMyName
+  vérifie par une API JSON : plus tard, si les essais montrent que trop de
+  cartes n'ont pas de photo.
+- Lire autre chose que les trois balises (liste d'abonnés, publications).
+- Lire les données propres à un site dans sa page (le bloc JSON de TikTok
+  contient le nom et la photo) : écarté pour l'instant, ce serait du code par
+  plateforme, qui casse quand le site change sa page.
+- Se faire passer pour le robot d'aperçu de liens d'un autre service pour
+  obtenir les balises : écarté, ce n'est pas acceptable.
 
 ## Récapitulatif
 
@@ -972,3 +1097,4 @@ n'accepte encore `PROFIL`.
 | Pseudo sur une liste de sites | WhatsMyName figé dans le dépôt, 569 sites, comptes « à confirmer » par le visiteur (T9, remplace « probable » de T7) | Une source par plateforme |
 | Saisie | Formulaire, un champ par type, pseudo ajouté, validation par le serveur (T8) | Barre unique |
 | Comptes trouvés par pseudo | Niveau « à confirmer », confirmés par le visiteur à la fin, deuxième tour (T9, remplace l'exception de T7) | Probable si le pseudo est rare |
+| Pages de profil | Balises `og:` lues dans la page de WhatsMyName, nom affiché comme indice, source « page de profil » pour les comptes confirmés, domaines de WhatsMyName seulement (T10) | Une API par plateforme |

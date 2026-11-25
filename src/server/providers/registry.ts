@@ -4,6 +4,7 @@ import { loadEnv } from "@/server/env";
 import { github } from "./github";
 import { gravatar } from "./gravatar";
 import { hudsonRock } from "./hudsonrock";
+import { profilePage } from "./profile-page";
 import { tavily } from "./tavily";
 import { whatsMyName } from "./whatsmyname";
 import { xposedOrNot } from "./xposedornot";
@@ -18,5 +19,6 @@ export const SOURCES: readonly Source[] = [
   hudsonRock,
   github(env.GITHUB_TOKEN),
   whatsMyName,
+  profilePage,
   ...(env.TAVILY_API_KEY ? [tavily(env.TAVILY_API_KEY)] : []),
 ];

@@ -55,22 +55,40 @@ describe("checkSite", () => {
 
   it("finds an account when the code and the text both match", async () => {
     stub(200, '{"username": "lmartin_06"}');
-    expect(await checkSite(site, "lmartin_06", signal)).toBe("found");
+    expect((await checkSite(site, "lmartin_06", signal)).result).toBe("found");
+  });
+
+  it("resolves a relative photo against the address it checked", async () => {
+    stub(200, '{"username": "lmartin_06"} <meta property="og:image" content="/a.jpg">');
+    expect((await checkSite(site, "lmartin_06", signal)).og).toEqual({ image: "https://forum.example/a.jpg" });
+  });
+
+  it("reads the og tags of a page found, and only then (T10)", async () => {
+    const tags = '<meta property="og:title" content="Léa Martin">';
+    stub(200, `{"username": "lmartin_06"} ${tags}`);
+    expect(await checkSite(site, "lmartin_06", signal)).toEqual({ result: "found", og: { title: "Léa Martin" } });
+    stub(404, `User not found ${tags}`);
+    expect(await checkSite(site, "lmartin_06", signal)).toEqual({ result: "missing", og: {} });
+  });
+
+  it("reads the author name when the site is checked through an oEmbed answer (TikTok)", async () => {
+    stub(200, JSON.stringify({ username: "lmartin_06", author_name: "Léa Martin" }));
+    expect(await checkSite(site, "lmartin_06", signal)).toEqual({ result: "found", og: { title: "Léa Martin" } });
   });
 
   it("says missing when the missing code and text match", async () => {
     stub(404, "User not found");
-    expect(await checkSite(site, "lmartin_06", signal)).toBe("missing");
+    expect((await checkSite(site, "lmartin_06", signal)).result).toBe("missing");
   });
 
   it("says unknown when only the code matches", async () => {
     stub(200, "<html>page de connexion</html>");
-    expect(await checkSite(site, "lmartin_06", signal)).toBe("unknown");
+    expect((await checkSite(site, "lmartin_06", signal)).result).toBe("unknown");
   });
 
   it("says unknown on a network error, never found", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("fetch failed")));
-    expect(await checkSite(site, "lmartin_06", signal)).toBe("unknown");
+    expect((await checkSite(site, "lmartin_06", signal)).result).toBe("unknown");
   });
 
   it("does not follow redirects and sends the headers of the site", async () => {

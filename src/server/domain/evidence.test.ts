@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { findingKey } from "./finding";
 import { countHints, isCommonPseudo, isLinkedToConfirmed } from "./evidence";
 import type { SourceRecord } from "./source";
 
@@ -37,6 +38,22 @@ describe("countHints", () => {
       { field: "A1" as const, value: "Léa Martin" },
     ];
     expect(countHints(record({ fields }), confirmed)).toBe(2);
+  });
+
+  it("counts a displayed name that contains the confirmed name as a whole-word match", () => {
+    const keys = new Set([findingKey("A1", "Léa Martin")]);
+    const fields = [{ field: "A1" as const, value: "Léa Martin (@lmartin_06) • Instagram" }];
+    expect(countHints(record({ fields }), keys)).toBe(1);
+  });
+
+  it("still counts a one-word name equal to the confirmed one", () => {
+    const keys = new Set([findingKey("A1", "Léa")]);
+    expect(countHints(record({ fields: [{ field: "A1", value: "Léa" }] }), keys)).toBe(1);
+  });
+
+  it("does not count a name that only starts like the confirmed one", () => {
+    const keys = new Set([findingKey("A1", "Léa Martin")]);
+    expect(countHints(record({ fields: [{ field: "A1", value: "Léa Martinez" }] }), keys)).toBe(0);
   });
 
   it("ignores the same value in a field that is not a hint", () => {

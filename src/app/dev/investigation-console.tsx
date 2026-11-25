@@ -108,16 +108,19 @@ export function InvestigationConsole() {
     // Accounts confirmed in an earlier round were searched then: they are inputs, so no lead event says so.
     const searchedAccounts = confirmedAccounts.current.map((value): Identifier => ({ type: "PROFIL", value }));
     confirmedAccounts.current = [...confirmedAccounts.current, ...newlyConfirmed];
-    // One entry per identifier: the list is bounded by the server (MAX_SEARCHED).
-    const searched = [
-      ...new Map(
-        [
-          ...inputIdentifiers(firstInput.current),
-          ...searchedAccounts,
-          ...events.flatMap((e) => (e.type === "lead" ? [e.identifier] : [])),
-        ].map((i) => [`${i.type}:${i.value}`, i]),
-      ).values(),
+    // Inputs and confirmed accounts are confirmed; a lead is confirmed when the engine said so (T10).
+    const entries = [
+      ...inputIdentifiers(firstInput.current).map((i) => ({ ...i, confirmed: true })),
+      ...searchedAccounts.map((i) => ({ ...i, confirmed: true })),
+      ...events.flatMap((e) => (e.type === "lead" ? [{ ...e.identifier, confirmed: e.confidence === "confirmed" }] : [])),
     ];
+    // One entry per identifier, confirmed if any of its entries is: the list is bounded by the server (MAX_SEARCHED).
+    const byKey = new Map<string, (typeof entries)[number]>();
+    for (const entry of entries) {
+      const key = `${entry.type}:${entry.value}`;
+      byKey.set(key, { ...entry, confirmed: entry.confirmed || byKey.get(key)?.confirmed === true });
+    }
+    const searched = [...byKey.values()];
     // Ticked accounts become confirmed; the others leave the screen (T9).
     setEvents((previous) =>
       previous.flatMap((e): InvestigationEvent[] => {
@@ -249,6 +252,21 @@ export function InvestigationConsole() {
                   checked={ticked.has(account.value)}
                   onChange={() => toggle(account.value)}
                 />
+                {account.profile?.photo && (
+                  // A plain <img>: the photo comes from a site we do not know in advance, so next/image cannot be
+                  // configured for it. No referrer: the address of the account page is not sent to the image host (T10).
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={account.profile.photo}
+                    alt={account.profile.name ?? "Photo du compte"}
+                    width={48}
+                    height={48}
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    className="h-12 w-12 rounded object-cover"
+                  />
+                )}
+                {account.profile?.name && <span className="font-medium">{account.profile.name}</span>}
                 {isWebAddress(account.value) ? (
                   <a href={account.value} target="_blank" rel="noreferrer" className="text-blue-800 underline">
                     {account.value}

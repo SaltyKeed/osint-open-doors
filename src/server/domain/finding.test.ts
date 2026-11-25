@@ -117,6 +117,17 @@ describe("mergeFindings", () => {
     expect(merged[0]?.page).toEqual({ title: "Résultats 10 km" });
   });
 
+  it("keeps the profile details of the first F2 finding that has them", () => {
+    const profile = { name: "Léa Martin", photo: "https://cdn.exemple.ch/p.jpg" };
+    const address = "https://site-a.exemple.ch/lmartin_06";
+    const merged = mergeFindings([
+      finding({ field: "F2", value: address }),
+      finding({ field: "F2", value: address, profile }),
+      finding({ field: "F2", value: address, profile: { name: "Autre" } }),
+    ]);
+    expect(merged[0]?.profile).toEqual(profile);
+  });
+
   it("does not modify the findings it receives", () => {
     const first = finding({ sources: ["a"] });
     mergeFindings([first, finding({ sources: ["b"] })]);

@@ -22,7 +22,7 @@ function fake(
   return { id, accepts, investigate: vi.fn(async (input: Identifier, signal: AbortSignal) => respond(input, signal)), inspect: vi.fn(), ...extra };
 }
 
-async function run(inputs: Identifier[], sources: Source[], options: { signal?: AbortSignal; callTimeoutMs?: number; alreadySearched?: Identifier[] } = {}) {
+async function run(inputs: Identifier[], sources: Source[], options: { signal?: AbortSignal; callTimeoutMs?: number; alreadySearched?: Identifier[]; alreadyConfirmed?: Identifier[] } = {}) {
   const events: InvestigationEvent[] = [];
   for await (const event of investigate(inputs, sources, { signal: options.signal ?? new AbortController().signal, ...options })) {
     events.push(event);
@@ -199,6 +199,48 @@ describe("investigate", () => {
     expect(ofType(events, "done")[0]?.hidden).toEqual({ possible: 0, namesake: 0 });
   });
 
+  describe("name and photo read on a found account (T10)", () => {
+    const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
+    const address = "https://site-a.exemple.ch/lmartin_06";
+    const photo = "https://cdn.exemple.ch/p.jpg";
+    const sitesWith = (displayedName: string) =>
+      fake(
+        "sites",
+        ["PSEUDO"],
+        () => [
+          record({
+            fields: [
+              { field: "F2", value: address, profile: { name: displayedName, photo } },
+              { field: "A1", value: displayedName },
+              { field: "A5", value: photo },
+            ],
+          }),
+        ],
+        { sitesChecked: 100 },
+      );
+
+    it("sends only the address of an account to confirm: the name and photo of a stranger are not findings", async () => {
+      const events = await run([pseudo, name], [sitesWith("Paul Durand")]);
+      const findings = ofType(events, "finding");
+      expect(findings).toHaveLength(1);
+      expect(findings[0]?.finding).toMatchObject({
+        field: "F2",
+        confidence: "to_confirm",
+        profile: { name: "Paul Durand", photo },
+      });
+    });
+
+    it("shows name and photo as probable when the displayed name is the visitor's", async () => {
+      const events = await run([pseudo, name], [sitesWith("Léa Martin")]);
+      const findings = ofType(events, "finding").map((e) => [e.finding.field, e.finding.confidence]);
+      expect(findings).toEqual([
+        ["F2", "probable"],
+        ["A1", "probable"],
+        ["A5", "probable"],
+      ]);
+    });
+  });
+
   it("keeps hidden a full profile found by a rare pseudo on a source without a list of sites", async () => {
     const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
     const profiles = fake("profiles", ["PSEUDO"], () => [
@@ -244,6 +286,52 @@ describe("investigate", () => {
     const nameFinding = ofType(events, "finding").find((e) => e.finding.field === "A1");
     expect(nameFinding?.finding.confidence).toBe("confirmed");
     expect(byEmail.investigate).not.toHaveBeenCalled();
+  });
+
+  it("treats an identifier confirmed in the first round as confirmed, without searching it again", async () => {
+    const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
+    const byEmail = fake("a", ["EMAIL"], () => []);
+    const byPseudo = fake("b", ["PSEUDO"], () => [
+      record({ fields: [{ field: "C1", value: "Neuchâtel" }], identifiers: [email] }),
+    ]);
+    // Control: without the memory of the first round, a record found by a pseudo alone stays hidden.
+    const alone = await run([pseudo], [byEmail, byPseudo]);
+    expect(ofType(alone, "finding")).toEqual([]);
+
+    const events = await run([pseudo], [byEmail, byPseudo], { alreadySearched: [email], alreadyConfirmed: [email] });
+    const city = ofType(events, "finding").find((e) => e.finding.field === "C1");
+    expect(city?.finding.confidence).toBe("confirmed");
+    expect(byEmail.investigate).not.toHaveBeenCalledWith(email, expect.anything());
+  });
+
+  it("caps at probable what a bio only cites, and what is found with it (T10)", async () => {
+    const profil: Identifier = { type: "PROFIL", value: "https://site-a.exemple.ch/lmartin_06" };
+    const byProfil = fake("profile-page", ["PROFIL"], () => [
+      record({ mentioned: true, identifiers: [email] }),
+    ]);
+    const byEmail = fake("a", ["EMAIL"], () => [record({ fields: [{ field: "C1", value: "Neuchâtel" }] })]);
+    const events = await run([profil], [byProfil, byEmail]);
+    expect(ofType(events, "lead")).toEqual([
+      { type: "lead", identifier: email, confidence: "probable", path: [profil] },
+    ]);
+    const city = ofType(events, "finding").find((e) => e.finding.field === "C1");
+    expect(city?.finding.confidence).toBe("probable");
+  });
+
+  it("keeps the details of a leak infection and of a cited page in the finding event", async () => {
+    const infection = { date: "2026-03-14", operatingSystem: "Windows 11", stolenCredentials: 12 };
+    const page = { title: "Résultats 10 km" };
+    const source = fake("a", ["EMAIL"], () => [
+      record({
+        fields: [
+          { field: "H5", value: "2026-03-14", infection },
+          { field: "I1", value: "https://club.exemple.ch/resultats", page },
+        ],
+      }),
+    ]);
+    const findings = ofType(await run([email], [source]), "finding").map((e) => e.finding);
+    expect(findings.find((f) => f.field === "H5")?.infection).toEqual(infection);
+    expect(findings.find((f) => f.field === "I1")?.page).toEqual(page);
   });
 
   it("skips a lead that was searched in the first round", async () => {

@@ -1,5 +1,5 @@
 import "server-only";
-import { assessConfidence, shouldRebound, type Confidence } from "@/server/domain/confidence";
+import { assessConfidence, capAt, shouldRebound, type Confidence } from "@/server/domain/confidence";
 import { countHints, isCommonPseudo, isLinkedToConfirmed } from "@/server/domain/evidence";
 import { findingKey, mergeFindings, type Finding } from "@/server/domain/finding";
 import { identifierKey, normalizeIdentifier, type Identifier } from "@/server/domain/identifier";
@@ -29,12 +29,14 @@ export interface InvestigationOptions {
   callTimeoutMs?: number;
   /** Identifiers a previous round already searched (T9): they are never given to the sources again. */
   alreadySearched?: readonly Identifier[];
+  /** Among them, the ones the first round confirmed (T10): they link a record to the visitor, as an input does. */
+  alreadyConfirmed?: readonly Identifier[];
 }
 
 export async function* investigate(
   inputs: readonly Identifier[],
   sources: readonly Source[],
-  { signal, callTimeoutMs = 8000, alreadySearched = [] }: InvestigationOptions,
+  { signal, callTimeoutMs = 8000, alreadySearched = [], alreadyConfirmed = [] }: InvestigationOptions,
 ): AsyncGenerator<InvestigationEvent> {
   const queue: QueueItem[] = [];
   /** Identifiers already queued, so that each one is searched once. */
@@ -59,6 +61,8 @@ export async function* investigate(
 
   // Marked as queued without being in the queue: they stay out even if a source finds them again.
   for (const identifier of alreadySearched) queued.add(identifierKey(identifier));
+
+  for (const identifier of alreadyConfirmed) confirmedKeys.add(identifierKey(identifier));
 
   // The visitor certified the inputs: they are confirmed, and the name is a confirmed A1.
   for (const input of inputs) {
@@ -109,20 +113,25 @@ export async function* investigate(
     commonPseudo: boolean,
   ): Generator<InvestigationEvent> {
     const { identifier: queried } = item;
-    const confidence = assessConfidence({
+    const assessed = assessConfidence({
       queried: { type: queried.type, confidence: item.confidence },
       linkedToConfirmed: isLinkedToConfirmed(record, confirmedKeys),
       rarePseudo: queried.type === "PSEUDO" && isRarePseudo(queried.value) && !commonPseudo,
       existenceCheck: source.sitesChecked !== undefined,
       coherentHints: countHints(record, confirmedValues),
     });
+    // A bio cites other people as well as the owner: what it mentions is never surer than probable (T10).
+    const confidence = record.mentioned ? capAt(assessed, "probable") : assessed;
     if (confidence === "possible" || confidence === "namesake") {
       hidden[confidence] += 1;
       return;
     }
     const aboutVisitor = record.about === "subject";
+    // An account to confirm sends only its address (F2): the name and photo of a stranger never become a
+    // finding of their own, they travel inside the F2 details (T10).
+    const fields = confidence === "to_confirm" ? record.fields.filter((f) => f.field === "F2") : record.fields;
 
-    for (const field of record.fields) {
+    for (const field of fields) {
       const key = findingKey(field.field, field.value);
       const incoming: Finding = {
         field: field.field,
@@ -131,6 +140,9 @@ export async function* investigate(
         confidence,
         path: item.path,
         ...(field.breach && { breach: field.breach }),
+        ...(field.infection && { infection: field.infection }),
+        ...(field.page && { page: field.page }),
+        ...(field.profile && { profile: field.profile }),
       };
       const existing = findings.get(key);
       const [merged] = mergeFindings(existing ? [existing, incoming] : [incoming]);

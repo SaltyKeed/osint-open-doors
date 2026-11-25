@@ -26,6 +26,7 @@ public et légal et donne un plan d'action (T1).
 | Aucun log de données personnelles | Aucun `console.log` d'un input ou d'une réponse d'API. Les messages d'erreur n'incluent pas le corps des réponses. |
 | Données personnelles jamais dans l'URL | La recherche se fait uniquement en `POST`. |
 | Clés API côté serveur uniquement | Le code serveur se trouve dans `src/server/` et est protégé par `import "server-only"`. |
+| Le serveur n'ouvre pas n'importe quelle adresse | La source `profile-page` reçoit une adresse du navigateur : elle n'ouvre que les domaines de la liste WhatsMyName, sans port, identifiants ni adresse IP, seulement s'ils se résolvent vers des adresses publiques (`public-ip.ts`), et suit trois redirections au plus, chacune revérifiée (SSRF, T10). |
 | Effacement côté poste | Bouton « Effacer et terminer » et reset automatique après une période d'inactivité. |
 
 ## 3. Vue d'ensemble
@@ -70,6 +71,8 @@ src/
 │   ├── providers/
 │   │   ├── registry.ts           ← liste des sources actives (SOURCES)
 │   │   ├── http.ts               ← appel HTTP commun : 404, 429 (quota), erreurs au message fixe
+│   │   ├── og-tags.ts            ← lit og:title, og:image, og:description d'une page HTML, nom affiché, lecture limitée (T10)
+│   │   ├── public-ip.ts          ← une adresse IP est-elle publique ? (SSRF, T10)
 │   │   ├── xposedornot/
 │   │   │   ├── index.ts          ← la source : client, schéma et mapper assemblés
 │   │   │   ├── client.ts         ← appel HTTP (fetch, timeout, clé)
@@ -80,6 +83,7 @@ src/
 │   │   ├── github/               ← même structure, jeton optionnel
 │   │   ├── tavily/               ← même structure, recherche web, clé obligatoire
 │   │   ├── whatsmyname/          ← pseudo sur 569 sites : copie figée de la liste, vérification par site
+│   │   ├── profile-page/         ← page d'un compte confirmé : balises og, domaines de WhatsMyName seulement (T10)
 │   │   ├── snusbase/             ← même structure (prévu)
 │   │   └── dehashed/             ← même structure (prévu)
 │   │
@@ -92,6 +96,7 @@ src/
 │   │   ├── confidence.ts         ← niveaux de confiance et règle de rebond
 │   │   ├── finding.ts            ← constats et fusion des doublons
 │   │   ├── evidence.ts           ← indices, rattachement, pseudo courant
+│   │   ├── name-match.ts         ← compare un nom affiché au nom confirmé (T10)
 │   │   ├── follow-up.ts          ← schéma du deuxième tour (comptes confirmés, déjà cherché)
 │   │   ├── source.ts             ← port des sources de l'enquête (Source)
 │   │   ├── masking.ts            ← masquage des valeurs
@@ -137,6 +142,9 @@ vers la console, jamais vers `/api/search`. La console a deux modes : « Sources
 une par une » appelle `/api/dev/search` et montre la réponse brute ; « Enquête
 complète » appelle `/api/search`, lit le flux NDJSON et n'affiche que les
 événements du moteur (rebonds, niveaux de confiance), jamais la réponse brute.
+Sur la carte d'un compte « à confirmer », elle affiche le nom et la photo du
+compte ; le navigateur charge la photo directement, sans envoyer l'adresse de
+la page (`referrerPolicy="no-referrer"`, T10).
 
 `/api/search` transforme la saisie en identifiants (`queryIdentifiers`) et
 lance le moteur d'enquête (`investigation.ts`, T4). Le moteur donne chaque
@@ -148,11 +156,12 @@ une ligne JSON par événement (NDJSON).
 Le corps de `/api/search` peut aussi porter un deuxième tour (T9) :
 `confirmedProfiles` (adresses des comptes que le visiteur a confirmés, 60 au
 maximum) et `searched` (identifiants déjà cherchés au premier tour, 300 au
-maximum). Le serveur ne garde rien entre deux requêtes : le navigateur renvoie
-la saisie, ces deux listes, et `followUpSchema` les valide à côté de
+maximum, chacun avec `confirmed: true` si le premier tour l'a confirmé, T10).
+Le serveur ne garde rien entre deux requêtes : le navigateur renvoie la saisie, ces deux listes, et `followUpSchema` les valide à côté de
 `searchRequestSchema` (400 à message fixe, sans écho de la saisie). Le moteur
-traite les comptes confirmés comme une saisie et ne redonne jamais aux sources
-un identifiant de `searched`.
+traite les comptes confirmés comme une saisie, ajoute les identifiants
+`confirmed` aux identifiants confirmés et ne redonne jamais aux sources un
+identifiant de `searched`.
 
 ```mermaid
 sequenceDiagram

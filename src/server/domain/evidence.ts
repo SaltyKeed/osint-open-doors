@@ -2,6 +2,7 @@ import "server-only";
 import type { FieldCode } from "./fiche-fields";
 import { findingKey } from "./finding";
 import { identifierKey, type IdentifierType } from "./identifier";
+import { nameMatches } from "./name-match";
 import type { SourceRecord } from "./source";
 
 /** Fields compared with what is already confirmed: same name, birth date or city (T4). */
@@ -16,11 +17,23 @@ export function isLinkedToConfirmed(record: SourceRecord, confirmedKeys: Readonl
   return record.identifiers.some((id) => LINKING_TYPES.has(id.type) && confirmedKeys.has(identifierKey(id)));
 }
 
+const NAME_KEY_PREFIX = "A1:";
+
+/** A displayed name is a hint when it holds the confirmed name (T10); the other fields must be equal. */
+function isHint(field: SourceRecord["fields"][number], confirmedValues: ReadonlySet<string>): boolean {
+  if (!HINT_FIELDS.includes(field.field)) return false;
+  // The exact comparison stays: a one-word name never passes nameMatches, but an equal one is still a hint.
+  if (confirmedValues.has(findingKey(field.field, field.value))) return true;
+  if (field.field !== "A1") return false;
+  for (const key of confirmedValues) {
+    if (key.startsWith(NAME_KEY_PREFIX) && nameMatches(field.value, key.slice(NAME_KEY_PREFIX.length))) return true;
+  }
+  return false;
+}
+
 /** `confirmedValues` holds `findingKey` of confirmed findings. */
 export function countHints(record: SourceRecord, confirmedValues: ReadonlySet<string>): number {
-  return record.fields.filter(
-    (f) => HINT_FIELDS.includes(f.field) && confirmedValues.has(findingKey(f.field, f.value)),
-  ).length;
+  return record.fields.filter((f) => isHint(f, confirmedValues)).length;
 }
 
 export function isCommonPseudo(found: number, sitesChecked: number | undefined): boolean {
