@@ -689,6 +689,9 @@ ordinaire ne saute que l'appel en cours.
 
 Date : 2026-11-18
 
+Mise à jour par T11 (2026-11-25) : pseudo et nom complété acceptés, dorks,
+au plus 8 recherches par enquête.
+
 Les grands réseaux (LinkedIn, Instagram, TikTok) n'ont plus d'API publique :
 un moteur de recherche est le seul moyen gratuit de trouver les pages qui
 citent un identifiant (I1). Les API de chaque plateforme (GitLab, Codeberg,
@@ -719,6 +722,9 @@ Règles :
 ## T6. Recherche web ciblée par le nom
 
 Date : 2026-11-18
+
+Mise à jour par T11 (2026-11-25) : la recherche ciblée fait partie des dorks
+et cherche d'abord en Suisse romande.
 
 Statut : décidée, pas encore codée (issue #80).
 
@@ -1065,6 +1071,134 @@ tour est reconnue comme confirmée.
 - Se faire passer pour le robot d'aperçu de liens d'un autre service pour
   obtenir les balises : écarté, ce n'est pas acceptable.
 
+## T11. Direction de travail jusqu'aux portes ouvertes
+
+Date : 2026-11-25
+
+Le but ne change pas (T1) : une fiche de vie du visiteur, construite avec tout
+ce qui est en libre accès sur internet. Les essais du 2026-11-25 ont montré
+que l'outil trouve encore trop peu : beaucoup de champs de la fiche n'ont
+aucune source, Instagram et Facebook ne répondent pas sans connexion, et les
+comptes d'homonymes brouillent les résultats. Cette décision fixe comment
+avancer jusqu'au 2027-01-15. Elle a été prise par une série de questions et
+de réponses entre les élèves et l'assistant.
+
+### Critère de réussite
+
+| Mesure | Seuil |
+| --- | --- |
+| Champs de la fiche remplis (confirmé ou probable), en moyenne sur le panel | Au moins 25 % des 30 champs |
+| Ville de résidence (C1) trouvée | Pour au moins la moitié du panel |
+
+Le seuil est revu après la première mesure. Le panel compte pour l'instant
+Tiago et Enzo. Les résultats sont notés dans `MESURES.md` : seulement des
+nombres, jamais les données trouvées.
+
+### Taux de remplissage
+
+Le taux se calcule sur les 30 champs de la fiche, pas seulement sur ceux que
+nos sources savent remplir : il montre ce qui reste à trouver et ne change pas
+quand une source est ajoutée. Un champ compte s'il a au moins un constat
+« confirmé » ou « probable » ; l'écran distingue les deux. Les niveaux « à
+confirmer », « possible » et « homonyme probable » ne comptent pas. Un taux
+global et un taux par catégorie (A à J) sont affichés, dans l'ordre de la
+fiche. Le taux mesure une exposition : un taux élevé n'est pas un bon
+résultat pour le visiteur.
+
+### Cadre
+
+La limite légale reste stricte (`CADRAGE.md`, section 6.4) : pas de connexion
+à un compte, pas de contournement de protection, respect des conditions des
+sites. Si les résultats restent faibles, l'outil gagne en puissance en
+ajoutant des sources et des façons de chercher, jamais en sortant de ce
+cadre. Le visiteur ne donne pas sa localité : l'outil doit la trouver. Aucun
+budget n'est demandé pour l'instant ; il le sera seulement si les mesures du
+panel le justifient.
+
+### Sources à ajouter
+
+| Ordre | Source | Champs | Condition |
+| --- | --- | --- | --- |
+| 1 | API de search.ch (annuaire) : recherche inversée par téléphone, puis recherche par nom | C1, B3 | Clé gratuite ; usage aux portes ouvertes à confirmer par écrit auprès de search.ch |
+| 2 | Dorks envoyés par Tavily | G1, D1, C3, G3, E1, comptes Instagram, Facebook, TikTok, LinkedIn (F2) | Déjà en place, règles de T5 et T6 élargies |
+| 3 | API Zefix (registre du commerce) | E2 | Seulement si le panel montre des employeurs trouvés ; accès à demander par email |
+| 4 | Brave Search API | Comme les dorks | Seulement si un budget est accordé (carte bancaire exigée) |
+
+Le panel est mesuré après chaque étape.
+
+Conditions de search.ch à respecter : citer la source (Swisscom Directories
+AG), ne rien garder après l'enquête, pas de requêtes en masse, clé gardée
+côté serveur. Pour une adresse, la recherche inversée par le téléphone saisi
+passe d'abord : elle relie l'adresse au visiteur. La recherche par nom vient
+ensuite : s'il y a au plus 3 personnes de ce nom, chacune devient une carte
+« à confirmer » (T9) ; au-delà, seul le nombre est affiché.
+
+Écartés : copier les pages de local.ch, de search.ch ou de moneyhouse
+(interdit par leurs conditions), les API d'adresses de La Poste (elles
+vérifient une adresse, elles ne trouvent pas celle d'une personne), envoyer
+des requêtes automatiques à Google (interdit par ses conditions). Aucune
+source légale ne donne la date de naissance : l'année de naissance n'apparaît
+qu'indirectement, par exemple dans des listes de résultats sportifs.
+
+### Dorks
+
+Un dork est une requête qui utilise les opérateurs d'un moteur de recherche
+(`site:`, `filetype:`, `intitle:`). Les dorks sont envoyés par Tavily, jamais
+à Google directement. Ils sont écrits à l'avance dans le code, chacun avec son
+test ; aucune requête n'est construite librement. Chaque dork combine deux
+informations, pour qu'un résultat puisse être relié au visiteur : le nom et
+une valeur confirmée (T6), ou le pseudo et une plateforme. Exemples :
+
+- `"lmartin_06" site:instagram.com OR site:tiktok.com OR site:facebook.com`
+- `"Léa Martin" club OR résultats OR classement`
+- `"Léa Martin" filetype:pdf`
+- `"Léa Martin" site:linkedin.com/in`
+
+Les recherches visent d'abord la Suisse romande (pays Suisse, noms des
+cantons romands), puis toute la Suisse si elles ne donnent rien, avec au plus
+une relance élargie par requête. Au plus 8 recherches par enquête : l'offre
+gratuite de Tavily (environ 1000 crédits par mois) suffit alors pour environ
+100 enquêtes. Les mesures du panel disent quels dorks gardent leur place.
+
+Les opérateurs réellement acceptés par Tavily sont vérifiés en codant.
+
+### WhatsMyName
+
+Instagram et Facebook sont retirés de la liste : Instagram répond « absent »
+même pour son compte officiel, Facebook renvoie vers sa page de connexion.
+Ils faussaient le seuil des pseudos courants. Les autres grands réseaux
+(Threads, Snapchat, X, YouTube, Pinterest, Telegram) sont vérifiés avec un
+compte public connu de la liste ; ceux qui ne répondent plus correctement sont
+retirés, avec la raison notée dans T7.
+
+### Plan d'action
+
+Une règle par type de constat, classée par urgence :
+
+| Urgence | Constats |
+| --- | --- |
+| Urgent | Mot de passe exposé (H3), ordinateur infecté (H5) |
+| Important | Fuites (H1), téléphone ou adresse publics (B2, B3) |
+| À revoir | Comptes trouvés (F2), pages qui citent la personne (I1) |
+
+Le plan se termine par « Ce qu'un attaquant pourrait faire de plus » : les
+techniques de `CADRAGE.md`, section 6.4, expliquées sans être exécutées.
+
+### Planning
+
+| Période | Travail |
+| --- | --- |
+| Jusqu'au 2026-12-02 | Plan d'action et taux de remplissage (#28), puis search.ch |
+| 2026-12-02 au 2026-12-09 | Dorks Tavily, première mesure du panel |
+| 2026-12-09 au 2026-12-23 | Interface (#30, #31), effacement (#32) ; l'interface commence au plus tard le 2026-12-09 |
+| Jusqu'au 2027-01-06 | Docker et mode kiosque (#33) |
+| 2027-01-06 au 2027-01-14 | Tests, répétition générale, profil de démonstration s'il reste du temps |
+
+Le profil de démonstration est montré avant que le visiteur essaie. Il est
+construit avec des traces publiques créées par les élèves pour un persona
+fictif, avec l'enregistrement d'une enquête en secours si le réseau tombe.
+Aucune donnée réelle d'un élève n'est montrée.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -1098,3 +1232,4 @@ tour est reconnue comme confirmée.
 | Saisie | Formulaire, un champ par type, pseudo ajouté, validation par le serveur (T8) | Barre unique |
 | Comptes trouvés par pseudo | Niveau « à confirmer », confirmés par le visiteur à la fin, deuxième tour (T9, remplace l'exception de T7) | Probable si le pseudo est rare |
 | Pages de profil | Balises `og:` lues dans la page de WhatsMyName, nom affiché comme indice, source « page de profil » pour les comptes confirmés, domaines de WhatsMyName seulement (T10) | Une API par plateforme |
+| Direction jusqu'aux portes ouvertes | Critère mesuré sur un panel, search.ch puis dorks Tavily, taux sur les 30 champs, planning (T11) | |
