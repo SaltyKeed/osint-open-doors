@@ -99,6 +99,11 @@ sont dans le dossier de la source.
 6. Relancer la recherche dans `/dev`. Le champ ne doit plus être dans la liste
    des champs ignorés, et il doit apparaître dans le résultat mappé.
 
+Le mode « Enquête complète » de la même page appelle `/api/search` : il lit le
+flux NDJSON du moteur et affiche les rebonds, les constats avec leur niveau de
+confiance et les sources en échec. Il ne montre jamais la réponse brute, qui
+reste réservée au mode « Sources une par une ».
+
 Chaque recherche dans la console appelle la vraie API et compte dans son
 quota : 100 recherches par jour pour XposedOrNot
 ([DECISIONS.md, D15](../DECISIONS.md#d15-quota-dxposedornot)).

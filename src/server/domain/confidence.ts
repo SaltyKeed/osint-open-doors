@@ -2,7 +2,7 @@ import "server-only";
 import type { Identifier, IdentifierType } from "./identifier";
 
 /** From the surest to the least sure (CADRAGE.md, section 7). */
-export const CONFIDENCE_LEVELS = ["confirmed", "probable", "possible", "namesake"] as const;
+export const CONFIDENCE_LEVELS = ["confirmed", "probable", "to_confirm", "possible", "namesake"] as const;
 
 export type Confidence = (typeof CONFIDENCE_LEVELS)[number];
 
@@ -15,7 +15,7 @@ export interface Evidence {
   rarePseudo: boolean;
   /** Same city, same photo, same name, same year... counted by the engine. */
   coherentHints: number;
-  /** The source only checks that an account with this pseudo exists on a list of sites (T7). */
+  /** The source only checks that an account with this pseudo exists on a list of sites: it returns an address, nothing else (T7). */
   existenceCheck?: boolean;
 }
 
@@ -42,9 +42,11 @@ function levelFromQuery(evidence: Evidence): Confidence {
   const { queried, rarePseudo, coherentHints } = evidence;
   if (UNIQUE_TYPES.has(queried.type)) return queried.confidence;
   if (queried.type === "PSEUDO") {
-    // T7: an account named after a confirmed, rare, not common pseudo is probably the visitor's.
-    const sureAccount = evidence.existenceCheck === true && queried.confidence === "confirmed";
-    return rarePseudo && (coherentHints > 0 || sureAccount) ? "probable" : "possible";
+    if (!rarePseudo) return "possible";
+    if (coherentHints > 0) return "probable";
+    // T9: a rare pseudo does not say that this account is the visitor's, so the visitor decides. Only for an
+    // address: a full profile (name, email, city) of a stranger is never shown.
+    return evidence.existenceCheck === true ? "to_confirm" : "possible";
   }
   if (queried.type === "NOM") return coherentHints > 0 ? "possible" : "namesake";
   return "possible"; // IP and ORGA are shared by many people.

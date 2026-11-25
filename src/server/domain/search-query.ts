@@ -36,7 +36,13 @@ export function queryIdentifiers(query: SearchQuery): Identifier[] {
   ];
 }
 
-const nameField = z.string().trim().min(1).optional();
+// Repeated spaces collapsed: the name gets the same key here and in normalizeIdentifier (second round, T9).
+const nameField = z
+  .string()
+  .trim()
+  .min(1)
+  .transform((value) => value.replace(/\s+/g, " "))
+  .optional();
 
 export const searchRequestSchema = z
   .object({

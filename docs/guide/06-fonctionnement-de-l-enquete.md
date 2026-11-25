@@ -94,7 +94,8 @@ confiance.
 | --- | --- | --- | --- |
 | Confirmé | La fiche contient aussi un email, un téléphone ou un profil déjà confirmé, ou elle a été trouvée avec un email, un téléphone, un profil ou un domaine confirmé | Oui | Oui |
 | Probable | Trouvé par un pseudo rare, avec au moins un indice cohérent (même ville, même photo, même année) | Oui, marqué « probable » | Oui, une seule fois |
-| Possible | Trouvé par un pseudo seul, une IP, une organisation, ou un nom avec un indice | Non, compté dans un total | Non |
+| À confirmer | Compte trouvé par un pseudo rare et pas courant sur une liste de sites (WhatsMyName), sans indice cohérent | À la fin, pour que le visiteur dise s'il est à lui | Non (oui une fois confirmé) |
+| Possible | Trouvé par un pseudo court ou courant, une IP, une organisation, ou un nom avec un indice | Non, compté dans un total | Non |
 | Homonyme probable | Trouvé par un nom seul | Non, compté dans un total | Non |
 
 Les saisies du visiteur sont « confirmé » : il a certifié qu'elles sont à lui.
@@ -107,9 +108,13 @@ flowchart TD
     B -- oui --> C["Confirmé"]
     B -- non --> D{"Trouvée avec quel type ?"}
     D -- "EMAIL, TEL, PROFIL, DOMAINE" --> E["Même niveau que l'identifiant cherché"]
-    D -- PSEUDO --> F{"Pseudo rare et au moins un indice ?"}
-    F -- oui --> G["Probable"]
+    D -- PSEUDO --> F{"Pseudo rare et pas courant ?"}
     F -- non --> H["Possible"]
+    F -- oui --> L{"Au moins un indice ?"}
+    L -- oui --> G["Probable"]
+    L -- non --> N{"Source à liste de sites ?"}
+    N -- oui --> M["À confirmer"]
+    N -- non --> H
     D -- NOM --> I{"Au moins un indice ?"}
     I -- oui --> H
     I -- non --> J["Homonyme probable"]
@@ -118,7 +123,12 @@ flowchart TD
 
 Sauf dans le cas « confirmé », un résultat n'est jamais plus sûr que
 l'identifiant qui l'a trouvé : ce qu'un identifiant « probable » trouve est au
-mieux « probable ».
+mieux « probable ». Le niveau « à confirmer » se place entre « probable » et
+« possible » : un pseudo rare ne dit pas que ce compte-là est celui du
+visiteur, alors c'est lui qui répond (T9). Seulement pour un compte dont on
+ne connaît que l'adresse : un profil complet (nom, email, ville) trouvé par
+pseudo sur GitHub ou Hudson Rock reste « possible », pour ne jamais montrer
+les données d'un inconnu.
 
 ## Le pseudo rare
 
@@ -131,8 +141,9 @@ pseudos dit combien de sites elle teste, et un pseudo présent sur plus de
 10 % d'entre eux n'est pas rare (`evidence.ts`).
 
 WhatsMyName vérifie un pseudo sur 569 sites. Un compte trouvé n'a que son
-adresse, sans rien à comparer. Il est quand même affiché, au niveau
-« probable », si le pseudo est confirmé, rare et pas courant (T7). Par
+adresse, sans rien à comparer. Si le pseudo est rare et pas courant, il est
+« à confirmer » : il est envoyé au navigateur à la fin de l'enquête, mais ne
+fait pas partie de la fiche tant que le visiteur ne le confirme pas (T9). Par
 exemple, `octocat` existe sur 105 sites de la liste (18 %) : c'est un pseudo
 courant, ses comptes sont seulement comptés.
 
@@ -233,7 +244,7 @@ message au navigateur à chaque étape :
 
 | Message | Quand |
 | --- | --- |
-| `finding` | Un constat « confirmé » ou « probable » est trouvé, ou complété (nouvelle source, chemin plus court) |
+| `finding` | Un constat « confirmé », « probable » ou « à confirmer » est trouvé, ou complété (nouvelle source, chemin plus court) |
 | `lead` | Un nouvel identifiant part dans la file de recherche |
 | `source-failed` | Une source est en panne (`error`) ou n'a plus de quota (`quota`) |
 | `done` | L'enquête est finie ; donne le nombre de fiches « possible » et « homonyme probable », jamais leur contenu |
@@ -245,6 +256,27 @@ Limite connue : si un identifiant n'est confirmé qu'en cours d'enquête, les
 fiches déjà traitées ne sont pas recalculées. Elles gardent le niveau qu'elles
 avaient au moment où elles sont arrivées.
 
+## Deuxième tour
+
+Les comptes « à confirmer » arrivent à la fin de l'enquête. Le visiteur coche
+ceux qui sont à lui, puis le bouton « Continuer l'enquête » envoie une
+nouvelle requête à `/api/search`. Le serveur ne garde rien entre deux
+requêtes : le navigateur renvoie donc la saisie de départ et deux listes.
+
+| Liste | Contenu | Limite |
+| --- | --- | --- |
+| `confirmedProfiles` | Adresses des comptes cochés, traitées comme une saisie « confirmé » | 60 |
+| `searched` | Identifiants déjà cherchés au premier tour (la saisie et tous les rebonds) | 300 |
+
+Le moteur ne redonne jamais aux sources un identifiant de `searched`, même
+quand une source le trouve de nouveau : les 569 sites de WhatsMyName et le
+quota de Tavily ne servent pas deux fois pour la même valeur. Un compte
+confirmé ne relance rien tant qu'aucune source n'accepte `PROFIL`. Le serveur
+refuse une liste trop longue ou une valeur invalide avec une erreur 400 au
+message fixe, sans répéter la saisie (`follow-up.ts`). Un compte décoché est
+retiré de l'écran, et le visiteur certifie que les comptes cochés sont à lui
+(T9).
+
 ## Où est le code
 
 | Fichier | Rôle |
@@ -254,6 +286,7 @@ avaient au moment où elles sont arrivées.
 | `src/server/domain/pseudo.ts` | Règle du pseudo rare |
 | `src/server/domain/confidence.ts` | Niveaux de confiance et règle de rebond |
 | `src/server/domain/finding.ts` | Constats et fusion des doublons |
+| `src/server/domain/follow-up.ts` | Schéma du deuxième tour : comptes confirmés et identifiants déjà cherchés |
 | `src/server/domain/source.ts` | Contrat commun à toutes les sources, erreur de quota |
 | `src/server/domain/evidence.ts` | Indices cohérents, rattachement, pseudo courant |
 | `src/server/investigation.ts` | Le moteur : file, rebonds, événements envoyés en direct |

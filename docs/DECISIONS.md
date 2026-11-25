@@ -429,7 +429,8 @@ Limites de l'exception :
   sur le poste des portes ouvertes. Vérifié avec `npm run build` puis
   `npm run start`.
 - La route publique `/api/search` ne change pas : elle renvoie seulement les
-  fuites mappées.
+  fuites mappées. La console peut aussi l'appeler (mode « enquête complète »,
+  T9) pour afficher les événements du moteur.
 - Chaque provider a une méthode `inspect` qui renvoie la réponse brute, la
   réponse filtrée par le schéma et les fuites mappées. `search` utilise
   `inspect` et ne garde que les fuites mappées.
@@ -461,7 +462,7 @@ point. Enzo est d'accord avec le résultat.
 | Sources | Le catalogue et la mesure de couverture des fuites d'Enzo servent de base. Une source peut être ajoutée si elle remplit un champ de la fiche ou ouvre un rebond. |
 | Structure | Un port générique `Source` : un identifiant en entrée, des constats et de nouveaux identifiants en sortie. Les modes `surface` et `deep` (D10) sont supprimés : une source sans clé configurée est sautée. |
 | Rebonds | Un identifiant trouvé relance une recherche. Un nom seul ne sert jamais de rebond. |
-| Validation des informations | Chaque information a un niveau de confiance : confirmé, probable, possible, homonyme probable. Seuls les deux premiers sont détaillés et servent au rebond. Ces niveaux remplacent la règle anti-homonymes de D12. |
+| Validation des informations | Chaque information a un niveau de confiance : confirmé, probable, possible, homonyme probable (T9 ajoute « à confirmer »). Seuls les deux premiers sont détaillés et servent au rebond. Ces niveaux remplacent la règle anti-homonymes de D12. |
 | Affichage | Toute valeur est masquée par défaut et visible avec un bouton « œil », mots de passe et contenu des fiches de fuites compris. |
 
 ### Modifié
@@ -775,7 +776,7 @@ Exception : un compte trouvé par une source qui vérifie une liste de sites
 (elle déclare `sitesChecked`) est « probable » si le pseudo cherché est
 confirmé, rare et pas courant (présent sur au plus 10 % des sites, T4). Ces
 comptes ne relancent pas de recherche : la source ne renvoie pas leurs
-adresses comme identifiants.
+adresses comme identifiants. Remplacé par T9.
 
 ### Liste de sites
 
@@ -842,6 +843,103 @@ pseudo. La même règle s'applique aux pseudos renvoyés par les sources
 - Pas de numéro étranger : le téléphone reste suisse (raccourci de
   `identifier.ts`).
 
+## T9. Comptes à confirmer par le visiteur
+
+Date : 2026-11-25
+
+Un test avec de vrais pseudos (9 caractères) a montré que la règle de T7 ne
+suffit pas : un pseudo rare peut être pris par une autre personne sur un site
+précis. Sur deux pseudos testés, la plupart des comptes trouvés par
+WhatsMyName n'étaient pas ceux de la personne, et ils auraient été affichés
+comme « probables ». La rareté du pseudo ne dit rien sur un compte en
+particulier, et WhatsMyName ne donne que l'adresse du compte, sans champ à
+comparer.
+
+Le visiteur est présent : lui seul sait si un compte est à lui. Il confirme
+seulement ce qui est ambigu, à la fin de l'enquête.
+
+### Niveau « à confirmer »
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Nouveau niveau « à confirmer » (retenu)** | La règle reste dans le moteur, testée avec le domaine ; le niveau dit ce qu'il veut dire. | Un niveau de plus à gérer dans le domaine, l'affichage et la documentation. |
+| Garder les niveaux, drapeau sur « possible » | Moins de changements dans le domaine. | « Possible » mélangerait ce qui est caché et ce qui est montré pour confirmation. |
+| Tri dans le navigateur | Le moteur change peu. | La règle de confiance sort du domaine, contrairement à T2. |
+
+Le niveau « à confirmer » se place entre « probable » et « possible ». Une
+fiche trouvée par un `PSEUDO` confirmé, rare et pas courant (T4), sans aucun
+indice cohérent, par une source qui vérifie une liste de sites, est « à
+confirmer ». Cela remplace l'exception de T7 : un
+compte trouvé par une source qui vérifie une liste de sites n'est plus
+« probable » du seul fait de la rareté du pseudo.
+
+| Fiche trouvée par un `PSEUDO` | Avant (T7) | Après |
+| --- | --- | --- |
+| Rare, pas courant, avec un indice cohérent | Probable | Probable |
+| Rare, pas courant, sans indice, source à liste de sites | Probable | À confirmer |
+| Rare, pas courant, sans indice, autre source | Possible | Possible |
+| Pas rare, ou courant | Possible | Possible |
+
+Un pseudo court ou courant reste « possible » (total seulement) : il
+donnerait des dizaines de comptes d'autres personnes à trier.
+
+Seule une source à liste de sites donne des fiches « à confirmer » : une telle
+fiche ne contient que l'adresse du compte. Une autre source interrogée par
+pseudo (GitHub, Hudson Rock) renvoie un profil complet : nom, email, ville,
+données d'un infostealer. Pour un inconnu, ces données ne sont jamais
+affichées, même pour une confirmation : la fiche reste « possible ».
+
+Une fiche « à confirmer » est envoyée au navigateur, mais elle ne fait pas
+partie de la fiche de vie, ne compte pas dans le taux de remplissage (#28) et
+ne relance pas de recherche. Elle est montrée au visiteur à la fin de
+l'enquête : « Ces comptes portent ton pseudo. Lesquels sont à toi ? ».
+Ces comptes peuvent être ceux d'autres personnes : ils sont affichés
+seulement pour la confirmation, avec l'élève présent, et effacés à la fin
+comme le reste.
+
+### Deuxième tour
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Réponse pendant l'enquête | Plus vivant : un « oui » relance tout de suite. | L'écran bouge pendant que le visiteur réfléchit ; le flux du moteur ne va que dans un sens. |
+| **Réponse à la fin, puis deuxième tour (retenu)** | Le moteur reste un flux simple ; chaque tour est une requête normale. | Le visiteur attend la fin pour répondre. |
+
+Le visiteur coche ses comptes, puis « Continuer l'enquête » envoie une
+nouvelle requête à `/api/search`. Le serveur ne garde rien entre deux
+requêtes : le navigateur envoie la saisie de départ, les comptes confirmés et
+la liste des identifiants déjà cherchés. Le moteur traite les comptes
+confirmés comme une saisie (confiance « confirmé ») et ne recherche pas ce qui
+l'a déjà été : les 569 sites de WhatsMyName et le quota de Tavily ne sont pas
+utilisés une deuxième fois pour la même valeur. Le serveur valide ces listes
+avec un schéma zod, avec un nombre maximum d'éléments. Comme pour la saisie,
+le visiteur certifie que les comptes cochés sont à lui.
+
+Un compte décoché est retiré de l'écran. Un compte sans réponse n'entre pas
+dans la fiche.
+
+Limite connue : au deuxième tour, le moteur ne connaît comme confirmés que la
+saisie et les comptes cochés. Ce que le premier tour a confirmé (un email ou
+un profil trouvé, un nom ou une ville) n'est envoyé que comme « déjà
+cherché ». Une fiche du deuxième tour qui contient une de ces valeurs n'est
+donc pas reconnue comme confirmée. Sans effet tant qu'aucune source
+n'accepte `PROFIL` (le deuxième tour ne cherche rien) ; à régler avec la
+partie 3.
+
+### Ordre du travail
+
+1. Mode « enquête complète » dans `/dev` : la console appelle `/api/search`
+   et affiche les événements (rebonds, niveaux de confiance). Sans lui, ni les
+   rebonds actuels ni cette décision ne peuvent être testés.
+2. Niveau « à confirmer » et deuxième tour (cette décision).
+3. Source qui lit la page d'un profil (nom affiché, photo, liens de la bio),
+   première source qui accepte `PROFIL` : elle affiche la photo sur les
+   comptes à confirmer et fait les rebonds à partir des comptes confirmés.
+   Elle remet en cause « la page du profil n'est jamais lue » (T7) et aura sa
+   propre décision.
+
+Jusqu'à la partie 3, un compte confirmé ne relance rien : aucune source
+n'accepte encore `PROFIL`.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -871,5 +969,6 @@ pseudo. La même règle s'applique aux pseudos renvoyés par les sources
 | Moteur d'enquête | Générateur d'événements envoyés en direct (NDJSON), 8 s par appel, quota = source sautée, pseudo non rare au-delà d'une part des sites testés (T4) | Une seule réponse à la fin |
 | Recherche web | Tavily, email et téléphone seulement, 3 recherches par enquête (T5) | Brave Search API |
 | Recherche par le nom | Seulement complétée par une information confirmée, page affichée si elle contient les deux (T6, à coder) | Nom seul |
-| Pseudo sur une liste de sites | WhatsMyName figé dans le dépôt, 569 sites, comptes « probable » si le pseudo est sûr (T7) | Une source par plateforme |
+| Pseudo sur une liste de sites | WhatsMyName figé dans le dépôt, 569 sites, comptes « à confirmer » par le visiteur (T9, remplace « probable » de T7) | Une source par plateforme |
 | Saisie | Formulaire, un champ par type, pseudo ajouté, validation par le serveur (T8) | Barre unique |
+| Comptes trouvés par pseudo | Niveau « à confirmer », confirmés par le visiteur à la fin, deuxième tour (T9, remplace l'exception de T7) | Probable si le pseudo est rare |
