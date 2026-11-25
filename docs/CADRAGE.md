@@ -410,7 +410,8 @@ Règles :
 - Le chemin des rebonds, en direct pendant l'enquête.
 - La liste des services qui ont reçu les données du visiteur.
 - Un plan d'action par constat, construit par des règles écrites à l'avance,
-  sans IA (T1).
+  sans IA (T1). Le contenu des règles est dans T11 et le calcul, fait par le
+  navigateur avec `summarize` (`src/shared/summary.ts`), dans T12.
 
 La forme de l'interface (écrans, graphe, identité visuelle) sera décidée plus
 tard. La console `/dev` actuelle sert seulement aux tests.

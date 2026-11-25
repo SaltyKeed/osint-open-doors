@@ -1,5 +1,5 @@
 import "server-only";
-import type { FieldCode } from "./fiche-fields";
+import type { FieldCode } from "@/shared/fiche-fields";
 import { findingKey } from "./finding";
 import { identifierKey, type IdentifierType } from "./identifier";
 import { nameMatches } from "./name-match";

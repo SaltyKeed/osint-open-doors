@@ -65,7 +65,6 @@ src/
 │   │   ├── types.ts
 │   │   ├── search-query.ts
 │   │   ├── masking.ts
-│   │   ├── fiche-fields.ts
 │   │   ├── identifier.ts
 │   │   ├── pseudo.ts
 │   │   ├── confidence.ts
@@ -99,6 +98,9 @@ src/
 │           ├── check.ts
 │           ├── schema.ts
 │           └── wmn-data.json
+├── shared/
+│   ├── fiche-fields.ts
+│   └── summary.ts
 └── tests/
     ├── fixtures/xposedornot/
     ├── fixtures/gravatar/
@@ -128,9 +130,13 @@ src/
   `npm run dev` (voir [Commandes du projet](02-commandes.md#npm-run-dev)).
 - `server/domain/` contient la logique métier sans réseau : normalisation et
   validation de la saisie, masquage des valeurs, et le modèle de l'enquête
-  (champs de la fiche, identifiants, pseudo rare, niveaux de confiance,
+  (identifiants, pseudo rare, niveaux de confiance,
   constats, deuxième tour, port `Source` et détails d'une fuite). Le fonctionnement est expliqué dans
   [Fonctionnement de l'enquête](06-fonctionnement-de-l-enquete.md).
+- `shared/` contient le code sans clé ni réseau que le navigateur et le
+  serveur utilisent tous les deux : les champs de la fiche
+  (codes, libellés, catégories) et `summarize`, qui calcule le taux de
+  remplissage et le plan d'action. Il n'importe jamais `server-only`.
 - `server/env.ts` lit les clés d'API dans `process.env` et les valide avec zod.
   C'est le seul fichier qui lit `process.env`. Toutes les clés sont
   optionnelles ; une erreur ne donne que le nom de la variable, jamais sa
