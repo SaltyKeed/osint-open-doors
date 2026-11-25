@@ -77,6 +77,12 @@ describe("searchRequestSchema", () => {
     ).toEqual({ name: { first: "Jean", last: "Dupont" } });
   });
 
+  it("collapses repeated spaces in the name, like normalizeIdentifier", () => {
+    expect(
+      searchRequestSchema.parse({ firstName: "Jean  Pierre", lastName: "Du   Pont", consent: true }),
+    ).toEqual({ name: { first: "Jean Pierre", last: "Du Pont" } });
+  });
+
   it("normalizes the pseudo", () => {
     expect(searchRequestSchema.parse({ pseudo: "@LMartin_06", consent: true })).toEqual({ pseudo: "lmartin_06" });
   });

@@ -14,7 +14,7 @@ interface Result {
   reports: SourceReport[];
 }
 
-const FIELDS = [
+export const FIELDS = [
   { name: "email", label: "Email", type: "email" },
   { name: "phone", label: "Téléphone", type: "tel" },
   { name: "pseudo", label: "Pseudo", type: "text" },
@@ -74,9 +74,9 @@ export function DevConsole({ sources }: { sources: SourceInfo[] }) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 p-6 font-sans text-sm">
+    <section className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold">Console de test des sources</h1>
+        <h2 className="text-xl font-semibold">Sources une par une</h2>
         <p className="text-zinc-600">
           Outil de développement, disponible uniquement avec <code>npm run dev</code>. Rien n&apos;est
           enregistré : recharger la page efface tout.
@@ -141,7 +141,7 @@ export function DevConsole({ sources }: { sources: SourceInfo[] }) {
           ))}
         </section>
       )}
-    </main>
+    </section>
   );
 }
 

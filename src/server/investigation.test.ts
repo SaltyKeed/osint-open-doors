@@ -22,7 +22,7 @@ function fake(
   return { id, accepts, investigate: vi.fn(async (input: Identifier, signal: AbortSignal) => respond(input, signal)), inspect: vi.fn(), ...extra };
 }
 
-async function run(inputs: Identifier[], sources: Source[], options: { signal?: AbortSignal; callTimeoutMs?: number } = {}) {
+async function run(inputs: Identifier[], sources: Source[], options: { signal?: AbortSignal; callTimeoutMs?: number; alreadySearched?: Identifier[] } = {}) {
   const events: InvestigationEvent[] = [];
   for await (const event of investigate(inputs, sources, { signal: options.signal ?? new AbortController().signal, ...options })) {
     events.push(event);
@@ -179,15 +179,34 @@ describe("investigate", () => {
     expect(limited.investigate).toHaveBeenCalledExactlyOnceWith(email, expect.any(AbortSignal));
   });
 
-  it("shows an account found on a list of sites for a confirmed rare pseudo, without searching it again", async () => {
+  it("asks the visitor about accounts found by a rare pseudo, without searching them again", async () => {
     const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
-    const byEmail = fake("leaks", ["EMAIL"], () => [record({ identifiers: [pseudo] })]);
-    const sites = fake("sites", ["PSEUDO"], () => [record({ fields: [{ field: "F2", value: "https://forum.example/u/lmartin_06" }] })], {
-      sitesChecked: 100,
-    });
-    const events = await run([email], [byEmail, sites]);
-    const account = ofType(events, "finding").find((e) => e.finding.field === "F2");
-    expect(account?.finding.confidence).toBe("probable");
+    const sites = fake(
+      "sites",
+      ["PSEUDO"],
+      () => [
+        record({ fields: [{ field: "F2", value: "https://site-a.exemple.ch/lmartin_06" }] }),
+        record({ fields: [{ field: "F2", value: "https://site-b.exemple.ch/lmartin_06" }] }),
+      ],
+      { sitesChecked: 100 },
+    );
+    const events = await run([pseudo], [sites]);
+    expect(ofType(events, "finding").map((e) => [e.finding.field, e.finding.confidence])).toEqual([
+      ["F2", "to_confirm"],
+      ["F2", "to_confirm"],
+    ]);
+    expect(ofType(events, "lead")).toEqual([]);
+    expect(ofType(events, "done")[0]?.hidden).toEqual({ possible: 0, namesake: 0 });
+  });
+
+  it("keeps hidden a full profile found by a rare pseudo on a source without a list of sites", async () => {
+    const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
+    const profiles = fake("profiles", ["PSEUDO"], () => [
+      record({ fields: [{ field: "A1", value: "Paul Durand" }, { field: "B1", value: "paul@exemple.ch" }] }),
+    ]);
+    const events = await run([pseudo], [profiles]);
+    expect(ofType(events, "finding")).toEqual([]);
+    expect(ofType(events, "done")[0]?.hidden).toEqual({ possible: 1, namesake: 0 });
   });
 
   it("gives a source its own call timeout when it declares one", async () => {
@@ -206,6 +225,33 @@ describe("investigate", () => {
     );
     const events = await run([email], [slowButAllowed], { callTimeoutMs: 20 });
     expect(ofType(events, "finding")).toHaveLength(1);
+  });
+
+  it("does not search again what was already searched", async () => {
+    const byEmail = fake("a", ["EMAIL"], () => [record({ fields: [{ field: "H1", value: "ExampleShop" }] })]);
+    const events = await run([email], [byEmail], { alreadySearched: [email] });
+    expect(byEmail.investigate).not.toHaveBeenCalled();
+    expect(events).toEqual([{ type: "done", hidden: { possible: 0, namesake: 0 } }]);
+  });
+
+  it("still treats an already searched input as confirmed", async () => {
+    const profil: Identifier = { type: "PROFIL", value: "https://site-a.exemple.ch/lmartin_06" };
+    const byEmail = fake("a", ["EMAIL"], () => []);
+    const byProfil = fake("b", ["PROFIL"], () => [
+      record({ fields: [{ field: "A1", value: "Léa Martin" }], identifiers: [email] }),
+    ]);
+    const events = await run([email, profil], [byEmail, byProfil], { alreadySearched: [email] });
+    const nameFinding = ofType(events, "finding").find((e) => e.finding.field === "A1");
+    expect(nameFinding?.finding.confidence).toBe("confirmed");
+    expect(byEmail.investigate).not.toHaveBeenCalled();
+  });
+
+  it("skips a lead that was searched in the first round", async () => {
+    const byEmail = fake("a", ["EMAIL"], () => [record({ identifiers: [tel] })]);
+    const byTel = fake("b", ["TEL"], () => []);
+    const events = await run([email], [byEmail, byTel], { alreadySearched: [tel] });
+    expect(ofType(events, "lead")).toEqual([]);
+    expect(byTel.investigate).not.toHaveBeenCalled();
   });
 
   it("ends with a done event", async () => {

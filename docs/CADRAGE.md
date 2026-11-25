@@ -222,7 +222,7 @@ Statuts :
 | `TEL` | Annuaire search.ch | A1 B3 C1 | `NOM` | Gratuit, quota | Prototype |
 | `TEL` | Analyse locale du numéro | pays, type de ligne, opérateur d'origine | aucun | Local | Prototype |
 | `TEL` | Moteur de recherche (plusieurs formats) : Tavily | I1 | aucun | Clé gratuite | En place (T5) |
-| `PSEUDO` | Base de sites (WhatsMyName figé dans le dépôt, 569 sites ; Maigret plus tard) | F2 | aucun | Gratuit | En place (WhatsMyName, T7) |
+| `PSEUDO` | Base de sites (WhatsMyName figé dans le dépôt, 569 sites ; Maigret plus tard) | F2 | aucun | Gratuit | En place (WhatsMyName, T7, T9) |
 | `PSEUDO` | Fiches de fuites (`SOURCES.md`, section 1.1) | A1 B1 B2 B3 H1 H2 H3 | `EMAIL` `TEL` | Payant | Retenu |
 | `NOM` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | A2 B1 B2 B3 H1 H2 | `EMAIL` `TEL` (seulement si la fiche est « confirmé ») | Payant | Retenu |
 | `IP` | Fiches de fuites : Leak-Lookup, Snusbase, HackCheck | H2 | `EMAIL` | Payant | Retenu |
@@ -319,7 +319,8 @@ panne ne saute que l'appel en cours.
 | --- | --- | --- | --- |
 | Confirmé | La fiche contient aussi un `EMAIL`, un `TEL` ou un `PROFIL` déjà confirmé, ou elle a été trouvée par un identifiant unique confirmé (`EMAIL`, `TEL`, `PROFIL`, `DOMAINE`) | Oui | Oui |
 | Probable | `PSEUDO` rare et au moins un indice cohérent : même nom (A1), même date de naissance (A2) ou même ville (C1) qu'un constat confirmé | Oui, marqué « probable » | Oui, sauf si l'identifiant qui l'a trouvé était lui-même « probable » |
-| Possible | `PSEUDO` seul, `IP`, `ORGA`, ou `NOM` avec un indice | Total seulement | Non |
+| À confirmer | `PSEUDO` rare et pas courant, sans indice cohérent, compte trouvé par une source à liste de sites (seulement son adresse) | À la fin, pour confirmation par le visiteur | Non (oui une fois confirmé, T9) |
+| Possible | `PSEUDO` court ou courant, `IP`, `ORGA`, ou `NOM` avec un indice | Total seulement | Non |
 | Homonyme probable | `NOM` seul | Total seulement | Non |
 
 Le niveau est choisi par `assessConfidence` (`src/server/domain/confidence.ts`) :
@@ -330,15 +331,20 @@ flowchart TD
     B -- oui --> C["Confirmé"]
     B -- non --> D{"Type de l'identifiant cherché ?"}
     D -- "EMAIL, TEL, PROFIL, DOMAINE" --> E["Niveau de l'identifiant cherché"]
-    D -- PSEUDO --> F{"Pseudo rare et au moins un indice ?"}
-    F -- oui --> G["Probable"]
+    D -- PSEUDO --> F{"Pseudo rare et pas courant ?"}
     F -- non --> H["Possible"]
+    F -- oui --> L{"Au moins un indice ?"}
+    L -- oui --> G["Probable"]
+    L -- non --> N{"Source à liste de sites ?"}
+    N -- oui --> M["À confirmer"]
+    N -- non --> H
     D -- NOM --> I{"Au moins un indice ?"}
     I -- oui --> H
     I -- non --> J["Homonyme probable"]
     D -- "IP, ORGA" --> H
     E --> K["Jamais plus sûr que l'identifiant cherché"]
     G --> K
+    M --> K
     H --> K
     J --> K
 ```
@@ -371,9 +377,13 @@ Règles :
   existe, il est courant (valeur de départ, T4). Pas de
   liste de prénoms ou de mots courants : elle sera ajoutée seulement si les
   essais sur volontaires montrent des homonymes (T2).
-- Un compte trouvé par une liste de sites (WhatsMyName) n'a que son adresse.
-  Il est « probable » si le pseudo cherché est confirmé, rare et pas courant,
-  et il ne relance pas de recherche (T7).
+- Un compte trouvé par une liste de sites (WhatsMyName) n'a que son adresse,
+  donc aucun indice cohérent. Il est « à confirmer » si le pseudo cherché est
+  rare et pas courant : le visiteur dit à la fin s'il est à lui (T9, qui
+  remplace l'exception de T7). Il ne relance pas de recherche tant qu'il n'est
+  pas confirmé. Un profil complet trouvé par pseudo sur une autre source
+  (GitHub, Hudson Rock) reste « possible » sans indice : les données d'un
+  inconnu ne sont jamais affichées.
 - Un site qui ne répond pas clairement donne « inconnu », jamais « trouvé ».
 - Chaque constat garde son chemin, pour que l'écran explique « trouvé grâce
   à… ».

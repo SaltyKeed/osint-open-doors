@@ -63,7 +63,7 @@ src/
 ├── app/                          ← Next.js : UI + routes, aussi léger que possible
 │   ├── page.tsx                  ← formulaire + consentement
 │   ├── api/search/route.ts       ← valide l'input, appelle le service, répond
-│   ├── dev/                      ← console de test des sources (npm run dev uniquement, D18)
+│   ├── dev/                      ← console de test : sources une par une, enquête complète (npm run dev uniquement, D18)
 │   └── api/dev/search/route.ts   ← réponses brutes pour la console (404 en production)
 │
 ├── server/                       ← code serveur uniquement (import "server-only")
@@ -92,6 +92,7 @@ src/
 │   │   ├── confidence.ts         ← niveaux de confiance et règle de rebond
 │   │   ├── finding.ts            ← constats et fusion des doublons
 │   │   ├── evidence.ts           ← indices, rattachement, pseudo courant
+│   │   ├── follow-up.ts          ← schéma du deuxième tour (comptes confirmés, déjà cherché)
 │   │   ├── source.ts             ← port des sources de l'enquête (Source)
 │   │   ├── masking.ts            ← masquage des valeurs
 │   │   ├── severity.ts           ← score d'exposition
@@ -132,7 +133,10 @@ export interface Source {
 
 `inspect` sert uniquement à la console de test (D18). `investigate` appelle
 `inspect` et ne garde que `records` : la réponse brute ne quitte la source que
-vers la console, jamais vers `/api/search`.
+vers la console, jamais vers `/api/search`. La console a deux modes : « Sources
+une par une » appelle `/api/dev/search` et montre la réponse brute ; « Enquête
+complète » appelle `/api/search`, lit le flux NDJSON et n'affiche que les
+événements du moteur (rebonds, niveaux de confiance), jamais la réponse brute.
 
 `/api/search` transforme la saisie en identifiants (`queryIdentifiers`) et
 lance le moteur d'enquête (`investigation.ts`, T4). Le moteur donne chaque
@@ -140,6 +144,15 @@ identifiant aux sources qui acceptent son type, calcule la confiance des
 fiches, crée les constats et relance les nouveaux identifiants fiables. Il
 émet des événements, que la route envoie au navigateur au fur et à mesure,
 une ligne JSON par événement (NDJSON).
+
+Le corps de `/api/search` peut aussi porter un deuxième tour (T9) :
+`confirmedProfiles` (adresses des comptes que le visiteur a confirmés, 60 au
+maximum) et `searched` (identifiants déjà cherchés au premier tour, 300 au
+maximum). Le serveur ne garde rien entre deux requêtes : le navigateur renvoie
+la saisie, ces deux listes, et `followUpSchema` les valide à côté de
+`searchRequestSchema` (400 à message fixe, sans écho de la saisie). Le moteur
+traite les comptes confirmés comme une saisie et ne redonne jamais aux sources
+un identifiant de `searched`.
 
 ```mermaid
 sequenceDiagram
@@ -247,6 +260,7 @@ classDiagram
         <<enumeration>>
         confirmed
         probable
+        to_confirm
         possible
         namesake
     }
@@ -275,6 +289,7 @@ constats (`Finding`), puis regroupe les doublons.
 | `pseudo.ts` | Règle du pseudo rare (6 caractères et une lettre) |
 | `confidence.ts` | `assessConfidence`, `isDetailed`, `shouldRebound` |
 | `finding.ts` | `Finding`, `findingKey` et `mergeFindings` (fusion des doublons) |
+| `follow-up.ts` | `followUpSchema` : comptes confirmés et identifiants déjà cherchés, avec leurs limites (T9) |
 | `evidence.ts` | `isLinkedToConfirmed`, `countHints` (A1, A2, C1), `isCommonPseudo` (T4) |
 | `source.ts` | Le port `Source`, les fiches renvoyées, `BreachDetails` et `SourceQuotaError` |
 

@@ -51,7 +51,9 @@ src/
 │   ├── api/search/route.ts
 │   ├── dev/
 │   │   ├── page.tsx
-│   │   └── dev-console.tsx
+│   │   ├── dev-console.tsx
+│   │   ├── investigation-console.tsx
+│   │   └── ndjson.ts
 │   └── api/dev/search/route.ts
 ├── server/
 │   ├── env.ts
@@ -69,6 +71,7 @@ src/
 │   │   ├── confidence.ts
 │   │   ├── finding.ts
 │   │   ├── evidence.ts
+│   │   ├── follow-up.ts
 │   │   └── source.ts
 │   └── providers/
 │       ├── registry.ts
@@ -114,12 +117,14 @@ src/
   zod, la transforme en identifiants, interroge les sources et renvoie leurs
   fiches en JSON.
 - `app/dev/` et `app/api/dev/search/` forment la console de test des
-  sources, et `server/dev/` prépare ses données. Elle n'existe qu'avec
+  sources (`dev-console.tsx`) et de l'enquête complète
+  (`investigation-console.tsx`, qui lit le flux avec `ndjson.ts`), et
+  `server/dev/` prépare ses données. Elle n'existe qu'avec
   `npm run dev` (voir [Commandes du projet](02-commandes.md#npm-run-dev)).
 - `server/domain/` contient la logique métier sans réseau : normalisation et
   validation de la saisie, masquage des valeurs, et le modèle de l'enquête
   (champs de la fiche, identifiants, pseudo rare, niveaux de confiance,
-  constats, port `Source` et détails d'une fuite). Le fonctionnement est expliqué dans
+  constats, deuxième tour, port `Source` et détails d'une fuite). Le fonctionnement est expliqué dans
   [Fonctionnement de l'enquête](06-fonctionnement-de-l-enquete.md).
 - `server/env.ts` lit les clés d'API dans `process.env` et les valide avec zod.
   C'est le seul fichier qui lit `process.env`. Toutes les clés sont

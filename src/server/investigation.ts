@@ -8,7 +8,7 @@ import { SourceQuotaError, type Source, type SourceRecord } from "@/server/domai
 
 /** What the engine tells the screen while it works (T4). */
 export type InvestigationEvent =
-  /** A confirmed or probable finding, new or updated (more sources, shorter path...). */
+  /** A confirmed, probable or to confirm finding, new or updated (more sources, shorter path...). */
   | { type: "finding"; finding: Finding }
   /** A new identifier that will be searched. */
   | { type: "lead"; identifier: Identifier; confidence: Confidence; path: Identifier[] }
@@ -27,12 +27,14 @@ export interface InvestigationOptions {
   /** Aborted when the visitor leaves: the engine stops. */
   signal: AbortSignal;
   callTimeoutMs?: number;
+  /** Identifiers a previous round already searched (T9): they are never given to the sources again. */
+  alreadySearched?: readonly Identifier[];
 }
 
 export async function* investigate(
   inputs: readonly Identifier[],
   sources: readonly Source[],
-  { signal, callTimeoutMs = 8000 }: InvestigationOptions,
+  { signal, callTimeoutMs = 8000, alreadySearched = [] }: InvestigationOptions,
 ): AsyncGenerator<InvestigationEvent> {
   const queue: QueueItem[] = [];
   /** Identifiers already queued, so that each one is searched once. */
@@ -54,6 +56,9 @@ export async function* investigate(
     queue.push({ identifier, confidence, path: [...path, identifier] });
     return true;
   }
+
+  // Marked as queued without being in the queue: they stay out even if a source finds them again.
+  for (const identifier of alreadySearched) queued.add(identifierKey(identifier));
 
   // The visitor certified the inputs: they are confirmed, and the name is a confirmed A1.
   for (const input of inputs) {
@@ -108,7 +113,6 @@ export async function* investigate(
       queried: { type: queried.type, confidence: item.confidence },
       linkedToConfirmed: isLinkedToConfirmed(record, confirmedKeys),
       rarePseudo: queried.type === "PSEUDO" && isRarePseudo(queried.value) && !commonPseudo,
-      // A source with a list of sites only checks that the account exists (T7).
       existenceCheck: source.sitesChecked !== undefined,
       coherentHints: countHints(record, confirmedValues),
     });

@@ -42,6 +42,13 @@ describe("mergeFindings", () => {
     expect(merged.map((f) => f.value)).toEqual(["Neuchâtel", "Lausanne"]);
   });
 
+  it("keeps probable when a value is found as to confirm and as probable", () => {
+    const merged = mergeFindings([finding({ confidence: "to_confirm" }), finding({ confidence: "probable" })]);
+    expect(merged[0]?.confidence).toBe("probable");
+    const reversed = mergeFindings([finding({ confidence: "probable" }), finding({ confidence: "to_confirm" })]);
+    expect(reversed[0]?.confidence).toBe("probable");
+  });
+
   it("keeps the highest confidence", () => {
     const merged = mergeFindings([finding({ confidence: "possible" }), finding({ confidence: "probable" })]);
     expect(merged[0]?.confidence).toBe("probable");

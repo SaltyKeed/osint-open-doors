@@ -25,22 +25,35 @@ describe("assessConfidence", () => {
   });
 });
 
-describe("assessConfidence for an account found on a list of sites (T7)", () => {
+describe("assessConfidence for a pseudo found on a list of sites (T9)", () => {
   const base = { linkedToConfirmed: false, coherentHints: 0, existenceCheck: true };
+  const queried = { type: "PSEUDO" as const, confidence: "confirmed" as const };
 
-  it.each<[Confidence, boolean, Confidence]>([
-    // pseudo confidence, rare and not common, expected
-    ["confirmed", true, "probable"],
-    ["confirmed", false, "possible"],
-    ["probable", true, "possible"],
-  ])("confirmed pseudo %s, rare %s: %s", (confidence, rarePseudo, expected) => {
-    const evidence: Evidence = { ...base, queried: { type: "PSEUDO", confidence }, rarePseudo };
-    expect(assessConfidence(evidence)).toBe(expected);
+  it("keeps hidden a full profile found by a rare pseudo on a source without a list of sites", () => {
+    // GitHub or Hudson Rock return a name, an email, a city: never shown for a stranger.
+    expect(assessConfidence({ ...base, existenceCheck: false, queried, rarePseudo: true })).toBe("possible");
   });
 
-  it("does not apply to a name, even when checked on a list of sites", () => {
-    const evidence: Evidence = { ...base, queried: { type: "NOM", confidence: "confirmed" }, rarePseudo: false };
-    expect(assessConfidence(evidence)).toBe("namesake");
+  it("asks the visitor about an account found by a rare pseudo, without hint", () => {
+    expect(assessConfidence({ ...base, queried, rarePseudo: true })).toBe("to_confirm");
+  });
+
+  it("keeps an account with a coherent hint probable", () => {
+    expect(assessConfidence({ ...base, queried, rarePseudo: true, coherentHints: 1 })).toBe("probable");
+  });
+
+  it("does not ask about a short or common pseudo", () => {
+    expect(assessConfidence({ ...base, queried, rarePseudo: false })).toBe("possible");
+  });
+
+  it("asks too when the pseudo searched was only probable", () => {
+    expect(assessConfidence({ ...base, queried: { type: "PSEUDO", confidence: "probable" }, rarePseudo: true })).toBe(
+      "to_confirm",
+    );
+  });
+
+  it("does not apply to a name", () => {
+    expect(assessConfidence({ ...base, queried: { type: "NOM", confidence: "confirmed" }, rarePseudo: false })).toBe("namesake");
   });
 });
 
@@ -48,10 +61,23 @@ describe("isDetailed", () => {
   it.each<[Confidence, boolean]>([
     ["confirmed", true],
     ["probable", true],
+    ["to_confirm", false],
     ["possible", false],
     ["namesake", false],
   ])("%s is detailed: %s", (confidence, expected) => {
     expect(isDetailed(confidence)).toBe(expected);
+  });
+});
+
+describe("an account to confirm", () => {
+  it("never searches again", () => {
+    const lead = {
+      identifier: { type: "PROFIL" as const, value: "https://exemple.ch/lmartin_06" },
+      confidence: "to_confirm" as const,
+      about: "subject" as const,
+      foundFrom: "confirmed" as const,
+    };
+    expect(shouldRebound(lead)).toBe(false);
   });
 });
 

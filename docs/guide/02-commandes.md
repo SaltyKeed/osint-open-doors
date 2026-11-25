@@ -62,11 +62,13 @@ d'un fichier. Pour arrêter le serveur, taper Ctrl+C dans le terminal.
 npm run dev
 ```
 
-En développement, la console de test des sources est disponible sur
-`http://localhost:3000/dev`. Elle permet de choisir les sources, de lancer
+En développement, la console de test est disponible sur
+`http://localhost:3000/dev`. Elle a deux modes. « Sources une par une » permet de choisir les sources, de lancer
 une recherche et de voir, pour chaque source et chaque identifiant qu'elle
 accepte : le statut et la durée de l'appel, les fiches mappées, les champs de
-la réponse que le schéma ignore et la réponse brute de l'API. Elle n'existe pas dans le build de production
+la réponse que le schéma ignore et la réponse brute de l'API. « Enquête complète » lance le moteur par
+`/api/search` et affiche les rebonds, les constats et leur niveau de confiance,
+sans réponse brute. Elle n'existe pas dans le build de production
 ([DECISIONS.md, D18](../DECISIONS.md#d18-console-de-test-des-providers)).
 Chaque recherche réelle compte dans le quota de l'API (100 par jour pour
 XposedOrNot).

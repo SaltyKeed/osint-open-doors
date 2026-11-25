@@ -137,7 +137,7 @@ point le plus important pour la sécurité.
 | `route.ts` | Sur le serveur | `src/app/api/search/route.ts` |
 | Tout `src/server/` | Sur le serveur. `import "server-only"` le garantit : si du code du navigateur l'importe, le build échoue | Le domaine, les sources |
 | `page.tsx` sans directive | Sur le serveur, qui produit le HTML avant de l'envoyer (Server Component) | `src/app/dev/page.tsx` lit la liste des sources |
-| Fichier qui commence par `"use client"` | Dans le navigateur, où il réagit aux clics et à la saisie (Client Component) | `src/app/dev/dev-console.tsx` : formulaire, cases à cocher |
+| Fichier qui commence par `"use client"` | Dans le navigateur, où il réagit aux clics et à la saisie (Client Component) | `src/app/dev/dev-console.tsx` et `investigation-console.tsx` : formulaires, cases à cocher, flux |
 
 Tout le code `"use client"` est envoyé au navigateur du visiteur. N'importe
 qui peut le lire avec les outils de développement (touche F12). Une clé d'API

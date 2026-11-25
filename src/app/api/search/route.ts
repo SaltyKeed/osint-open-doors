@@ -1,3 +1,4 @@
+import { followUpSchema } from "@/server/domain/follow-up";
 import { queryIdentifiers, searchRequestSchema } from "@/server/domain/search-query";
 import { investigate, type InvestigationEvent } from "@/server/investigation";
 import { SOURCES } from "@/server/providers/registry";
@@ -36,10 +37,16 @@ export async function POST(request: Request): Promise<Response> {
     return invalidRequest();
   }
   const query = searchRequestSchema.safeParse(body);
-  if (!query.success) return invalidRequest();
+  // Same body, two schemas: each one ignores the keys of the other. The second round (T9) adds the
+  // accounts the visitor confirmed and what the first round already searched.
+  const followUp = followUpSchema.safeParse(body);
+  if (!query.success || !followUp.success) return invalidRequest();
 
   // request.signal is aborted when the visitor leaves the page.
-  const events = investigate(queryIdentifiers(query.data), SOURCES, { signal: request.signal });
+  const events = investigate([...queryIdentifiers(query.data), ...followUp.data.confirmedProfiles], SOURCES, {
+    signal: request.signal,
+    alreadySearched: followUp.data.searched,
+  });
   return new Response(toNdjson(events), {
     headers: { ...NO_STORE, "Content-Type": "application/x-ndjson" },
   });
