@@ -4,6 +4,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { Finding } from "@/server/domain/finding";
 import type { Identifier } from "@/server/domain/identifier";
 import type { InvestigationEvent } from "@/server/investigation";
+import { summarize, type Urgency } from "@/shared/summary";
 import { FIELDS } from "./dev-console";
 import { splitNdjson } from "./ndjson";
 
@@ -20,6 +21,9 @@ function inputIdentifiers(body: Record<string, unknown>): Identifier[] {
   }
   return identifiers;
 }
+
+const URGENCY_TITLES: Record<Urgency, string> = { urgent: "Urgent", important: "Important", review: "À revoir" };
+const URGENCIES = Object.keys(URGENCY_TITLES) as Urgency[];
 
 const pathText = (path: Identifier[]) => path.map((i) => `${i.type}:${i.value}`).join(" → ");
 
@@ -150,6 +154,15 @@ export function InvestigationConsole() {
   // Accounts found by the pseudo that only the visitor can recognize (T9).
   const toConfirm = [...findings.values()].filter((f) => f.field === "F2" && f.confidence === "to_confirm");
 
+  // The summary is computed here, in the browser, on every finding of every round (T12). An account the visitor
+  // just ticked counts as confirmed before the next round starts.
+  const summary = summarize(
+    [...findings.values()].map((f) =>
+      f.field === "F2" && f.confidence === "to_confirm" && ticked.has(f.value) ? { ...f, confidence: "confirmed" as const } : f,
+    ),
+  );
+  const filled = summary.fill.confirmed + summary.fill.probable;
+
   return (
     <section className="space-y-4">
       <form onSubmit={onSubmit} className="space-y-4 rounded border border-zinc-300 p-4">
@@ -192,6 +205,71 @@ export function InvestigationConsole() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {events.length > 0 && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-medium">
+                Fiche remplie : {filled} champs sur {summary.fill.total} (dont {summary.fill.probable} probables)
+              </h3>
+              <p>{Math.round((filled / summary.fill.total) * 100)} %</p>
+            </div>
+
+            <table className="border-collapse text-left text-xs">
+              <thead className="bg-zinc-100 text-zinc-900">
+                <tr>
+                  {["Catégorie", "Confirmés", "Probables", "Total"].map((column) => (
+                    <th key={column} className="border-b border-zinc-300 px-2 py-1">
+                      {column}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {summary.categories.map((category) => (
+                  <tr key={category.code} className="border-b border-zinc-200">
+                    <td className="px-2 py-1">
+                      {category.code}. {category.label}
+                    </td>
+                    <td className="px-2 py-1">{category.confirmed}</td>
+                    <td className="px-2 py-1">{category.probable}</td>
+                    <td className="px-2 py-1">{category.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="space-y-2">
+              <h3 className="font-medium">Plan d&apos;action</h3>
+              {URGENCIES.map((urgency) => {
+                const actions = summary.actions.filter((a) => a.urgency === urgency);
+                if (actions.length === 0) return null;
+                return (
+                  <div key={urgency}>
+                    <h4 className="font-medium">{URGENCY_TITLES[urgency]}</h4>
+                    <ul className="list-inside list-disc">
+                      {actions.map((action) => (
+                        <li key={action.id}>
+                          <span className="font-medium">{action.title}.</span> {action.detail}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+              <div>
+                <h4 className="font-medium">Ce qu&apos;un attaquant pourrait faire de plus</h4>
+                <ul className="list-inside list-disc">
+                  {summary.beyond.map((item) => (
+                    <li key={item.title}>
+                      <span className="font-medium">{item.title}.</span> {item.detail}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         )}
 

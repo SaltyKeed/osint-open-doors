@@ -1199,6 +1199,32 @@ construit avec des traces publiques créées par les élèves pour un persona
 fictif, avec l'enregistrement d'une enquête en secours si le réseau tombe.
 Aucune donnée réelle d'un élève n'est montrée.
 
+## T12. Taux de remplissage et plan d'action calculés dans le navigateur
+
+Date : 2026-11-25
+
+Issue #28. T11 fixe le contenu : taux sur les 30 champs (confirmé et
+probable), global et par catégorie, plan d'action classé par urgence, et
+« Ce qu'un attaquant pourrait faire de plus ». Reste à choisir où le calcul
+est fait, alors qu'une enquête peut avoir deux tours (T9) et que le moteur ne
+voit qu'un tour à la fois.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| **Fonction pure appelée par le navigateur (retenu)** | Le navigateur a déjà tous les constats des deux tours ; le taux monte en direct ; aucune donnée ne repart vers le serveur. | Le code doit pouvoir être chargé par le navigateur : il ne peut pas importer `server-only`. |
+| Calcul par le serveur à la fin de chaque tour | Tout reste côté serveur. | Au deuxième tour, le serveur ne connaît pas les constats du premier : il faudrait les lui renvoyer. |
+| Route dédiée `/api/summary` | Calcul côté serveur sur tous les constats. | Les données du visiteur voyagent une deuxième fois ; une route de plus à protéger. |
+
+Le code commun au navigateur et au serveur, sans clé ni appel réseau, va dans
+un nouveau dossier `src/shared/`. La liste des champs de la fiche
+(`fiche-fields.ts`) y déménage, avec la nouvelle fonction `summarize`.
+L'invariant « tout `src/server/` importe `server-only` » reste vrai sans
+exception.
+
+Le plan d'action ne contient aucune valeur du visiteur : des nombres (« 3
+comptes »), des noms de fuites et des conseils. Les actions sont écrites à
+l'avance dans le code, en français, sans IA (T1).
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -1233,3 +1259,4 @@ Aucune donnée réelle d'un élève n'est montrée.
 | Comptes trouvés par pseudo | Niveau « à confirmer », confirmés par le visiteur à la fin, deuxième tour (T9, remplace l'exception de T7) | Probable si le pseudo est rare |
 | Pages de profil | Balises `og:` lues dans la page de WhatsMyName, nom affiché comme indice, source « page de profil » pour les comptes confirmés, domaines de WhatsMyName seulement (T10) | Une API par plateforme |
 | Direction jusqu'aux portes ouvertes | Critère mesuré sur un panel, search.ch puis dorks Tavily, taux sur les 30 champs, planning (T11) | |
+| Taux et plan d'action | Fonction pure `summarize` dans `src/shared/`, appelée par le navigateur sur les constats des deux tours (T12) | Calcul par le serveur |

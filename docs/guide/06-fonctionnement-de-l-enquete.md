@@ -67,7 +67,7 @@ différentes.
 ## La fiche de vie
 
 Ce que l'outil cherche à remplir. Chaque champ a un code, utilisé dans le code
-et dans les tests (`fiche-fields.ts`).
+et dans les tests (`src/shared/fiche-fields.ts`).
 
 | Catégorie | Exemples de champs |
 | --- | --- |
@@ -292,11 +292,48 @@ message fixe, sans répéter la saisie (`follow-up.ts`). Un compte décoché est
 retiré de l'écran, et le visiteur certifie que les comptes cochés sont à lui
 (T9).
 
+## Taux de remplissage et plan d'action
+
+La fonction `summarize` (`src/shared/summary.ts`) reçoit tous les constats de
+l'enquête, des deux tours, et renvoie le taux de remplissage, le plan d'action
+et la liste « Ce qu'un attaquant pourrait faire de plus ». Elle est pure : même
+entrée, même sortie, sans réseau. Elle est dans `src/shared/` parce que le
+navigateur l'appelle lui-même, sur les constats qu'il a déjà reçus : le calcul
+ne renvoie aucune donnée au serveur (T12).
+
+Le taux se calcule sur les 30 champs de la fiche. Un champ compte s'il a au
+moins un constat « confirmé » ou « probable », et il compte une seule fois,
+même avec deux emails. Un champ avec un constat confirmé et un probable compte
+comme confirmé. Les niveaux « à confirmer », « possible » et « homonyme
+probable » ne comptent pas et ne produisent aucune action. Le taux est donné
+en tout et pour chaque catégorie, de A à J.
+
+Le plan d'action a une règle par type de constat. Les règles sont écrites à
+l'avance dans le code, sans IA (T1). Le plan est classé en trois niveaux :
+
+| Niveau | Constats |
+| --- | --- |
+| Urgent | Mot de passe exposé (H3), ordinateur infecté (H5) |
+| Important | Fuites (H1), téléphone public (B2), adresse publique (B3) |
+| À revoir | Comptes (F2), pages qui citent la personne (I1), photos de profil (A5) |
+
+Une action ne contient jamais une valeur du visiteur : seulement un nombre
+(« 3 comptes »), le nom d'une fuite et un conseil. La liste « Ce qu'un
+attaquant pourrait faire de plus » est toujours présente. Elle explique les
+cinq techniques que l'outil refuse (`CADRAGE.md`, section 6.4).
+
+La console `/dev` appelle `summarize` à chaque nouvel événement, sur les
+constats des deux tours. Un compte coché au deuxième tour compte comme
+confirmé. Elle affiche le taux global avec son pourcentage, un tableau par
+catégorie, puis le plan d'action en trois listes (Urgent, Important, À revoir)
+et « Ce qu'un attaquant pourrait faire de plus ».
+
 ## Où est le code
 
 | Fichier | Rôle |
 | --- | --- |
-| `src/server/domain/fiche-fields.ts` | Codes et libellés des champs de la fiche |
+| `src/shared/fiche-fields.ts` | Codes, libellés et catégories des champs de la fiche |
+| `src/shared/summary.ts` | `summarize` : taux de remplissage, plan d'action et « Ce qu'un attaquant pourrait faire de plus » |
 | `src/server/domain/identifier.ts` | Types d'identifiants, nettoyage, clé `TYPE:valeur` |
 | `src/server/domain/pseudo.ts` | Règle du pseudo rare |
 | `src/server/domain/confidence.ts` | Niveaux de confiance et règle de rebond |

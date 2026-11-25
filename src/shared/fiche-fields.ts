@@ -1,5 +1,3 @@
-import "server-only";
-
 /** Fields of the life record, in the display order of CADRAGE.md, section 5. */
 export const FIELD_CODES = [
   "A1", "A2", "A3", "A4", "A5",
@@ -48,3 +46,17 @@ export const FIELD_LABELS: Record<FieldCode, string> = {
   I3: "Documents qui citent un identifiant",
   J1: "Proches identifiables",
 };
+
+/** The 10 categories of the life record, in the order of CADRAGE.md, section 5. */
+export const FIELD_CATEGORIES: readonly { code: string; label: string; fields: readonly FieldCode[] }[] = [
+  { code: "A", label: "Identité", fields: ["A1", "A2", "A3", "A4", "A5"] },
+  { code: "B", label: "Coordonnées", fields: ["B1", "B2", "B3"] },
+  { code: "C", label: "Lieux", fields: ["C1", "C2", "C3"] },
+  { code: "D", label: "Formation", fields: ["D1"] },
+  { code: "E", label: "Vie professionnelle", fields: ["E1", "E2", "E3"] },
+  { code: "F", label: "Présence en ligne", fields: ["F1", "F2", "F3"] },
+  { code: "G", label: "Activités et centres d'intérêt", fields: ["G1", "G2", "G3"] },
+  { code: "H", label: "Exposition et sécurité", fields: ["H1", "H2", "H3", "H4", "H5"] },
+  { code: "I", label: "Traces sur le web", fields: ["I1", "I2", "I3"] },
+  { code: "J", label: "Entourage", fields: ["J1"] },
+];

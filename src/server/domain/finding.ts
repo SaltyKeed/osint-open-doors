@@ -1,6 +1,6 @@
 import "server-only";
 import { CONFIDENCE_LEVELS, type Confidence } from "./confidence";
-import type { FieldCode } from "./fiche-fields";
+import type { FieldCode } from "@/shared/fiche-fields";
 import type { Identifier } from "./identifier";
 import { normalizeEmail, normalizeSwissPhone } from "./search-query";
 import type { BreachDetails, InfectionDetails, PageDetails, ProfileDetails } from "./source";

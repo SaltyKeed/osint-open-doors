@@ -1,5 +1,5 @@
 import "server-only";
-import type { FieldCode } from "./fiche-fields";
+import type { FieldCode } from "@/shared/fiche-fields";
 import type { Identifier, IdentifierType } from "./identifier";
 import type { DataCategory } from "./types";
 

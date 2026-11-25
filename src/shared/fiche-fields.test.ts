@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FIELD_CODES, FIELD_LABELS } from "./fiche-fields";
+import { FIELD_CATEGORIES, FIELD_CODES, FIELD_LABELS } from "./fiche-fields";
 
 describe("FIELD_CODES", () => {
   it("lists the 30 fields of the life record", () => {
@@ -24,5 +24,13 @@ describe("FIELD_LABELS", () => {
 
   it("uses the French labels of CADRAGE.md", () => {
     expect(FIELD_LABELS.B2).toBe("Numéros de téléphone");
+  });
+});
+
+describe("FIELD_CATEGORIES", () => {
+  it("groups the 30 fields into the 10 categories of CADRAGE.md, in order", () => {
+    expect(FIELD_CATEGORIES.map((c) => c.code)).toEqual(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]);
+    expect(FIELD_CATEGORIES.flatMap((c) => c.fields)).toEqual([...FIELD_CODES]);
+    expect(FIELD_CATEGORIES[7]).toMatchObject({ code: "H", label: "Exposition et sécurité" });
   });
 });

@@ -25,7 +25,7 @@ public et légal et donne un plan d'action (T1).
 | Zéro stockage | Pas de base de données, pas de fichier, pas de `localStorage` ni de cookie contenant des données personnelles. Le conteneur est en `read_only`. |
 | Aucun log de données personnelles | Aucun `console.log` d'un input ou d'une réponse d'API. Les messages d'erreur n'incluent pas le corps des réponses. |
 | Données personnelles jamais dans l'URL | La recherche se fait uniquement en `POST`. |
-| Clés API côté serveur uniquement | Le code serveur se trouve dans `src/server/` et est protégé par `import "server-only"`. |
+| Clés API côté serveur uniquement | Le code serveur se trouve dans `src/server/` et est protégé par `import "server-only"`. Le code partagé avec le navigateur est dans `src/shared/` et n'utilise aucune clé. |
 | Le serveur n'ouvre pas n'importe quelle adresse | La source `profile-page` reçoit une adresse du navigateur : elle n'ouvre que les domaines de la liste WhatsMyName, sans port, identifiants ni adresse IP, seulement s'ils se résolvent vers des adresses publiques (`public-ip.ts`), et suit trois redirections au plus, chacune revérifiée (SSRF, T10). |
 | Effacement côté poste | Bouton « Effacer et terminer » et reset automatique après une période d'inactivité. |
 
@@ -90,7 +90,6 @@ src/
 │   ├── domain/                   ← logique métier pure, sans HTTP, 100 % testable
 │   │   ├── types.ts              ← SearchQuery, PersonName, DataCategory
 │   │   ├── search-query.ts       ← normalisation, schéma zod de la saisie, identifiants saisis
-│   │   ├── fiche-fields.ts       ← codes des champs de la fiche (A1 à J1)
 │   │   ├── identifier.ts         ← types d'identifiants et normalisation
 │   │   ├── pseudo.ts             ← règle du pseudo rare
 │   │   ├── confidence.ts         ← niveaux de confiance et règle de rebond
@@ -99,13 +98,15 @@ src/
 │   │   ├── name-match.ts         ← compare un nom affiché au nom confirmé (T10)
 │   │   ├── follow-up.ts          ← schéma du deuxième tour (comptes confirmés, déjà cherché)
 │   │   ├── source.ts             ← port des sources de l'enquête (Source)
-│   │   ├── masking.ts            ← masquage des valeurs
-│   │   ├── severity.ts           ← score d'exposition
-│   │   └── actions.ts            ← catégories exposées → plan d'action
+│   │   └── masking.ts            ← masquage des valeurs
 │   │
 │   ├── investigation.ts          ← moteur d'enquête : file, rebonds, événements (T4)
 │   ├── dev/                      ← inspection des sources pour la console (D18)
 │   └── env.ts                    ← clés d'API lues et validées par zod (seul accès à process.env)
+│
+├── shared/                       ← code sans clé ni réseau, partagé par le navigateur et le serveur (sans `server-only`, T12)
+│   ├── fiche-fields.ts           ← codes des champs de la fiche (A1 à J1), libellés, catégories A à J
+│   └── summary.ts                ← summarize : taux de remplissage, plan d'action (T12)
 │
 ├── components/                   ← UI (shadcn/ui + composants maison)
 └── tests/
@@ -144,7 +145,12 @@ complète » appelle `/api/search`, lit le flux NDJSON et n'affiche que les
 événements du moteur (rebonds, niveaux de confiance), jamais la réponse brute.
 Sur la carte d'un compte « à confirmer », elle affiche le nom et la photo du
 compte ; le navigateur charge la photo directement, sans envoyer l'adresse de
-la page (`referrerPolicy="no-referrer"`, T10).
+la page (`referrerPolicy="no-referrer"`, T10). Au-dessus du tableau des
+constats, elle appelle `summarize` (`src/shared/summary.ts`) sur tous les
+constats reçus, des deux tours, et affiche le taux de remplissage, le tableau
+par catégorie, le plan d'action et « Ce qu'un attaquant pourrait faire de
+plus ». Le calcul est refait à chaque événement et se fait dans le navigateur
+(T12).
 
 `/api/search` transforme la saisie en identifiants (`queryIdentifiers`) et
 lance le moteur d'enquête (`investigation.ts`, T4). Le moteur donne chaque
@@ -293,7 +299,6 @@ constats (`Finding`), puis regroupe les doublons.
 
 | Fichier | Rôle |
 | --- | --- |
-| `fiche-fields.ts` | Codes des champs de la fiche (`A1` à `J1`) et libellés |
 | `identifier.ts` | Types d'identifiants, normalisation, clé `TYPE:valeur` des recherches déjà faites |
 | `pseudo.ts` | Règle du pseudo rare (6 caractères et une lettre) |
 | `confidence.ts` | `assessConfidence`, `isDetailed`, `shouldRebound` |
@@ -301,6 +306,17 @@ constats (`Finding`), puis regroupe les doublons.
 | `follow-up.ts` | `followUpSchema` : comptes confirmés et identifiants déjà cherchés, avec leurs limites (T9) |
 | `evidence.ts` | `isLinkedToConfirmed`, `countHints` (A1, A2, C1), `isCommonPseudo` (T4) |
 | `source.ts` | Le port `Source`, les fiches renvoyées, `BreachDetails` et `SourceQuotaError` |
+
+Les codes des champs de la fiche (`A1` à `J1`), leurs libellés et les 10
+catégories sont dans `src/shared/fiche-fields.ts`. `src/shared/summary.ts`
+calcule le taux de remplissage et le plan d'action à partir des constats : le
+navigateur l'appelle (T11, T12). Le dossier `src/shared/`
+contient le code sans clé ni appel réseau que le navigateur et le serveur
+utilisent tous les deux. Il n'importe jamais `server-only`, `node:*`,
+`src/server/env.ts` ni une valeur de `src/server/` (`import type` seulement).
+Une règle ESLint (`eslint.config.mjs`) refuse tout autre import dans ce
+dossier. Ainsi, tout `src/server/` garde `import "server-only"` sans exception
+(T12).
 
 Explication simple, avec des exemples :
 [Fonctionnement de l'enquête](guide/06-fonctionnement-de-l-enquete.md).
