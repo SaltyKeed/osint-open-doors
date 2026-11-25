@@ -8,11 +8,12 @@ describe("followUpSchema", () => {
     expect(followUpSchema.parse({ confirmedProfiles: ["HTTPS://Site-A.exemple.ch/lmartin_06/"] })).toEqual({
       confirmedProfiles: [{ type: "PROFIL", value: "https://site-a.exemple.ch/lmartin_06" }],
       searched: [],
+      alreadyConfirmed: [],
     });
   });
 
   it("gives empty lists when nothing is sent", () => {
-    expect(followUpSchema.parse({})).toEqual({ confirmedProfiles: [], searched: [] });
+    expect(followUpSchema.parse({})).toEqual({ confirmedProfiles: [], searched: [], alreadyConfirmed: [] });
   });
 
   it("normalizes the identifiers already searched", () => {
@@ -21,7 +22,24 @@ describe("followUpSchema", () => {
     ]);
   });
 
+  it("lists apart the identifiers the first round confirmed", () => {
+    const parsed = followUpSchema.parse({
+      searched: [
+        { type: "EMAIL", value: "Lea@Exemple.ch", confirmed: true },
+        { type: "PSEUDO", value: "lmartin_06" },
+        { type: "TEL", value: "079 123 45 67", confirmed: false },
+      ],
+    });
+    expect(parsed.searched).toEqual([
+      { type: "EMAIL", value: "lea@exemple.ch" },
+      { type: "PSEUDO", value: "lmartin_06" },
+      { type: "TEL", value: "+41791234567" },
+    ]);
+    expect(parsed.alreadyConfirmed).toEqual([{ type: "EMAIL", value: "lea@exemple.ch" }]);
+  });
+
   it.each<[unknown, string]>([
+    [{ searched: [{ type: "EMAIL", value: "a@exemple.ch", confirmed: "yes" }] }, "confirmed is not a boolean"],
     [{ confirmedProfiles: ["javascript:alert(1)"] }, "not http or https"],
     [{ confirmedProfiles: Array(61).fill("https://exemple.ch/a") }, "more than 60 profiles"],
     [{ searched: Array(301).fill({ type: "EMAIL", value: "a@exemple.ch" }) }, "more than 300 identifiers"],

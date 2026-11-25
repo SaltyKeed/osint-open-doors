@@ -46,6 +46,7 @@ export async function POST(request: Request): Promise<Response> {
   const events = investigate([...queryIdentifiers(query.data), ...followUp.data.confirmedProfiles], SOURCES, {
     signal: request.signal,
     alreadySearched: followUp.data.searched,
+    alreadyConfirmed: followUp.data.alreadyConfirmed,
   });
   return new Response(toNdjson(events), {
     headers: { ...NO_STORE, "Content-Type": "application/x-ndjson" },

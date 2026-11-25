@@ -3,7 +3,7 @@ import { CONFIDENCE_LEVELS, type Confidence } from "./confidence";
 import type { FieldCode } from "./fiche-fields";
 import type { Identifier } from "./identifier";
 import { normalizeEmail, normalizeSwissPhone } from "./search-query";
-import type { BreachDetails, InfectionDetails, PageDetails } from "./source";
+import type { BreachDetails, InfectionDetails, PageDetails, ProfileDetails } from "./source";
 
 /** One piece of the fiche, with where it came from. */
 export interface Finding {
@@ -20,6 +20,8 @@ export interface Finding {
   infection?: InfectionDetails;
   /** Only on I1, see SourceField. */
   page?: PageDetails;
+  /** Only on F2, see SourceField. */
+  profile?: ProfileDetails;
 }
 
 /** The form used to decide whether two values are the same. */
@@ -67,6 +69,7 @@ export function mergeFindings(findings: Finding[]): Finding[] {
     // Only one infostealer source today: the first details are kept.
     existing.infection ??= finding.infection;
     existing.page ??= finding.page;
+    existing.profile ??= finding.profile;
   }
   return [...merged.values()];
 }

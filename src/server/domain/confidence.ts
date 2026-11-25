@@ -34,7 +34,7 @@ function rank(confidence: Confidence): number {
 }
 
 /** The less sure of two levels. */
-function capAt(confidence: Confidence, ceiling: Confidence): Confidence {
+export function capAt(confidence: Confidence, ceiling: Confidence): Confidence {
   return rank(confidence) > rank(ceiling) ? confidence : ceiling;
 }
 

@@ -34,6 +34,13 @@ export interface PageDetails {
   title: string;
 }
 
+/** Name and photo shown by an account (T10). Only on F2: the visitor sees them to confirm the account. */
+export interface ProfileDetails {
+  name?: string;
+  /** Photo address, http or https. */
+  photo?: string;
+}
+
 export interface SourceField {
   field: FieldCode;
   value: string;
@@ -43,6 +50,8 @@ export interface SourceField {
   infection?: InfectionDetails;
   /** Only on I1: the value is the page address. */
   page?: PageDetails;
+  /** Only on F2: the displayed name and photo of the account. */
+  profile?: ProfileDetails;
 }
 
 /** One record returned by a source: a leak line, a profile. */
@@ -50,6 +59,8 @@ export interface SourceRecord {
   /** "relative": the record is about someone close to the visitor (J1, never searched again). */
   about: "subject" | "relative";
   fields: SourceField[];
+  /** Identifiers only cited in a free text (a bio): at most probable, T10. */
+  mentioned?: boolean;
   /** New identifiers the engine may search next. */
   identifiers: Identifier[];
 }

@@ -42,7 +42,7 @@ permettent, une fois assemblées, d'en apprendre beaucoup sur une personne.
 | Catégorie | Sources | Accès |
 | --- | --- | --- |
 | Moteurs de recherche | Tavily : donnée exacte, plusieurs formats de téléphone, filtres par site et par type de fichier | Clé gratuite |
-| Pseudos et réseaux sociaux | Liste WhatsMyName (pages de profil publiques) | Gratuit |
+| Pseudos et réseaux sociaux | Liste WhatsMyName (comptes trouvés, avec nom affiché et photo) | Gratuit |
 | Code | GitHub, GitLab (commits, profils) | Gratuit |
 | Identité technique | Gravatar, serveurs de clés PGP, domaine de l'email (RDAP) | Gratuit |
 | Archives du web | Wayback Machine (pages supprimées) | Gratuit |
