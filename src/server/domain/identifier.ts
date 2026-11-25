@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { normalizeEmail, normalizeSwissPhone } from "./search-query";
+import { normalizeEmail, normalizePseudo, normalizeSwissPhone } from "./search-query";
 
 /** Kinds of value the investigation can give to a source (CADRAGE.md, section 6.1). */
 export const IDENTIFIER_TYPES = ["EMAIL", "TEL", "PSEUDO", "NOM", "PROFIL", "DOMAINE", "IP", "ORGA"] as const;
@@ -43,7 +43,7 @@ function normalizeValue(type: IdentifierType, value: string): string | null {
       // shortcut: Swiss numbers only; switch to libphonenumber-js when a source returns foreign numbers.
       return normalizeSwissPhone(value);
     case "PSEUDO":
-      return value.replace(/^@/, "").toLowerCase() || null;
+      return normalizePseudo(value);
     case "NOM":
     case "ORGA":
       return collapseSpaces(value);

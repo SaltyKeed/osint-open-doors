@@ -21,6 +21,7 @@ describe("normalizeIdentifier", () => {
     ["EMAIL", "pas-un-email", "no @"],
     ["TEL", "+33 6 12 34 56 78", "not a Swiss number"],
     ["PSEUDO", "@", "nothing after @"],
+    ["PSEUDO", "jean dupont", "space inside"],
     ["PROFIL", "javascript:alert(1)", "not http or https"],
     ["PROFIL", "pas une adresse", "not a URL"],
     ["DOMAINE", "pas un domaine", "spaces"],

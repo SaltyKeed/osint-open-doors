@@ -393,7 +393,7 @@ mis à jour.
 
 ## Hors de ce plan
 
-- Saisie du volontaire et identifiants de départ : #48 et #65.
+- Saisie du volontaire (formulaire, T8) et identifiants de départ : #48 et #65.
 - Calcul des indices cohérents et du nombre anormal de sites pour un
   pseudo : #65.
 - Masquage par champ avec le bouton « œil » : #31.

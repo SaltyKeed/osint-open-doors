@@ -1,11 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { normalizeEmail, normalizeSwissPhone, queryIdentifiers, searchRequestSchema } from "./search-query";
+import { normalizeEmail, normalizePseudo, normalizeSwissPhone, queryIdentifiers, searchRequestSchema } from "./search-query";
 
 // All values below are invented test data.
 
 describe("normalizeEmail", () => {
   it("trims spaces and lowercases", () => {
     expect(normalizeEmail("  Jean.Dupont@Example.COM ")).toBe("jean.dupont@example.com");
+  });
+});
+
+describe("normalizePseudo", () => {
+  it("trims spaces, removes a leading @ and lowercases", () => {
+    expect(normalizePseudo("  @LMartin_06 ")).toBe("lmartin_06");
+  });
+
+  it("accepts dots and dashes around letters and digits, up to 40 characters", () => {
+    expect(normalizePseudo("l.martin-06")).toBe("l.martin-06");
+    expect(normalizePseudo("a".repeat(40))).toBe("a".repeat(40));
+  });
+
+  it.each([
+    ["@", "nothing after @"],
+    ["   ", "blank"],
+    ["l martin", "space inside"],
+    ["jean@exemple.ch", "an email"],
+    ["@@lmartin", "a second @"],
+    ["..", "only dots: the site URL would point to the parent page"],
+    ["l&martin", "character outside letters, digits, dot, dash, underscore"],
+    ["a".repeat(41), "longer than 40 characters"],
+  ])("rejects %s (%s)", (input) => {
+    expect(normalizePseudo(input)).toBeNull();
   });
 });
 
@@ -53,11 +77,16 @@ describe("searchRequestSchema", () => {
     ).toEqual({ name: { first: "Jean", last: "Dupont" } });
   });
 
+  it("normalizes the pseudo", () => {
+    expect(searchRequestSchema.parse({ pseudo: "@LMartin_06", consent: true })).toEqual({ pseudo: "lmartin_06" });
+  });
+
   it("keeps every identifier given", () => {
     expect(
       searchRequestSchema.parse({
         email: "jean@exemple.ch",
         phone: "+41 79 123 45 67",
+        pseudo: "jdupont_74",
         firstName: "Jean",
         lastName: "Dupont",
         consent: true,
@@ -65,6 +94,7 @@ describe("searchRequestSchema", () => {
     ).toEqual({
       email: "jean@exemple.ch",
       phone: "+41791234567",
+      pseudo: "jdupont_74",
       name: { first: "Jean", last: "Dupont" },
     });
   });
@@ -80,6 +110,8 @@ describe("searchRequestSchema", () => {
     [{ firstName: "   ", lastName: "Dupont", consent: true }, "blank first name"],
     [{ phone: "12345", consent: true }, "invalid phone"],
     [{ email: "pas-un-email", consent: true }, "invalid email"],
+    [{ pseudo: "@", consent: true }, "pseudo is only @"],
+    [{ pseudo: "jean dupont", consent: true }, "pseudo with a space"],
   ])("rejects %o (%s)", (input) => {
     expect(searchRequestSchema.safeParse(input).success).toBe(false);
   });
@@ -88,20 +120,27 @@ describe("searchRequestSchema", () => {
     const result = searchRequestSchema.safeParse({
       phone: "079 999 88",
       email: "secret-visitor@exemple",
+      pseudo: "secret pseudo",
       consent: true,
     });
     expect(result.success).toBe(false);
-    expect(JSON.stringify(result.error)).not.toMatch(/999 88|secret-visitor/);
+    expect(JSON.stringify(result.error)).not.toMatch(/999 88|secret-visitor|secret pseudo/);
   });
 });
 
 describe("queryIdentifiers", () => {
   it("turns each part of the query into an identifier, in a fixed order", () => {
     expect(
-      queryIdentifiers({ name: { first: "Léa", last: "Martin" }, phone: "+41791234567", email: "lea@exemple.ch" }),
+      queryIdentifiers({
+        name: { first: "Léa", last: "Martin" },
+        pseudo: "lmartin_06",
+        phone: "+41791234567",
+        email: "lea@exemple.ch",
+      }),
     ).toEqual([
       { type: "EMAIL", value: "lea@exemple.ch" },
       { type: "TEL", value: "+41791234567" },
+      { type: "PSEUDO", value: "lmartin_06" },
       { type: "NOM", value: "Léa Martin" },
     ]);
   });
