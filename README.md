@@ -57,3 +57,5 @@ Documents de référence :
   choix.
 - [BUDGET.md](docs/BUDGET.md) : services payants envisagés et leur coût.
 - [IDEES.md](docs/IDEES.md) : idées d'amélioration pas encore décidées.
+- [MESURES.md](docs/MESURES.md) : efficacité de l'outil mesurée sur un panel
+  de volontaires, en nombres seulement (T11).
