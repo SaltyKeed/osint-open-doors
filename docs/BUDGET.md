@@ -74,8 +74,8 @@ Une marge d'environ 10 % est à prévoir pour le taux de change et la TVA.
 
 ## Pourquoi le scénario B
 
-- Il couvre les trois saisies du formulaire (email, téléphone, nom) et ajoute
-  la recherche par pseudo.
+- Il couvre les saisies du formulaire : email, téléphone, nom et pseudo
+  (T8).
 - LeakCheck a un prix public, un nombre de recherches suffisant (200 par jour)
   et accepte le téléphone et le pseudo.
 - Have I Been Pwned est la référence pour les fuites par email et ne renvoie

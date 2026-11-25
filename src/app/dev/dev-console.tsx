@@ -17,6 +17,7 @@ interface Result {
 const FIELDS = [
   { name: "email", label: "Email", type: "email" },
   { name: "phone", label: "Téléphone", type: "tel" },
+  { name: "pseudo", label: "Pseudo", type: "text" },
   { name: "firstName", label: "Prénom", type: "text" },
   { name: "lastName", label: "Nom", type: "text" },
 ] as const;

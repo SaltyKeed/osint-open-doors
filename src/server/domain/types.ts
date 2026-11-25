@@ -3,10 +3,11 @@ export interface PersonName {
   last: string;
 }
 
-/** A visitor's search, already normalized: phone in +41 format, email in lowercase. */
+/** A visitor's search, already normalized: phone in +41 format, email and pseudo in lowercase. */
 export interface SearchQuery {
   email?: string;
   phone?: string;
+  pseudo?: string;
   name?: PersonName;
 }
 

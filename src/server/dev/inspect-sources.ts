@@ -49,7 +49,8 @@ export async function inspectSources(
       const skipped: SourceReport = { id: source.id, input: null, status: "skipped", durationMs: 0, message, ...empty };
       return [Promise.resolve(skipped)];
     }
-    return accepted.map((input) => inspectOne(source, input, timeoutMs));
+    // Same rule as the engine: a source that checks many sites declares its own timeout (T7).
+    return accepted.map((input) => inspectOne(source, input, source.callTimeoutMs ?? timeoutMs));
   });
   return Promise.all(reports);
 }

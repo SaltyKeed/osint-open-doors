@@ -807,6 +807,41 @@ site.
 Le pseudo est envoyé aux 569 sites : ils feront partie de la liste des
 services qui ont reçu les données du visiteur (`CADRAGE.md`, section 8).
 
+## T8. Saisie par un formulaire
+
+Date : 2026-11-25
+
+Le visiteur remplit un champ par type d'information (issue #48). La barre
+unique du prototype d'Enzo (#13), où l'application devine le type de chaque
+valeur, a été étudiée puis écartée.
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Barre unique | Le visiteur tape comme il veut. | Un mot seul (`neuchatel`, `tiago`, `saltykeed`) peut être une localité, un prénom ou un pseudo : il faut deviner, puis faire confirmer. Une erreur envoie une localité ou un prénom comme pseudo vers 569 sites (T7). |
+| **Formulaire, un champ par type (retenu)** | Le type est connu sans deviner ; chaque champ est validé seul. | Plus long à remplir qu'un seul champ. |
+
+Champs : email, téléphone suisse, pseudo, prénom et nom. Tous sont
+facultatifs, au moins un est requis ; le prénom et le nom vont ensemble. Le
+serveur valide chaque valeur avec `searchRequestSchema`. Aujourd'hui, seule la
+console `/dev` a ces champs ; le formulaire du visiteur est fait dans #31.
+
+Le pseudo est ajouté à la requête : il devient un identifiant `PSEUDO`. Il est
+normalisé par `normalizePseudo` : sans le `@` du début, en minuscules, de 1 à
+40 caractères parmi les lettres sans accent, les chiffres, le point, le tiret
+et le trait bas, avec au moins une lettre ou un chiffre. Le pseudo est placé
+dans l'adresse des 569 sites de WhatsMyName : une valeur comme `..` pointerait
+vers une autre page, et un email tapé dans le mauvais champ partirait comme
+pseudo. La même règle s'applique aux pseudos renvoyés par les sources
+(`normalizeIdentifier`) : un pseudo qui ne la respecte pas n'est pas relancé.
+
+### Hors de cette décision
+
+- Localité et date de naissance : aucune source ni règle ne les utilise
+  encore. Les champs viendront avec la règle anti-homonymes.
+- Une seule valeur par champ.
+- Pas de numéro étranger : le téléphone reste suisse (raccourci de
+  `identifier.ts`).
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -837,3 +872,4 @@ services qui ont reçu les données du visiteur (`CADRAGE.md`, section 8).
 | Recherche web | Tavily, email et téléphone seulement, 3 recherches par enquête (T5) | Brave Search API |
 | Recherche par le nom | Seulement complétée par une information confirmée, page affichée si elle contient les deux (T6, à coder) | Nom seul |
 | Pseudo sur une liste de sites | WhatsMyName figé dans le dépôt, 569 sites, comptes « probable » si le pseudo est sûr (T7) | Une source par plateforme |
+| Saisie | Formulaire, un champ par type, pseudo ajouté, validation par le serveur (T8) | Barre unique |

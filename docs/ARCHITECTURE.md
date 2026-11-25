@@ -1,9 +1,10 @@
 # Architecture de OSINT Open Doors
 
-OSINT Open Doors est un outil de sensibilisation prévu pour les portes ouvertes
-du CPNE. Un visiteur teste ses propres informations (email, téléphone, nom et
-prénom) et voit dans quelles fuites de données elles apparaissent. Il reçoit
-ensuite un plan d'action concret.
+OSINT Open Doors est un outil d'enquête prévu pour les portes ouvertes du
+CPNE. Un volontaire remplit un formulaire avec ses propres informations
+(email, téléphone, pseudo, nom et prénom, T8). L'outil rebondit d'une
+information à l'autre, reconstitue sa fiche de vie à partir de ce qui est
+public et légal et donne un plan d'action (T1).
 
 ## 1. Contexte d'utilisation
 
