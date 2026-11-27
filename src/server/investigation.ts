@@ -1,6 +1,6 @@
 import "server-only";
-import { assessConfidence, capAt, shouldRebound, type Confidence } from "@/server/domain/confidence";
-import { countHints, isCommonPseudo, isLinkedToConfirmed } from "@/server/domain/evidence";
+import { assessConfidence, capAt, MAX_HOMONYMS, shouldRebound, type Confidence } from "@/server/domain/confidence";
+import { countHints, isCommonPseudo, isConfirmedName, isLinkedToConfirmed } from "@/server/domain/evidence";
 import { findingKey, mergeFindings, type Finding } from "@/server/domain/finding";
 import { identifierKey, normalizeIdentifier, type Identifier } from "@/server/domain/identifier";
 import { isRarePseudo } from "@/server/domain/pseudo";
@@ -50,6 +50,7 @@ export async function* investigate(
   /** Calls made to each source, for sources with maxCallsPerInvestigation. */
   const calls = new Map<string, number>();
   const hidden = { possible: 0, namesake: 0 };
+  let cardCount = 0;
 
   function enqueue(identifier: Identifier, confidence: Confidence, path: Identifier[]): boolean {
     const key = identifierKey(identifier);
@@ -113,23 +114,53 @@ export async function* investigate(
     commonPseudo: boolean,
   ): Generator<InvestigationEvent> {
     const { identifier: queried } = item;
-    const assessed = assessConfidence({
+    // The name listed for a phone line may be a parent's: it stays A1 only when it is the visitor's (T13).
+    // Otherwise it is split off as a relative's name (J1), in a record of its own.
+    const holder = record.fields.find((f) => f.field === "A1" && f.holder === true);
+    if (holder && !isConfirmedName(holder.value, confirmedValues)) {
+      const relative: SourceRecord = {
+        about: "relative",
+        fields: [{ field: "J1", value: holder.value }],
+        identifiers: [],
+      };
+      yield* handleRecord({ ...record, fields: record.fields.filter((f) => f !== holder) }, source, item, commonPseudo);
+      yield* handleRecord(relative, source, item, commonPseudo);
+      return;
+    }
+    // A directory record found by a name (T13): its own hints prove nothing. If its address is one we already
+    // confirmed (by phone), it is the visitor's own entry; otherwise the visitor decides, up to MAX_HOMONYMS.
+    const isDirectory = record.homonyms !== undefined;
+    const ownEntry =
+      isDirectory && record.fields.some((f) => f.field === "B3" && confirmedValues.has(findingKey(f.field, f.value)));
+    const assessed = ownEntry ? "confirmed" : assessConfidence({
       queried: { type: queried.type, confidence: item.confidence },
       linkedToConfirmed: isLinkedToConfirmed(record, confirmedKeys),
       rarePseudo: queried.type === "PSEUDO" && isRarePseudo(queried.value) && !commonPseudo,
       existenceCheck: source.sitesChecked !== undefined,
-      coherentHints: countHints(record, confirmedValues),
+      coherentHints: isDirectory ? 0 : countHints(record, confirmedValues),
+      fewHomonyms: record.homonyms !== undefined && record.homonyms <= MAX_HOMONYMS,
     });
     // A bio cites other people as well as the owner: what it mentions is never surer than probable (T10).
     const confidence = record.mentioned ? capAt(assessed, "probable") : assessed;
     if (confidence === "possible" || confidence === "namesake") {
-      hidden[confidence] += 1;
+      // With many homonyms the source gives the total: it is counted, no address is kept (T13).
+      hidden[confidence] += record.homonyms !== undefined && record.homonyms > MAX_HOMONYMS ? record.homonyms : 1;
       return;
     }
     const aboutVisitor = record.about === "subject";
     // An account to confirm sends only its address (F2): the name and photo of a stranger never become a
-    // finding of their own, they travel inside the F2 details (T10).
-    const fields = confidence === "to_confirm" ? record.fields.filter((f) => f.field === "F2") : record.fields;
+    // finding of their own, they travel inside the F2 details (T10). Only a directory card sends all its fields.
+    const fields =
+      confidence === "to_confirm" && !isDirectory ? record.fields.filter((f) => f.field === "F2") : record.fields;
+    // The findings of one card to confirm share a key: the visitor confirms them together (T13). An account is
+    // identified by its address; a directory entry gets a number, because two homonyms can share name and city.
+    const first = fields[0];
+    const card =
+      confidence === "to_confirm" && first
+        ? isDirectory
+          ? `${findingKey(first.field, first.value)}#${++cardCount}`
+          : findingKey(first.field, first.value)
+        : undefined;
 
     for (const field of fields) {
       const key = findingKey(field.field, field.value);
@@ -143,10 +174,14 @@ export async function* investigate(
         ...(field.infection && { infection: field.infection }),
         ...(field.page && { page: field.page }),
         ...(field.profile && { profile: field.profile }),
+        ...(card && { card }),
       };
-      const existing = findings.get(key);
+      // Two homonyms often share a name and a city: each directory card keeps its own findings (T13). An
+      // account keeps the plain slot, so that the same address found twice is merged and keeps the surer level.
+      const slot = isDirectory && card ? `${card}|${key}` : key;
+      const existing = findings.get(slot);
       const [merged] = mergeFindings(existing ? [existing, incoming] : [incoming]);
-      findings.set(key, merged!);
+      findings.set(slot, merged!);
       if (confidence === "confirmed" && aboutVisitor) confirmedValues.add(key);
       // Send only what changed: a second source with nothing new stays silent.
       if (JSON.stringify(existing) !== JSON.stringify(merged)) yield { type: "finding", finding: merged! };

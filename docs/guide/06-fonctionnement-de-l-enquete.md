@@ -5,10 +5,11 @@ cherche, comment il décide qu'une information appartient bien au visiteur et
 quand il relance une recherche. Le détail complet est dans
 [CADRAGE.md](../CADRAGE.md), les sources dans [SOURCES.md](../SOURCES.md).
 
-État au 2026-11-18 : le modèle de données (issue #63), XposedOrNot sur le
-port `Source` (#64) et le moteur d'enquête (#65) sont en place. Sept
+État au 2026-11-25 : le modèle de données (issue #63), XposedOrNot sur le
+port `Source` (#64) et le moteur d'enquête (#65) sont en place. Huit
 sources sont branchées : XposedOrNot, Gravatar, Hudson Rock, GitHub, la
-recherche web Tavily (avec sa clé), WhatsMyName et la page de profil. Les pseudos trouvés (par
+recherche web Tavily (avec sa clé), l'annuaire search.ch (avec sa clé), WhatsMyName et la page de profil. Un téléphone saisi donne l'adresse et la
+ville ; un nom donne au plus 3 cartes « à confirmer » (T13). Les pseudos trouvés (par
 Gravatar ou GitHub) sont cherchés chez Hudson Rock, GitHub et WhatsMyName ;
 l'email public et le site d'un compte GitHub repartent aussi dans la file.
 Les comptes que le visiteur confirme (`PROFIL`) sont lus par la source page de
@@ -96,8 +97,9 @@ confiance.
 | Confirmé | La fiche contient aussi un email, un téléphone ou un profil déjà confirmé, ou elle a été trouvée avec un email, un téléphone, un profil ou un domaine confirmé | Oui | Oui |
 | Probable | Trouvé par un pseudo rare, avec au moins un indice cohérent (même ville, même nom affiché, même année) | Oui, marqué « probable » | Oui, une seule fois |
 | À confirmer | Compte trouvé par un pseudo rare et pas courant sur une liste de sites (WhatsMyName), sans indice cohérent | À la fin, pour que le visiteur dise s'il est à lui | Non (oui une fois confirmé) |
+| À confirmer (annuaire) | Trouvé par un nom, sans tenir compte des indices, dans une source d'annuaire qui connaît au plus 3 personnes de ce nom : une carte par personne, avec nom, adresse et ville | À la fin, pour que le visiteur dise laquelle est la sienne | Non |
 | Possible | Trouvé par un pseudo court ou courant, une IP, une organisation, ou un nom avec un indice | Non, compté dans un total | Non |
-| Homonyme probable | Trouvé par un nom seul | Non, compté dans un total | Non |
+| Homonyme probable | Trouvé par un nom seul, ou par un nom porté par plus de 3 personnes dans la source | Non, compté dans un total (le nombre de personnes) | Non |
 
 Les saisies du visiteur sont « confirmé » : il a certifié qu'elles sont à lui.
 
@@ -118,7 +120,9 @@ flowchart TD
     N -- non --> H
     D -- NOM --> I{"Au moins un indice ?"}
     I -- oui --> H
-    I -- non --> J["Homonyme probable"]
+    I -- non --> P{"Au plus 3 personnes de ce nom ?"}
+    P -- oui --> M
+    P -- non --> J["Homonyme probable"]
     D -- "IP, ORGA" --> H
 ```
 
@@ -131,6 +135,16 @@ on ne garde que l'adresse (avec le nom affiché et la photo comme détails de
 cette adresse, pour aider le visiteur à reconnaître le compte) : un profil complet (nom, email, ville) trouvé par
 pseudo sur GitHub ou Hudson Rock reste « possible », pour ne jamais montrer
 les données d'un inconnu.
+
+Une source d'annuaire donne en plus le nombre de personnes qui portent le
+nom cherché (`homonyms`). Jusqu'à 3, chacune devient une carte « à confirmer » :
+ses constats (nom, adresse, ville) partagent une clé de carte (`card`), pour
+que le visiteur les confirme ensemble. Au-delà, aucune adresse n'est envoyée,
+seul le nombre est compté. Si l'adresse d'une de ces personnes est déjà
+confirmée (trouvée par le téléphone), c'est la fiche du visiteur : elle est
+« confirmée », sans carte. Un annuaire par téléphone donne aussi le nom du
+titulaire de la ligne : le moteur le garde en A1 s'il correspond au nom
+saisi, sinon il va en J1 (un parent), sans relancer de recherche.
 
 Un nom affiché sur un compte est un indice quand chaque mot du nom confirmé
 est un mot entier du nom affiché, sans tenir compte des majuscules ni des
@@ -267,14 +281,16 @@ avaient au moment où elles sont arrivées.
 
 ## Deuxième tour
 
-Les comptes « à confirmer » arrivent à la fin de l'enquête. Le visiteur coche
-ceux qui sont à lui, puis le bouton « Continuer l'enquête » envoie une
+Les fiches « à confirmer » arrivent à la fin de l'enquête, regroupées en cartes
+(une carte par clé `card`) : un compte trouvé par pseudo (adresse, photo et
+nom), ou une personne de l'annuaire trouvée par le nom (nom, adresse et ville,
+T13). Le visiteur coche les cartes qui sont à lui, puis le bouton « Continuer l'enquête » envoie une
 nouvelle requête à `/api/search`. Le serveur ne garde rien entre deux
 requêtes : le navigateur renvoie donc la saisie de départ et deux listes.
 
 | Liste | Contenu | Limite |
 | --- | --- | --- |
-| `confirmedProfiles` | Adresses des comptes cochés, traitées comme une saisie « confirmé » | 60 |
+| `confirmedProfiles` | Adresses des comptes cochés (les cartes d'annuaire n'en font pas partie : elles ne relancent rien), traitées comme une saisie « confirmé » | 60 |
 | `searched` | Identifiants déjà cherchés au premier tour (la saisie et tous les rebonds), chacun avec `confirmed: true` si le premier tour l'a confirmé | 300 |
 
 Le moteur ne redonne jamais aux sources un identifiant de `searched`, même
@@ -288,9 +304,10 @@ le moteur (`alreadyConfirmed`), sans être cherchés de nouveau : une fiche du
 deuxième tour qui contient un email trouvé et confirmé au premier tour est
 reconnue comme confirmée. Le serveur
 refuse une liste trop longue ou une valeur invalide avec une erreur 400 au
-message fixe, sans répéter la saisie (`follow-up.ts`). Un compte décoché est
-retiré de l'écran, et le visiteur certifie que les comptes cochés sont à lui
-(T9).
+message fixe, sans répéter la saisie (`follow-up.ts`). Une carte décochée est
+retirée de l'écran, et le visiteur certifie que les cartes cochées sont à lui
+(T9, T13). Tous les constats d'une carte cochée passent ensemble en
+« confirmé ».
 
 ## Taux de remplissage et plan d'action
 
@@ -323,8 +340,9 @@ attaquant pourrait faire de plus » est toujours présente. Elle explique les
 cinq techniques que l'outil refuse (`CADRAGE.md`, section 6.4).
 
 La console `/dev` appelle `summarize` à chaque nouvel événement, sur les
-constats des deux tours. Un compte coché au deuxième tour compte comme
-confirmé. Elle affiche le taux global avec son pourcentage, un tableau par
+constats des deux tours. Une carte cochée compte comme confirmée avant
+même le deuxième tour. Si un constat vient de search.ch, elle affiche sous les
+résultats « Données d'annuaire : search.ch, Swisscom Directories AG ». Elle affiche le taux global avec son pourcentage, un tableau par
 catégorie, puis le plan d'action en trois listes (Urgent, Important, À revoir)
 et « Ce qu'un attaquant pourrait faire de plus ».
 

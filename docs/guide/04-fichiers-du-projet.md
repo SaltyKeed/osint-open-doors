@@ -53,6 +53,7 @@ src/
 │   │   ├── page.tsx
 │   │   ├── dev-console.tsx
 │   │   ├── investigation-console.tsx
+│   │   ├── cards.ts
 │   │   └── ndjson.ts
 │   └── api/dev/search/route.ts
 ├── server/
@@ -91,6 +92,11 @@ src/
 │       │   └── (mêmes fichiers)
 │       ├── tavily/
 │       │   └── (mêmes fichiers)
+│       ├── searchch/
+│       │   ├── index.ts
+│       │   ├── client.ts
+│       │   ├── parse.ts
+│       │   └── mapper.ts
 │       ├── profile-page/
 │       │   └── index.ts
 │       └── whatsmyname/
@@ -107,6 +113,7 @@ src/
     ├── fixtures/hudsonrock/
     ├── fixtures/github/
     ├── fixtures/tavily/
+    ├── fixtures/searchch/
     └── server-only-stub.ts
 ```
 
@@ -125,7 +132,8 @@ src/
   fiches en JSON.
 - `app/dev/` et `app/api/dev/search/` forment la console de test des
   sources (`dev-console.tsx`) et de l'enquête complète
-  (`investigation-console.tsx`, qui lit le flux avec `ndjson.ts`), et
+  (`investigation-console.tsx`, qui lit le flux avec `ndjson.ts` et regroupe
+les constats « à confirmer » en cartes avec `cards.ts`), et
   `server/dev/` prépare ses données. Elle n'existe qu'avec
   `npm run dev` (voir [Commandes du projet](02-commandes.md#npm-run-dev)).
 - `server/domain/` contient la logique métier sans réseau : normalisation et
@@ -248,8 +256,9 @@ fichiers générés par TypeScript et les fichiers personnels de Claude Code
 Tous les fichiers `.env*` sont ignorés, car ils contiendront les clés API.
 Seul `.env.example` est versionné : il liste les variables attendues, sans
 valeur. Pour travailler avec des clés, le copier en `.env.local` et le
-compléter. Clés aujourd'hui : `GITHUB_TOKEN` (optionnelle) et `TAVILY_API_KEY`
-(sans elle, la recherche web est sautée).
+compléter. Clés aujourd'hui : `GITHUB_TOKEN` (optionnelle), `TAVILY_API_KEY`
+(sans elle, la recherche web est sautée) et `SEARCH_CH_API_KEY` (sans elle,
+l'annuaire est sauté).
 
 ## next-env.d.ts
 

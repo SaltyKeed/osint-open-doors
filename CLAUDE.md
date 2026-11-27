@@ -52,6 +52,9 @@ Ils s'appliquent à tout le code, sans exception. Détail et justification :
   liste blanche de champs. La réponse brute reste dans le dossier du provider.
 - Une fiche trouvée par nom est détaillée seulement si elle contient aussi le
   téléphone ou l'email saisi par le visiteur. Sinon, seul un total est affiché.
+  Exception décidée (T13) : un annuaire qui connaît au plus 3 personnes de ce
+  nom les montre comme cartes « à confirmer », avec l'adresse, le temps que le
+  visiteur choisisse la sienne.
 - Les valeurs affichées sont masquées (`+41 79 ••• •• 42`).
 - Les données personnelles vivent uniquement en mémoire, le temps de la
   requête. Pas de base de données, de fichier, de cookie ni de `localStorage`.

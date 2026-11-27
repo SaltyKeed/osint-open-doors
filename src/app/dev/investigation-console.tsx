@@ -6,6 +6,7 @@ import type { Identifier } from "@/server/domain/identifier";
 import type { InvestigationEvent } from "@/server/investigation";
 import { summarize, type Urgency } from "@/shared/summary";
 import { FIELDS } from "./dev-console";
+import { accountAddresses, cardsToConfirm, confirmCards, findingId, mergeFinding } from "./cards";
 import { splitNdjson } from "./ndjson";
 
 const isWebAddress = (value: string) => /^https?:\/\//i.test(value);
@@ -97,18 +98,18 @@ export function InvestigationConsole() {
     }
   }
 
-  function toggle(address: string) {
+  function toggle(card: string) {
     setTicked((current) => {
       const next = new Set(current);
-      if (next.has(address)) next.delete(address);
-      else next.add(address);
+      if (next.has(card)) next.delete(card);
+      else next.add(card);
       return next;
     });
   }
 
   async function continueInvestigation() {
-    const isToConfirmAccount = (f: Finding) => f.field === "F2" && f.confidence === "to_confirm";
-    const newlyConfirmed = toConfirm.map((f) => f.value).filter((address) => ticked.has(address));
+    // Only accounts are searched again; a directory card is confirmed for the display only (T13).
+    const newlyConfirmed = accountAddresses(cards, ticked);
     // Accounts confirmed in an earlier round were searched then: they are inputs, so no lead event says so.
     const searchedAccounts = confirmedAccounts.current.map((value): Identifier => ({ type: "PROFIL", value }));
     confirmedAccounts.current = [...confirmedAccounts.current, ...newlyConfirmed];
@@ -125,13 +126,11 @@ export function InvestigationConsole() {
       byKey.set(key, { ...entry, confirmed: entry.confirmed || byKey.get(key)?.confirmed === true });
     }
     const searched = [...byKey.values()];
-    // Ticked accounts become confirmed; the others leave the screen (T9).
+    // Ticked cards become confirmed, all their findings together; the others leave the screen (T9, T13).
     setEvents((previous) =>
-      previous.flatMap((e): InvestigationEvent[] => {
-        if (e.type !== "finding" || !isToConfirmAccount(e.finding)) return [e];
-        if (!ticked.has(e.finding.value)) return [];
-        return [{ type: "finding", finding: { ...e.finding, confidence: "confirmed" } }];
-      }),
+      previous.flatMap((e): InvestigationEvent[] =>
+        e.type === "finding" ? confirmCards([e.finding], ticked).map((finding) => ({ type: "finding", finding })) : [e],
+      ),
     );
     setTicked(new Set());
     await runRound({ ...firstInput.current, confirmedProfiles: confirmedAccounts.current, searched });
@@ -147,20 +146,22 @@ export function InvestigationConsole() {
     hidden.possible += e.hidden.possible;
     hidden.namesake += e.hidden.namesake;
   }
-  // An updated finding replaces the previous one (same field and value).
+  // An updated finding replaces the previous one (same field and value, and same card).
   const findings = new Map<string, Finding>();
-  for (const e of events) if (e.type === "finding") findings.set(`${e.finding.field}\n${e.finding.value}`, e.finding);
+  for (const e of events) {
+    if (e.type !== "finding") continue;
+    const id = findingId(e.finding);
+    const existing = findings.get(id);
+    // A confirmed card meets what is already there: sources and path are kept, not overwritten.
+    findings.set(id, existing ? mergeFinding(existing, e.finding) : e.finding);
+  }
 
-  // Accounts found by the pseudo that only the visitor can recognize (T9).
-  const toConfirm = [...findings.values()].filter((f) => f.field === "F2" && f.confidence === "to_confirm");
+  // What only the visitor can recognize: accounts found by the pseudo (T9), directory entries found by the name (T13).
+  const cards = cardsToConfirm(findings.values());
 
-  // The summary is computed here, in the browser, on every finding of every round (T12). An account the visitor
-  // just ticked counts as confirmed before the next round starts.
-  const summary = summarize(
-    [...findings.values()].map((f) =>
-      f.field === "F2" && f.confidence === "to_confirm" && ticked.has(f.value) ? { ...f, confidence: "confirmed" as const } : f,
-    ),
-  );
+  // The summary is computed here, in the browser, on every finding of every round (T12). The cards the visitor
+  // just ticked count as confirmed before the next round starts.
+  const summary = summarize(confirmCards([...findings.values()], ticked, { dropOthers: false }));
   const filled = summary.fill.confirmed + summary.fill.probable;
 
   return (
@@ -314,46 +315,60 @@ export function InvestigationConsole() {
           </div>
         )}
 
+        {[...findings.values()].some((f) => f.sources.includes("searchch")) && (
+          <p className="text-xs">Données d&apos;annuaire : search.ch, Swisscom Directories AG</p>
+        )}
+
         {done && (
           <p>
             Enquête terminée. Fiches cachées : {hidden.possible} possible(s), {hidden.namesake} homonyme(s).
           </p>
         )}
 
-        {done && !loading && toConfirm.length > 0 && (
+        {done && !loading && cards.length > 0 && (
           <fieldset className="space-y-2 rounded border border-zinc-300 p-4">
-            <legend className="font-medium">Ces comptes portent ton pseudo. Lesquels sont à toi ?</legend>
-            {toConfirm.map((account) => (
-              <label key={account.value} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={ticked.has(account.value)}
-                  onChange={() => toggle(account.value)}
-                />
-                {account.profile?.photo && (
-                  // A plain <img>: the photo comes from a site we do not know in advance, so next/image cannot be
-                  // configured for it. No referrer: the address of the account page is not sent to the image host (T10).
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={account.profile.photo}
-                    alt={account.profile.name ?? "Photo du compte"}
-                    width={48}
-                    height={48}
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                    className="h-12 w-12 rounded object-cover"
-                  />
-                )}
-                {account.profile?.name && <span className="font-medium">{account.profile.name}</span>}
-                {isWebAddress(account.value) ? (
-                  <a href={account.value} target="_blank" rel="noreferrer" className="text-blue-800 underline">
-                    {account.value}
-                  </a>
-                ) : (
-                  <span>{account.value}</span>
-                )}
-              </label>
-            ))}
+            <legend className="font-medium">Ces fiches te correspondent peut-être. Lesquelles sont à toi ?</legend>
+            {cards.map((card) => {
+              const account = card.findings.find((f) => f.field === "F2");
+              const valueOf = (field: Finding["field"]) => card.findings.find((f) => f.field === field)?.value;
+              return (
+                <label key={card.key} className="flex items-center gap-2">
+                  <input type="checkbox" checked={ticked.has(card.key)} onChange={() => toggle(card.key)} />
+                  {account ? (
+                    <>
+                      {account.profile?.photo && (
+                        // A plain <img>: the photo comes from a site we do not know in advance, so next/image cannot be
+                        // configured for it. No referrer: the address of the account page is not sent to the image host (T10).
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={account.profile.photo}
+                          alt={account.profile.name ?? "Photo du compte"}
+                          width={48}
+                          height={48}
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
+                          className="h-12 w-12 rounded object-cover"
+                        />
+                      )}
+                      {account.profile?.name && <span className="font-medium">{account.profile.name}</span>}
+                      {isWebAddress(account.value) ? (
+                        <a href={account.value} target="_blank" rel="noreferrer" className="text-blue-800 underline">
+                          {account.value}
+                        </a>
+                      ) : (
+                        <span>{account.value}</span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium">{valueOf("A1")}</span>
+                      {valueOf("B3") && <span>{valueOf("B3")}</span>}
+                      {valueOf("C1") && !valueOf("B3") && <span>{valueOf("C1")}</span>}
+                    </>
+                  )}
+                </label>
+              );
+            })}
             <button
               type="button"
               onClick={continueInvestigation}

@@ -13,6 +13,8 @@ const envSchema = z.object({
   GITHUB_TOKEN: optionalKey,
   /** Web search (Tavily, free plan without credit card): without it, the source is skipped. */
   TAVILY_API_KEY: optionalKey,
+  /** Phone book (search.ch, free key for personal use): without it, the source is skipped. */
+  SEARCH_CH_API_KEY: optionalKey,
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -51,7 +51,7 @@ for (const [accent, letters] of Object.entries({
 }
 
 /** One pass over the text, so that "&amp;lt;" becomes "&lt;" and not "<". */
-function decodeEntities(text: string): string {
+export function decodeEntities(text: string): string {
   return text.replace(/&(?:#(\d{1,7})|#[xX]([0-9a-fA-F]{1,6})|([a-zA-Z]+));/g, (whole, dec?: string, hex?: string, name?: string) => {
     if (name) return NAMED_ENTITIES[name] ?? whole;
     const code = dec ? Number.parseInt(dec, 10) : Number.parseInt(hex!, 16);

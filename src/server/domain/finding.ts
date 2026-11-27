@@ -22,6 +22,8 @@ export interface Finding {
   page?: PageDetails;
   /** Only on F2, see SourceField. */
   profile?: ProfileDetails;
+  /** Only on a "to confirm" finding: key shared by the findings of one card, confirmed together (T13). */
+  card?: string;
 }
 
 /** The form used to decide whether two values are the same. */
@@ -70,6 +72,7 @@ export function mergeFindings(findings: Finding[]): Finding[] {
     existing.infection ??= finding.infection;
     existing.page ??= finding.page;
     existing.profile ??= finding.profile;
+    existing.card ??= finding.card;
   }
   return [...merged.values()];
 }

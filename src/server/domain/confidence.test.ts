@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assessConfidence, isDetailed, shouldRebound, type Confidence, type Evidence } from "./confidence";
+import { assessConfidence, isDetailed, MAX_HOMONYMS, shouldRebound, type Confidence, type Evidence } from "./confidence";
 import type { IdentifierType } from "./identifier";
 
 // All values below are invented test data.
@@ -54,6 +54,29 @@ describe("assessConfidence for a pseudo found on a list of sites (T9)", () => {
 
   it("does not apply to a name", () => {
     expect(assessConfidence({ ...base, queried: { type: "NOM", confidence: "confirmed" }, rarePseudo: false })).toBe("namesake");
+  });
+});
+
+describe("assessConfidence for a name with few homonyms (T13)", () => {
+  const evidence: Evidence = {
+    queried: { type: "NOM", confidence: "confirmed" },
+    linkedToConfirmed: false,
+    rarePseudo: false,
+    coherentHints: 0,
+  };
+
+  it("asks the visitor when the source knows at most MAX_HOMONYMS people of this name", () => {
+    expect(MAX_HOMONYMS).toBe(3);
+    expect(assessConfidence({ ...evidence, fewHomonyms: true })).toBe("to_confirm");
+  });
+
+  it("keeps a namesake without the flag", () => {
+    expect(assessConfidence(evidence)).toBe("namesake");
+    expect(assessConfidence({ ...evidence, fewHomonyms: false })).toBe("namesake");
+  });
+
+  it("keeps a coherent hint possible, as before", () => {
+    expect(assessConfidence({ ...evidence, coherentHints: 1, fewHomonyms: true })).toBe("possible");
   });
 });
 
