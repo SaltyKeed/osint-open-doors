@@ -6,10 +6,10 @@ import { toRecords } from "./mapper";
 import { parseFeed } from "./parse";
 
 /**
- * 2 calls per investigation in all, of either kind (phone or name), in queue order: the budget is shared
- * (free offer: limited monthly requests, T13).
+ * 4 calls per investigation in all, of either kind (phone or name), in queue order: the budget is shared
+ * (free offer: about 1000 requests a month for about 100 visitors, T11, T13).
  */
-const MAX_CALLS = 2;
+const MAX_CALLS = 4;
 
 /**
  * Swiss phone book (fields A1, B3, C1). By phone, it finds the address of the visitor; by name, at most

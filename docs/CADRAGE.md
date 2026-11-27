@@ -233,14 +233,15 @@ Statuts :
 | `PROFIL` | API publique du site (GitHub, GitLab, Mastodon, YouTube, Twitch, Steam, Chess.com...) | A1 A5 C1 E1 F2 G2 | `PSEUDO` `PROFIL` `DOMAINE` | Gratuit | Partiel |
 | `PROFIL` | Listes publiques d'abonnés, d'amis et mentions | J1 | aucun (identifiants de tiers, jamais relancés) | Gratuit | Nouveau |
 | `PROFIL` | Wayback Machine | I2 | `PROFIL` | Gratuit | Prototype |
-| `NOM` | Moteur de recherche ciblé, nom et valeur confirmée : LinkedIn | A1 C1 D1 E1 | `ORGA` `PROFIL` | Clé gratuite | Décidé, à coder (T6, #80) |
-| `NOM` | Moteur de recherche ciblé, nom et valeur confirmée : presse, résultats sportifs, associations | C3 G1 G3 | `ORGA` | Clé gratuite | Décidé, à coder (T6, #80) |
+| `NOM` | Moteur de recherche ciblé, nom et valeur confirmée (C1, E1, D1) | I1 E1 D1 | aucun | Clé gratuite | En place (T6, T11) : « probable » |
+| `NOM` | Moteur de recherche ciblé : LinkedIn, résultats sportifs, presse, fichiers PDF | F2 G1 G3 I3 | aucun | Clé gratuite | En place (T11) : au plus 3 cartes « à confirmer » |
+| `PSEUDO` | Moteur de recherche ciblé : Instagram, TikTok, Facebook | F2 | aucun | Clé gratuite | En place (T11) : « probable » si le pseudo est rare, sinon « à confirmer » |
 | `NOM` | Zefix, FOSC | E2 | `ORGA` | Gratuit | Nouveau |
 | `NOM` | ORCID, OpenAlex | E3 | `ORGA` | Gratuit | Partiel |
 | `NOM` | Annuaire search.ch | A1 B3 C1 | aucun | Clé gratuite, quota | En place (T13) : au plus 3 cartes « à confirmer », sinon le nombre |
 | `DOMAINE` | RDAP, crt.sh, Wayback Machine | F3 I2 | `EMAIL` `NOM` | Gratuit | Partiel |
 | `IP` | ip-api.com | H4 C1 (approximatif) | aucun | Gratuit | Retenu |
-| `ORGA` | Moteur de recherche « nom + organisation » | D1 E1 G1 | `PROFIL` | Clé gratuite | Décidé, à coder (T6, #80) |
+| `ORGA` | Moteur de recherche « nom + organisation » | D1 | aucun | Clé gratuite | En place (T6) : une `ORGA` confirmée sert au dork 3 |
 
 Lecture d'un exemple : un email saisi est donné au service de fiches de fuites.
 La fiche Pandabuy contient un téléphone et un pseudo. Le téléphone est un

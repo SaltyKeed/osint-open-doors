@@ -329,7 +329,8 @@ export function InvestigationConsole() {
           <fieldset className="space-y-2 rounded border border-zinc-300 p-4">
             <legend className="font-medium">Ces fiches te correspondent peut-être. Lesquelles sont à toi ?</legend>
             {cards.map((card) => {
-              const account = card.findings.find((f) => f.field === "F2");
+              // An account (F2) or a web page found by a dork (G1, G3, I3...): both show an address to open.
+              const account = card.findings.find((f) => f.field === "F2" || f.page);
               const valueOf = (field: Finding["field"]) => card.findings.find((f) => f.field === field)?.value;
               return (
                 <label key={card.key} className="flex items-center gap-2">
@@ -351,6 +352,7 @@ export function InvestigationConsole() {
                         />
                       )}
                       {account.profile?.name && <span className="font-medium">{account.profile.name}</span>}
+                      {account.page && <span className="font-medium">{account.page.title}</span>}
                       {isWebAddress(account.value) ? (
                         <a href={account.value} target="_blank" rel="noreferrer" className="text-blue-800 underline">
                           {account.value}

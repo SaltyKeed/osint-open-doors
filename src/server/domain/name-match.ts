@@ -20,3 +20,16 @@ export function nameMatches(displayed: string, confirmed: string): boolean {
   const present = new Set(words(displayed));
   return wanted.every((word) => present.has(word));
 }
+
+/**
+ * Stricter than nameMatches, for a page that may list many people (T6): the words of the name follow each
+ * other, in order or reversed. "Léa Dupont, Paul Martin" holds "Léa" and "Martin", not "Léa Martin".
+ */
+export function nameSideBySide(text: string, name: string): boolean {
+  const wanted = words(name);
+  if (wanted.length < 2) return false;
+  const present = words(text);
+  const follows = (sequence: string[]) =>
+    present.some((_, i) => sequence.every((word, j) => present[i + j] === word));
+  return follows(wanted) || follows([...wanted].reverse());
+}

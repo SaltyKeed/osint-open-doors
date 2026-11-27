@@ -26,3 +26,6 @@ Tiago et Enzo. Seuls des nombres sont notés ici, jamais une donnée trouvée.
 
 | Date | Version (commit) | Personne | Champs confirmés | Champs probables | Taux | C1 trouvé | Remarques |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| 27.11.2026 | main à 10h26 | Tiago | H(1) et I(1) | 0 | 7% | Non | On trouve les fuites par xposedornot et c'est tout, rien d'autre n'est trouvé |
+| 27.11.2026 | main à 10h26 | Enzo | I(1) et F(1) | 0 | 7% | Non | La présence en ligne a du être confirmée à la main |
+| 27.11.2026 | feat/dorks | Tiago | H(1) et I(1) | 0 | 7% | Non | Un des champs confirmés n'était pas moi, c'était un PDF qui contenait des noms me ressemblant mais c'était pas moi |

@@ -690,7 +690,8 @@ ordinaire ne saute que l'appel en cours.
 Date : 2026-11-18
 
 Mise à jour par T11 (2026-11-25) : pseudo et nom complété acceptés, dorks,
-au plus 8 recherches par enquête.
+au plus 8 recherches par enquête, puis 10 (2026-11-27, environ 100 visiteurs attendus). Codé le 2026-11-27 : la source garde
+`EMAIL` et `TEL` pour `investigate` et gagne une méthode `dork` (T6, T11).
 
 Les grands réseaux (LinkedIn, Instagram, TikTok) n'ont plus d'API publique :
 un moteur de recherche est le seul moyen gratuit de trouver les pages qui
@@ -700,7 +701,7 @@ qui ne concernent qu'une partie des visiteurs.
 
 | Option | Avantages | Inconvénients |
 | --- | --- | --- |
-| **Tavily (retenu)** | 1000 crédits gratuits par mois, sans carte bancaire. Recherche de la valeur exacte (`exact_match`). | 1000 recherches par mois pour environ 200 visiteurs : juste. |
+| **Tavily (retenu)** | 1000 crédits gratuits par mois, sans carte bancaire. Recherche de la valeur exacte (`exact_match`). | 1000 recherches par mois pour environ 100 visiteurs : 10 par visiteur au plus. |
 | Brave Search API | Index propre, environ 1000 requêtes par mois avec le crédit offert. | Carte bancaire exigée même pour l'offre gratuite : risque de débit avant l'acceptation du budget (T1). |
 
 Règles :
@@ -708,9 +709,13 @@ Règles :
 - La source accepte `EMAIL` et `TEL` seulement. Une page trouvée par un
   pseudo n'a aucun champ à comparer : le moteur la classerait « possible » et
   la compterait sans l'afficher, pour un crédit dépensé.
-- Au plus 3 recherches par enquête (`maxCallsPerInvestigation`, compté par le
-  moteur), soit environ 600 pour 200 visiteurs. Les identifiants saisis
-  passent en premier, car la file les traite d'abord.
+- Au plus 8 recherches au premier tour et 2 au deuxième
+  (`maxCallsPerInvestigation` vaut 8, compté par le moteur), partagées entre
+  l'email, le téléphone et les dorks : 10 par enquête au plus. Avec 6, un
+  pseudo qui faisait trouver d'autres emails privait les derniers dorks
+  (presse, PDF) de recherches lors du premier essai réel. Les identifiants
+  saisis passent en premier, car la file les traite d'abord ; les dorks
+  reçoivent le reste, une fois la file vide.
 - Une page n'est gardée que si son titre ou son extrait contient vraiment
   l'identifiant. Seuls l'adresse et le titre sont gardés (`PageDetails`),
   jamais le texte de la page, qui peut citer d'autres personnes.
@@ -726,7 +731,10 @@ Date : 2026-11-18
 Mise à jour par T11 (2026-11-25) : la recherche ciblée fait partie des dorks
 et cherche d'abord en Suisse romande.
 
-Statut : décidée, pas encore codée (issue #80).
+Statut : codée avec les dorks (T11, issues #80 et #86). Les règles ci-dessous
+sont appliquées, sauf la précision sur le niveau : un dork « nom et valeur
+confirmée » donne « probable » sans passer par le calcul de confiance, car une
+page n'a aucun identifiant à relier ni à comparer.
 
 Une recherche par le nom seul ne donne que des homonymes : avec T2, chaque
 page serait « homonyme probable », comptée sans être affichée, pour un crédit
@@ -754,9 +762,10 @@ Règles à appliquer :
 - Elle partage le plafond de recherches web de T5 ; l'email et le téléphone
   passent d'abord. Le plafond pourra être revu après la mesure du quota.
 
-À préciser en codant (#80) : comment le moteur construit la requête (le port
-`Source` reçoit un seul identifiant), le nombre de recherches ciblées par
-enquête, et quelles valeurs confirmées passent en premier.
+Précisé en codant : le moteur appelle la méthode `dork` de la source une fois
+la file vide, avec le nom saisi et les valeurs confirmées sur le visiteur. Le
+port `Source` ne reçoit donc toujours qu'un identifiant par appel. Pour les
+dorks 2 et 3, la plus courte des valeurs confirmées est utilisée.
 
 ## T7. Pseudo vérifié sur une liste de sites
 
@@ -1120,7 +1129,7 @@ panel le justifient.
 | Ordre | Source | Champs | Condition |
 | --- | --- | --- | --- |
 | 1 | API de search.ch (annuaire) : recherche inversée par téléphone, puis recherche par nom | C1, B3 | Clé gratuite ; usage aux portes ouvertes à confirmer par écrit auprès de search.ch |
-| 2 | Dorks envoyés par Tavily | G1, D1, C3, G3, E1, comptes Instagram, Facebook, TikTok, LinkedIn (F2) | Déjà en place, règles de T5 et T6 élargies |
+| 2 | Dorks envoyés par Tavily | G1, D1, C3, G3, E1, comptes Instagram, Facebook, TikTok, LinkedIn (F2) | Codés le 2026-11-27 (règles de T5 et T6 élargies), opérateurs à vérifier en réel |
 | 3 | API Zefix (registre du commerce) | E2 | Seulement si le panel montre des employeurs trouvés ; accès à demander par email |
 | 4 | Brave Search API | Comme les dorks | Seulement si un budget est accordé (carte bancaire exigée) |
 
@@ -1156,11 +1165,39 @@ une valeur confirmée (T6), ou le pseudo et une plateforme. Exemples :
 
 Les recherches visent d'abord la Suisse romande (pays Suisse, noms des
 cantons romands), puis toute la Suisse si elles ne donnent rien, avec au plus
-une relance élargie par requête. Au plus 8 recherches par enquête : l'offre
-gratuite de Tavily (environ 1000 crédits par mois) suffit alors pour environ
-100 enquêtes. Les mesures du panel disent quels dorks gardent leur place.
+une relance élargie par requête. Au plus 10 recherches par enquête (8 au
+premier tour, 2 au deuxième) : l'offre gratuite de Tavily (environ 1000
+crédits par mois) suffit pour les environ 100 visiteurs attendus. Les mesures du panel disent quels dorks gardent leur place.
 
-Les opérateurs réellement acceptés par Tavily sont vérifiés en codant.
+Dorks en place (2026-11-27), dans l'ordre d'envoi :
+
+| N° | Genre | Requête | Remplit |
+| --- | --- | --- | --- |
+| 1 | `value` | `"{nom}" "{C1}"` | I1 |
+| 2 | `value` | `"{nom}" "{E1}"` | E1 |
+| 3 | `value` | `"{nom}" "{D1}"` ou `"{nom}" "{ORGA}"` | D1 |
+| 4 | `pseudo` | `"{pseudo}" site:instagram.com OR site:tiktok.com OR site:facebook.com` | F2 |
+| 5 | `keyword` | `"{nom}" site:linkedin.com/in` | F2 |
+| 6 | `keyword` | `"{nom}" club OR résultats OR classement` | G1 |
+| 7 | `keyword` | `"{nom}"`, filtré sur les domaines de presse (`include_domains`) | G3 |
+| 8 | `keyword` | `"{nom}" filetype:pdf` | I3 |
+
+Le genre décide du niveau, sans calcul de confiance : `value` donne
+« probable » ; `pseudo` donne « probable » si le pseudo est rare et pas
+courant, sinon une carte « à confirmer » ; `keyword` donne des cartes « à
+confirmer », trois au plus, les suivantes étant comptées « possible ». Une
+page n'est gardée que si son titre ou son extrait contient le nom, ses mots
+côte à côte (prénom puis nom, ou l'inverse), et la deuxième information. Le
+premier essai réel (2026-11-27) a gardé un PDF qui listait le prénom chez une
+personne et le nom chez une autre : des mots éparpillés ne suffisent plus
+(`nameSideBySide`). Au deuxième tour, seuls les
+dorks `value` partent. Un quota atteint au milieu des dorks garde les pages
+déjà trouvées.
+
+Premier essai réel (2026-11-27, panel) : `site:` fonctionne (un profil
+LinkedIn trouvé), `filetype:pdf` aussi (un PDF trouvé), avec `exact_match` et
+`country`. Les dorks de club et de presse n'ont rien donné pour le panel ;
+cela ne dit pas encore si `include_domains` fonctionne.
 
 ### WhatsMyName
 
@@ -1285,9 +1322,11 @@ A1, B3 et C1.
 ### Quota
 
 L'offre gratuite annonce selon la page 100 résultats ou 1000 requêtes par
-mois. Une enquête fait au plus deux requêtes en tout, de l'un ou l'autre type
-(téléphone ou nom), dans l'ordre de la file : le budget est partagé, et un
-téléphone et un nom saisis le consomment en entier. Chaque requête lit au plus
+mois. Une enquête fait au plus quatre requêtes en tout (deux à l'origine,
+relevé le 2026-11-27 pour environ 100 visiteurs), de l'un ou l'autre type
+(téléphone ou nom), dans l'ordre de la file : le budget est partagé. Un
+téléphone et un nom saisis en prennent deux ; les deux autres servent à un
+téléphone trouvé en route. Chaque requête lit au plus
 3 résultats. La limite exacte et l'usage aux portes ouvertes sont à
 confirmer par écrit auprès de search.ch.
 
@@ -1318,8 +1357,8 @@ confirmer par écrit auprès de search.ch.
 | Pseudo rare | 6 caractères et une lettre, puis nombre de sites mesuré par le moteur (T2) | Liste de mots, modèle de Markov |
 | Détails d'un événement | Un type fermé par sorte d'événement, ajouté avec sa source : `BreachDetails` pour H1 (T3) | Détail générique |
 | Moteur d'enquête | Générateur d'événements envoyés en direct (NDJSON), 8 s par appel, quota = source sautée, pseudo non rare au-delà d'une part des sites testés (T4) | Une seule réponse à la fin |
-| Recherche web | Tavily, email et téléphone seulement, 3 recherches par enquête (T5) | Brave Search API |
-| Recherche par le nom | Seulement complétée par une information confirmée, page affichée si elle contient les deux (T6, à coder) | Nom seul |
+| Recherche web | Tavily : email et téléphone, puis dorks ; 8 recherches au premier tour, 2 au deuxième (T5, T11) | Brave Search API |
+| Recherche par le nom | Seulement complétée par une information confirmée, page affichée si elle contient les deux (T6, T11) | Nom seul |
 | Pseudo sur une liste de sites | WhatsMyName figé dans le dépôt, 569 sites, comptes « à confirmer » par le visiteur (T9, remplace « probable » de T7) | Une source par plateforme |
 | Saisie | Formulaire, un champ par type, pseudo ajouté, validation par le serveur (T8) | Barre unique |
 | Comptes trouvés par pseudo | Niveau « à confirmer », confirmés par le visiteur à la fin, deuxième tour (T9, remplace l'exception de T7) | Probable si le pseudo est rare |
