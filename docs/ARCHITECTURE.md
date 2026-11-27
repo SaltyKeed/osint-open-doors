@@ -20,7 +20,7 @@ public et légal et donne un plan d'action (T1).
 | Invariant | Mise en œuvre |
 | --- | --- |
 | Jamais de mot de passe ni de hash affiché | Les mappers des sources appliquent une liste blanche de champs. Le type brut ne sort jamais de l'adaptateur. |
-| Pas d'exposition de tiers (homonymes) | Une fiche trouvée par nom n'est détaillée que si elle contient aussi un autre identifiant saisi par le visiteur (téléphone ou email). Sinon, seul un agrégat est affiché (« N fiches portent ce nom »). |
+| Pas d'exposition de tiers (homonymes) | Une fiche trouvée par nom n'est détaillée que si elle contient aussi un autre identifiant saisi par le visiteur (téléphone ou email). Sinon, seul un agrégat est affiché (« N fiches portent ce nom »). Exception (T13) : un annuaire qui connaît au plus 3 personnes de ce nom les montre en cartes « à confirmer », pour que le visiteur reconnaisse la sienne. |
 | Valeurs masquées | Les fiches correspondantes sont aussi masquées : `+41 79 ••• •• 42`, « Adresse : présente ». |
 | Zéro stockage | Pas de base de données, pas de fichier, pas de `localStorage` ni de cookie contenant des données personnelles. Le conteneur est en `read_only`. |
 | Aucun log de données personnelles | Aucun `console.log` d'un input ou d'une réponse d'API. Les messages d'erreur n'incluent pas le corps des réponses. |
@@ -82,6 +82,7 @@ src/
 │   │   ├── hudsonrock/           ← même structure
 │   │   ├── github/               ← même structure, jeton optionnel
 │   │   ├── tavily/               ← même structure, recherche web, clé obligatoire
+│   │   ├── searchch/             ← annuaire : XML Atom lu par expressions régulières (parse.ts), clé obligatoire (T13)
 │   │   ├── whatsmyname/          ← pseudo sur 569 sites : copie figée de la liste, vérification par site
 │   │   ├── profile-page/         ← page d'un compte confirmé : balises og, domaines de WhatsMyName seulement (T10)
 │   │   ├── snusbase/             ← même structure (prévu)
@@ -373,7 +374,8 @@ Le choix de Docker compose en local est expliqué dans
   `process.env` ; une erreur ne donne que le nom de la variable. Aucune clé ne
   porte le préfixe `NEXT_PUBLIC_`, qui l'enverrait au navigateur.
 - Clés aujourd'hui : `GITHUB_TOKEN` (optionnelle, GitHub marche sans) et
-  `TAVILY_API_KEY` (sans elle, la recherche web est sautée).
+  `TAVILY_API_KEY` (sans elle, la recherche web est sautée) et
+  `SEARCH_CH_API_KEY` (sans elle, l'annuaire est sauté).
 - Le navigateur du poste est lancé avec
   `--kiosk --incognito http://localhost:3000`.
 

@@ -20,6 +20,11 @@ describe("loadEnv", () => {
     expect(loadEnv({ TAVILY_API_KEY: "tvly-exemple123" })).toEqual({ TAVILY_API_KEY: "tvly-exemple123" });
   });
 
+  it("reads the search.ch key, and none when it is empty", () => {
+    expect(loadEnv({ SEARCH_CH_API_KEY: " cle-exemple123 " })).toEqual({ SEARCH_CH_API_KEY: "cle-exemple123" });
+    expect(loadEnv({ SEARCH_CH_API_KEY: "" })).toEqual({});
+  });
+
   it("rejects a malformed token without echoing its value", () => {
     expect(() => loadEnv({ GITHUB_TOKEN: "pas un jeton" })).toThrow("Invalid environment: GITHUB_TOKEN");
     expect(() => loadEnv({ GITHUB_TOKEN: "pas un jeton" })).not.toThrow(/jeton/);

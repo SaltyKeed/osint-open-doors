@@ -19,16 +19,21 @@ export function isLinkedToConfirmed(record: SourceRecord, confirmedKeys: Readonl
 
 const NAME_KEY_PREFIX = "A1:";
 
+/** A name is the confirmed one when it equals it or holds it (T10). `confirmedValues` holds `findingKey`s. */
+export function isConfirmedName(name: string, confirmedValues: ReadonlySet<string>): boolean {
+  // The exact comparison stays: a one-word name never passes nameMatches, but an equal one is still a match.
+  if (confirmedValues.has(findingKey("A1", name))) return true;
+  for (const key of confirmedValues) {
+    if (key.startsWith(NAME_KEY_PREFIX) && nameMatches(name, key.slice(NAME_KEY_PREFIX.length))) return true;
+  }
+  return false;
+}
+
 /** A displayed name is a hint when it holds the confirmed name (T10); the other fields must be equal. */
 function isHint(field: SourceRecord["fields"][number], confirmedValues: ReadonlySet<string>): boolean {
   if (!HINT_FIELDS.includes(field.field)) return false;
-  // The exact comparison stays: a one-word name never passes nameMatches, but an equal one is still a hint.
-  if (confirmedValues.has(findingKey(field.field, field.value))) return true;
-  if (field.field !== "A1") return false;
-  for (const key of confirmedValues) {
-    if (key.startsWith(NAME_KEY_PREFIX) && nameMatches(field.value, key.slice(NAME_KEY_PREFIX.length))) return true;
-  }
-  return false;
+  if (field.field === "A1") return isConfirmedName(field.value, confirmedValues);
+  return confirmedValues.has(findingKey(field.field, field.value));
 }
 
 /** `confirmedValues` holds `findingKey` of confirmed findings. */

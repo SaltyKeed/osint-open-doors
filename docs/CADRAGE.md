@@ -219,7 +219,7 @@ Statuts :
 | `EMAIL` | Moteur de recherche (valeur exacte) : Tavily | I1 | aucun | Clé gratuite | En place (T5) |
 | `EMAIL` | Domaine de l'email (hors webmail) | E1 | `ORGA` `DOMAINE` | Gratuit | Nouveau |
 | `TEL` | Fiches de fuites : LeakCheck Pro, Leak-Lookup, HackCheck | A1 A2 B1 B3 C1 E1 H1 H2 H3 | `EMAIL` `NOM` `PSEUDO` | Payant | Retenu |
-| `TEL` | Annuaire search.ch | A1 B3 C1 | `NOM` | Gratuit, quota | Prototype |
+| `TEL` | Annuaire search.ch | A1 B3 C1 (J1 si le titulaire n'est pas le visiteur) | aucun | Clé gratuite, quota | En place (T13) |
 | `TEL` | Analyse locale du numéro | pays, type de ligne, opérateur d'origine | aucun | Local | Prototype |
 | `TEL` | Moteur de recherche (plusieurs formats) : Tavily | I1 | aucun | Clé gratuite | En place (T5) |
 | `PSEUDO` | Base de sites (WhatsMyName figé dans le dépôt, 569 sites ; Maigret plus tard) | A1 A5 F2 | aucun | Gratuit | En place (WhatsMyName, T7, T9, T10) |
@@ -237,7 +237,7 @@ Statuts :
 | `NOM` | Moteur de recherche ciblé, nom et valeur confirmée : presse, résultats sportifs, associations | C3 G1 G3 | `ORGA` | Clé gratuite | Décidé, à coder (T6, #80) |
 | `NOM` | Zefix, FOSC | E2 | `ORGA` | Gratuit | Nouveau |
 | `NOM` | ORCID, OpenAlex | E3 | `ORGA` | Gratuit | Partiel |
-| `NOM` | Annuaire search.ch | B2 B3 C1 | `TEL` | Gratuit, quota | Prototype (total seulement) |
+| `NOM` | Annuaire search.ch | A1 B3 C1 | aucun | Clé gratuite, quota | En place (T13) : au plus 3 cartes « à confirmer », sinon le nombre |
 | `DOMAINE` | RDAP, crt.sh, Wayback Machine | F3 I2 | `EMAIL` `NOM` | Gratuit | Partiel |
 | `IP` | ip-api.com | H4 C1 (approximatif) | aucun | Gratuit | Retenu |
 | `ORGA` | Moteur de recherche « nom + organisation » | D1 E1 G1 | `PROFIL` | Clé gratuite | Décidé, à coder (T6, #80) |
@@ -321,8 +321,9 @@ panne ne saute que l'appel en cours.
 | Confirmé | La fiche contient aussi un `EMAIL`, un `TEL` ou un `PROFIL` déjà confirmé, ou elle a été trouvée par un identifiant unique confirmé (`EMAIL`, `TEL`, `PROFIL`, `DOMAINE`) | Oui | Oui |
 | Probable | `PSEUDO` rare et au moins un indice cohérent : même nom (A1), même date de naissance (A2) ou même ville (C1) qu'un constat confirmé | Oui, marqué « probable » | Oui, sauf si l'identifiant qui l'a trouvé était lui-même « probable » |
 | À confirmer | `PSEUDO` rare et pas courant, sans indice cohérent, compte trouvé par une source à liste de sites (son adresse, avec nom affiché et photo comme détails) | À la fin, pour confirmation par le visiteur | Non (oui une fois confirmé, T9) |
+| À confirmer | `NOM` dans une source d'annuaire qui connaît au plus 3 personnes de ce nom, sans tenir compte des indices (T13) : le nom, l'adresse et la ville de chacune | À la fin, une carte par personne | Non |
 | Possible | `PSEUDO` court ou courant, `IP`, `ORGA`, ou `NOM` avec un indice | Total seulement | Non |
-| Homonyme probable | `NOM` seul | Total seulement | Non |
+| Homonyme probable | `NOM` seul, ou avec plus de 3 personnes de ce nom dans la source | Total seulement (le nombre de personnes) | Non |
 
 Le niveau est choisi par `assessConfidence` (`src/server/domain/confidence.ts`) :
 
@@ -341,7 +342,9 @@ flowchart TD
     N -- non --> H
     D -- NOM --> I{"Au moins un indice ?"}
     I -- oui --> H
-    I -- non --> J["Homonyme probable"]
+    I -- non --> P{"Au plus 3 personnes de ce nom ?"}
+    P -- oui --> M
+    P -- non --> J["Homonyme probable"]
     D -- "IP, ORGA" --> H
     E --> K["Jamais plus sûr que l'identifiant cherché"]
     G --> K
@@ -392,6 +395,21 @@ Règles :
   relance pas de recherche tant qu'il n'est pas confirmé. Un profil complet trouvé par pseudo sur une autre source
   (GitHub, Hudson Rock) reste « possible » sans indice : les données d'un
   inconnu ne sont jamais affichées.
+- Une source de noms (l'annuaire search.ch) donne le nombre total de personnes
+  de ce nom. Jusqu'à 3, chacune est une carte « à confirmer » avec son nom,
+  son adresse (B3) et sa ville (C1) : les constats d'une carte partagent une
+  clé de carte, et le visiteur les confirme ensemble. Au-delà de 3, aucune
+  adresse n'est envoyée, seul le nombre est compté dans les « homonymes
+  probables ».
+- Une fiche d'annuaire trouvée par le nom ne tient pas compte des indices :
+  si son adresse (B3) est déjà confirmée (trouvée par le téléphone), c'est la
+  fiche du visiteur, « confirmée » et sans carte ; sinon elle est « à
+  confirmer » (au plus 3 personnes) ou comptée comme homonyme. Seule une carte
+  d'annuaire envoie tous ses champs : tout autre constat « à confirmer »
+  n'envoie que l'adresse d'un compte (F2), et rien sans F2 (T10, T13).
+- Un annuaire par téléphone donne le nom du titulaire de la ligne, qui peut
+  être un parent. Le moteur le range en A1 s'il correspond au nom confirmé,
+  sinon en J1 (entourage), qui ne relance rien (T13).
 - Les identifiants cités dans le texte libre d'une page (la bio d'un compte
   confirmé) sont au plus « probable », même si la page est celle d'un compte
   confirmé : une bio cite aussi d'autres personnes (T10).

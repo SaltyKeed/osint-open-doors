@@ -1225,6 +1225,72 @@ Le plan d'action ne contient aucune valeur du visiteur : des nombres (« 3
 comptes »), des noms de fuites et des conseils. Les actions sont écrites à
 l'avance dans le code, en français, sans IA (T1).
 
+## T13. Annuaire search.ch
+
+Date : 2026-11-25
+
+Première source de T11 pour la ville (C1) et l'adresse (B3). L'API de
+search.ch (Swisscom Directories AG) répond en XML (Atom) ; avec une clé, une
+entrée donne le type (personne ou organisation), le nom, le prénom, la rue,
+le numéro, le NPA, la ville, le canton, le téléphone, et parfois la
+profession, un email ou un site. La recherche inversée par numéro a été
+vérifiée le 2026-11-25 sur le numéro public du CPNE : le format `+41…` de
+`normalizeSwissPhone` est accepté tel quel. La clé (`SEARCH_CH_API_KEY`) est
+gratuite pour un usage personnel ; sans clé, la source est sautée (T3).
+
+Conditions d'utilisation respectées : la source est citée (« Swisscom
+Directories AG »), rien n'est gardé après l'enquête, pas de requêtes en
+masse, la clé reste sur le serveur.
+
+### Recherche inversée par téléphone
+
+Pour un `TEL`, la source cherche le numéro (`was`). Une entrée trouvée donne
+l'adresse (B3) et la ville (C1), rattachées au visiteur : il a certifié que
+le numéro est le sien, et il est joignable à cette adresse. Le niveau est
+« confirmé » (identifiant unique, T2).
+
+Un téléphone fixe est souvent au nom d'un parent. Le nom inscrit n'est donc
+pas forcément celui du visiteur :
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Nom inscrit toujours en A1 | Simple. | Le nom d'un parent s'affiche comme le nom du visiteur, en « confirmé ». |
+| **Nom inscrit comparé au nom saisi (retenu)** | Le nom va en A1 seulement s'il correspond (`nameMatches`, T10) ; sinon il va en J1 (entourage), sans relance (T1). | La comparaison doit être faite par le moteur, seul à connaître le nom saisi. |
+
+La source marque le nom inscrit comme « titulaire de l'entrée » ; le moteur
+le range en A1 ou en J1. La profession, l'email et le site d'une entrée ne
+sont pas gardés : ils peuvent être ceux d'un parent.
+
+### Recherche par nom
+
+Pour un `NOM`, la source cherche les personnes privées (`privat=1`,
+`firma=0`) de ce nom dans toute la Suisse, avec au plus 3 résultats lus
+(`maxnum=3`) et le nombre total (`totalResults`) : une seule requête.
+
+- Au plus 3 personnes : chacune devient une carte « à confirmer » (T9), avec
+  le nom, l'adresse complète et la ville.
+- Plus de 3 : aucune entrée n'est gardée ; seul le nombre est compté dans
+  les fiches cachées (« homonyme probable »).
+
+| Option | Avantages | Inconvénients |
+| --- | --- | --- |
+| Carte avec la ville seulement | La rue d'un inconnu n'est jamais affichée. | Une requête de plus après la confirmation. |
+| **Carte avec l'adresse complète (retenu)** | Le visiteur se reconnaît tout de suite ; pas de requête de plus. | Jusqu'à 3 adresses d'inconnus à l'écran, le temps de la confirmation, avec l'élève présent. |
+
+Une carte « à confirmer » regroupe tous les champs d'une même fiche :
+le moteur leur donne une même clé de carte. Pour un compte (T10), la carte
+garde seulement F2 et ses détails ; pour une entrée d'annuaire, elle garde
+A1, B3 et C1.
+
+### Quota
+
+L'offre gratuite annonce selon la page 100 résultats ou 1000 requêtes par
+mois. Une enquête fait au plus deux requêtes en tout, de l'un ou l'autre type
+(téléphone ou nom), dans l'ordre de la file : le budget est partagé, et un
+téléphone et un nom saisis le consomment en entier. Chaque requête lit au plus
+3 résultats. La limite exacte et l'usage aux portes ouvertes sont à
+confirmer par écrit auprès de search.ch.
+
 ## Récapitulatif
 
 | Couche | Choix | Plan B |
@@ -1260,3 +1326,4 @@ l'avance dans le code, en français, sans IA (T1).
 | Pages de profil | Balises `og:` lues dans la page de WhatsMyName, nom affiché comme indice, source « page de profil » pour les comptes confirmés, domaines de WhatsMyName seulement (T10) | Une API par plateforme |
 | Direction jusqu'aux portes ouvertes | Critère mesuré sur un panel, search.ch puis dorks Tavily, taux sur les 30 champs, planning (T11) | |
 | Taux et plan d'action | Fonction pure `summarize` dans `src/shared/`, appelée par le navigateur sur les constats des deux tours (T12) | Calcul par le serveur |
+| Annuaire | search.ch : téléphone vers adresse, nom inscrit en A1 ou J1, nom vers au plus 3 cartes à confirmer avec l'adresse (T13) | Pages de local.ch (interdit) |

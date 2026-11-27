@@ -223,7 +223,7 @@ cherchés : leurs pages ne pourraient pas être affichées.
 
 | Source | Appel | Entrée | Renvoie | Remplit | Rebonds | Accès | Statut |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| search.ch | `GET https://search.ch/tel/api/?was=…&key=…&privat=1` | Téléphone, nom | Nom, adresse, ville, autres numéros | A1 B2 B3 C1 | `NOM` `TEL` | Clé gratuite, quota mensuel | Prototype |
+| search.ch | `GET https://search.ch/tel/api/?was=…&key=…&lang=fr&maxnum=3`, plus `privat=1&firma=0` pour un nom. Réponse XML (Atom). Téléphone : une personne, nom du titulaire (A1 ou J1 selon le nom saisi), adresse et ville. Nom : au plus 3 personnes en cartes « à confirmer », sinon le nombre seulement. Une organisation n'est jamais rattachée au visiteur. 2 requêtes par enquête en tout, de l'un ou l'autre type, dans l'ordre de la file (T13) | Téléphone, nom | Nom, adresse, ville | A1 B3 C1 (J1) | aucun | Clé gratuite (`SEARCH_CH_API_KEY`), quota mensuel à confirmer par écrit. Source à citer : « Swisscom Directories AG » | En place |
 | Zefix | `https://www.zefix.admin.ch/ZefixPublicREST/api/v1/…` | Nom de personne ou d'entreprise | Entreprises et fonctions inscrites | E2 | `ORGA` | Identifiants à demander | Nouveau |
 | FOSC (Feuille officielle du commerce) | `GET https://amtsblattportal.ch/api/v1/publications?…` | Nom | Publications (inscriptions, mutations) | E2 | `ORGA` | Gratuit | Prototype |
 

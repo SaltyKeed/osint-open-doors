@@ -4,13 +4,14 @@ Outil d'enquête OSINT pour les portes ouvertes du CPNE. Un volontaire saisit
 ses propres informations (email, téléphone, pseudo, nom et prénom) sur un PC
 de l'école. L'outil rebondit d'une information à l'autre et reconstitue sa
 fiche de vie à partir de ce qui est public et légal, avec un plan d'action
-(`docs/DECISIONS.md`, T1). Aujourd'hui, sept sources sont branchées :
+(`docs/DECISIONS.md`, T1). Aujourd'hui, huit sources sont branchées :
 XposedOrNot (fuites liées à un email), Gravatar (profil public lié à un
 email), Hudson Rock (ordinateur infecté par un logiciel espion), GitHub
 (compte et projets liés à un email ou un pseudo), Tavily (pages web qui
-citent l'email ou le téléphone, avec une clé) WhatsMyName (comptes qui
-portent un pseudo, sur 569 sites) et la page de profil (nom, photo et liens
-d'un compte que le visiteur a confirmé).
+citent l'email ou le téléphone, avec une clé), search.ch (adresse et ville
+d'un numéro de téléphone, personnes d'un nom, avec une clé), WhatsMyName
+(comptes qui portent un pseudo, sur 569 sites) et la page de profil (nom,
+photo et liens d'un compte que le visiteur a confirmé).
 
 ## Démarrage rapide
 

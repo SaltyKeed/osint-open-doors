@@ -342,6 +342,150 @@ describe("investigate", () => {
     expect(byTel.investigate).not.toHaveBeenCalled();
   });
 
+  describe("directory entries (T13)", () => {
+    const address = { field: "B3" as const, value: "Rue du Lac 1, 2000 Neuchâtel" };
+    const city = { field: "C1" as const, value: "Neuchâtel" };
+    const byTel = (holder: string) =>
+      fake("directory", ["TEL"], () => [
+        record({ fields: [{ field: "A1", value: holder, holder: true }, address, city] }),
+      ]);
+    const pairs = (events: InvestigationEvent[]) =>
+      ofType(events, "finding").map((e) => [e.finding.field, e.finding.value, e.finding.confidence]);
+
+    it("keeps the name in A1 when the holder is the visitor", async () => {
+      const events = await run([tel, name], [byTel("Léa Martin")]);
+      expect(pairs(events)).toEqual([
+        ["A1", "Léa Martin", "confirmed"],
+        ["B3", address.value, "confirmed"],
+        ["C1", "Neuchâtel", "confirmed"],
+      ]);
+      expect(ofType(events, "finding")[0]?.finding).not.toHaveProperty("holder");
+    });
+
+    it("moves the name of another holder to J1 and does not search again", async () => {
+      const events = await run([tel, name], [byTel("Marc Martin")]);
+      expect(pairs(events)).toEqual([
+        ["B3", address.value, "confirmed"],
+        ["C1", "Neuchâtel", "confirmed"],
+        ["J1", "Marc Martin", "confirmed"],
+      ]);
+      expect(ofType(events, "lead")).toEqual([]);
+    });
+
+    it("puts the name in J1 when the visitor gave no name: it cannot be checked", async () => {
+      const events = await run([tel], [byTel("Léa Martin")]);
+      expect(pairs(events).map(([field]) => field)).toEqual(["B3", "C1", "J1"]);
+    });
+
+    const byName = (records: Partial<SourceRecord>[]) => fake("directory", ["NOM"], () => records.map(record));
+    const person = (street: string) => ({
+      homonyms: 2,
+      fields: [
+        { field: "A1" as const, value: "Léa Martin" },
+        { field: "B3" as const, value: `${street}, 2000 Neuchâtel` },
+        { field: "C1" as const, value: "Neuchâtel" },
+      ],
+    });
+
+    it("gives one card per homonym when there are at most three", async () => {
+      const events = await run([name], [byName([person("Rue du Lac 1"), person("Rue du Port 2")])]);
+      const findings = ofType(events, "finding").map((e) => e.finding);
+      expect(findings).toHaveLength(6);
+      expect(findings.every((f) => f.confidence === "to_confirm")).toBe(true);
+      expect(new Set(findings.slice(0, 3).map((f) => f.card)).size).toBe(1);
+      expect(new Set(findings.slice(3).map((f) => f.card)).size).toBe(1);
+      expect(findings[0]?.card).not.toBe(findings[3]?.card);
+      expect(findings[0]?.card).toBeDefined();
+    });
+
+    it("counts the homonyms and shows nothing when there are too many", async () => {
+      const events = await run([name], [byName([{ homonyms: 12, fields: [] }])]);
+      expect(ofType(events, "finding")).toEqual([]);
+      expect(ofType(events, "done")[0]?.hidden).toEqual({ possible: 0, namesake: 12 });
+    });
+
+    it("recognizes the visitor's own entry in a name search: confirmed, no card, no duplicate", async () => {
+      const lookup = fake("phone", ["TEL"], () => [
+        record({ fields: [{ field: "A1", value: "Léa Martin", holder: true }, address, city] }),
+      ]);
+      const directory = fake("names", ["NOM"], () => [
+        record({ homonyms: 2, fields: [{ field: "A1", value: "Léa Martin" }, address, city] }),
+        record({
+          homonyms: 2,
+          fields: [
+            { field: "A1", value: "Léa Martin" },
+            { field: "B3", value: "Bundesgasse 3, 3011 Bern" },
+            { field: "C1", value: "Bern" },
+          ],
+        }),
+      ]);
+      const events = await run([tel, name], [lookup, directory]);
+      // Last version of each finding, by card, field and value.
+      const last = new Map(ofType(events, "finding").map((e) => [`${e.finding.card ?? ""}|${e.finding.field}|${e.finding.value}`, e.finding]));
+      const own = [...last.values()].filter((f) => f.value === address.value || f.value === "Neuchâtel");
+      expect(own.map((f) => [f.field, f.confidence, f.card, f.sources])).toEqual([
+        ["B3", "confirmed", undefined, ["phone", "names"]],
+        ["C1", "confirmed", undefined, ["phone", "names"]],
+      ]);
+      const bern = [...last.values()].filter((f) => f.confidence === "to_confirm");
+      expect(bern.map((f) => f.field)).toEqual(["A1", "B3", "C1"]);
+      expect(new Set(bern.map((f) => f.card)).size).toBe(1);
+      expect(ofType(events, "done")[0]?.hidden).toEqual({ possible: 0, namesake: 0 });
+    });
+
+    it("keeps a stranger's entry a card, whatever hint it has", async () => {
+      const confirmedCity = fake("phone", ["TEL"], () => [record({ fields: [city] })]);
+      const directory = fake("names", ["NOM"], () => [
+        record({ homonyms: 1, fields: [{ field: "A1", value: "Léa Martin" }, { field: "B3", value: "Bundesgasse 3, 3011 Bern" }, city] }),
+      ]);
+      const events = await run([tel, name], [confirmedCity, directory]);
+      expect(ofType(events, "finding").filter((e) => e.finding.confidence === "to_confirm")).toHaveLength(3);
+    });
+
+    it("merges an account found as to confirm and as probable into one finding", async () => {
+      const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
+      const url = "https://site-a.exemple.ch/lmartin_06";
+      const sites = fake("sites", ["PSEUDO"], () => [record({ fields: [{ field: "F2", value: url }] })], { sitesChecked: 100 });
+      const other = fake("other", ["PSEUDO"], () => [
+        record({ fields: [{ field: "F2", value: url }, { field: "A1", value: "Léa Martin" }] }),
+      ]);
+      const events = await run([pseudo, name], [sites, other]);
+      const accounts = ofType(events, "finding").filter((e) => e.finding.field === "F2");
+      expect(accounts.at(-1)?.finding).toMatchObject({ confidence: "probable", sources: ["sites", "other"] });
+    });
+
+    it("sends nothing for a record to confirm that has no account address (T10)", async () => {
+      const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
+      const sites = fake(
+        "sites",
+        ["PSEUDO"],
+        () => [record({ fields: [{ field: "A1", value: "Paul Durand" }, { field: "B1", value: "paul@exemple.ch" }] })],
+        { sitesChecked: 100 },
+      );
+      expect(ofType(await run([pseudo], [sites]), "finding")).toEqual([]);
+    });
+
+    it("gives an account to confirm a card and sends only its address (T10)", async () => {
+      const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
+      const sites = fake(
+        "sites",
+        ["PSEUDO"],
+        () => [
+          record({
+            fields: [
+              { field: "F2", value: "https://site-a.exemple.ch/lmartin_06" },
+              { field: "A1", value: "Paul Durand" },
+            ],
+          }),
+        ],
+        { sitesChecked: 100 },
+      );
+      const findings = ofType(await run([pseudo], [sites]), "finding").map((e) => e.finding);
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toMatchObject({ field: "F2", card: "F2:https://site-a.exemple.ch/lmartin_06" });
+    });
+  });
+
   it("ends with a done event", async () => {
     const events = await run([email], [fake("a", ["EMAIL"], () => [])]);
     expect(events).toEqual([{ type: "done", hidden: { possible: 0, namesake: 0 } }]);

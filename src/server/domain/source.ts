@@ -52,6 +52,11 @@ export interface SourceField {
   page?: PageDetails;
   /** Only on F2: the displayed name and photo of the account. */
   profile?: ProfileDetails;
+  /**
+   * Only on A1: the name listed for this entry, the visitor's or a relative's. The engine decides by
+   * comparing it with the confirmed name (T13); the source cannot know.
+   */
+  holder?: boolean;
 }
 
 /** One record returned by a source: a leak line, a profile. */
@@ -61,6 +66,8 @@ export interface SourceRecord {
   fields: SourceField[];
   /** Identifiers only cited in a free text (a bio): at most probable, T10. */
   mentioned?: boolean;
+  /** Total number of people of this name in the source, whatever the number of entries returned (T13). */
+  homonyms?: number;
   /** New identifiers the engine may search next. */
   identifiers: Identifier[];
 }

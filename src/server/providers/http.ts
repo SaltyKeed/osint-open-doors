@@ -5,16 +5,16 @@ import { SourceQuotaError } from "@/server/domain/source";
 const QUOTA_STATUSES: ReadonlySet<number> = new Set([429, 432, 433]);
 
 /**
- * Call a JSON API for a source: GET, or POST when a body is given. Returns the body, or null on 404
- * (nothing found). Errors carry fixed messages: the URL and the body may contain the visitor's input.
+ * Sends the request and checks the status. Returns null on 404 (nothing found). Errors carry fixed
+ * messages: the URL and the body may contain the visitor's input or an API key.
  */
-export async function fetchJson(
+async function request(
   sourceId: string,
   url: string,
   signal: AbortSignal,
-  headers: Record<string, string> = {},
+  headers: Record<string, string>,
   body?: unknown,
-): Promise<unknown | null> {
+): Promise<Response | null> {
   const init: RequestInit =
     body === undefined
       ? { signal, headers, cache: "no-store" }
@@ -33,8 +33,35 @@ export async function fetchJson(
     (response.status === 403 && response.headers.get("x-ratelimit-remaining") === "0");
   if (quota) throw new SourceQuotaError(sourceId);
   if (!response.ok) throw new Error(`${sourceId}: HTTP ${response.status}`);
+  return response;
+}
+
+/**
+ * Call a JSON API for a source: GET, or POST when a body is given. Returns the body, or null on 404
+ * (nothing found).
+ */
+export async function fetchJson(
+  sourceId: string,
+  url: string,
+  signal: AbortSignal,
+  headers: Record<string, string> = {},
+  body?: unknown,
+): Promise<unknown | null> {
+  const response = await request(sourceId, url, signal, headers, body);
+  if (!response) return null;
   // A JSON SyntaxError quotes part of the body: replace it with a fixed message.
   return response.json().catch(() => {
     throw new Error(`${sourceId}: invalid response`);
   });
+}
+
+/** Same as fetchJson for an API that answers with text (XML): GET only. Returns the body, or null on 404. */
+export async function fetchText(
+  sourceId: string,
+  url: string,
+  signal: AbortSignal,
+  headers: Record<string, string> = {},
+): Promise<string | null> {
+  const response = await request(sourceId, url, signal, headers);
+  return response ? response.text() : null;
 }
