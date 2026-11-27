@@ -7,6 +7,12 @@ export const CONFIDENCE_LEVELS = ["confirmed", "probable", "to_confirm", "possib
 /** Up to this many people of the same name in a source, each one is shown as a card to confirm (T13). */
 export const MAX_HOMONYMS = 3;
 
+/** At most this many web pages found by a keyword dork are shown as cards to confirm (T6). */
+export const MAX_PAGE_CARDS = 3;
+
+/** Web searches left to the dorks about a value confirmed in the second round (T11). */
+export const ROUND_TWO_DORK_CALLS = 2;
+
 export type Confidence = (typeof CONFIDENCE_LEVELS)[number];
 
 /** What the engine knows about a record returned by a source. */

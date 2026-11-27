@@ -54,7 +54,9 @@ Ils s'appliquent à tout le code, sans exception. Détail et justification :
   téléphone ou l'email saisi par le visiteur. Sinon, seul un total est affiché.
   Exception décidée (T13) : un annuaire qui connaît au plus 3 personnes de ce
   nom les montre comme cartes « à confirmer », avec l'adresse, le temps que le
-  visiteur choisisse la sienne.
+  visiteur choisisse la sienne. Autre exception (T6, T11) : une page trouvée
+  par un dork est montrée (adresse et titre) si elle contient le nom saisi et
+  une deuxième information, au plus 3 cartes de mot-clé par enquête.
 - Les valeurs affichées sont masquées (`+41 79 ••• •• 42`).
 - Les données personnelles vivent uniquement en mémoire, le temps de la
   requête. Pas de base de données, de fichier, de cookie ni de `localStorage`.

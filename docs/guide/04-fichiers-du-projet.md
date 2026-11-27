@@ -91,7 +91,8 @@ src/
 │       ├── github/
 │       │   └── (mêmes fichiers)
 │       ├── tavily/
-│       │   └── (mêmes fichiers)
+│       │   ├── (mêmes fichiers)
+│       │   └── dorks.ts          ← liste des dorks et filtre des deux informations
 │       ├── searchch/
 │       │   ├── index.ts
 │       │   ├── client.ts

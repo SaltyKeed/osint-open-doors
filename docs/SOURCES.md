@@ -187,7 +187,7 @@ recherche : titre et extrait de la page publique.
 
 | Source | Appel | Accès | Statut |
 | --- | --- | --- | --- |
-| Tavily | `POST https://api.tavily.com/search`, profondeur `basic` (1 crédit), `exact_match`, sans réponse générée ni texte des pages. Email et téléphone seulement, 3 recherches par enquête (T5) | 1000 crédits gratuits par mois sans carte bancaire (`TAVILY_API_KEY`), gratuit pour les étudiants (à demander), puis 0.008 USD par crédit | En place |
+| Tavily | `POST https://api.tavily.com/search`, profondeur `basic` (1 crédit), `exact_match`, sans réponse générée ni texte des pages. Email et téléphone, puis les dorks ci-dessous ; 8 recherches au premier tour, 2 au deuxième (T5, T11), pays `switzerland` | 1000 crédits gratuits par mois sans carte bancaire (`TAVILY_API_KEY`), gratuit pour les étudiants (à demander), puis 0.008 USD par crédit | En place |
 | Brave Search API | `GET https://api.search.brave.com/res/v1/web/search?q=…`, en-tête `X-Subscription-Token` | 5 USD par 1000 requêtes, 5 USD offerts par mois, carte bancaire exigée | Non utilisé (T5) |
 | Google Custom Search | API JSON | Fermée aux nouveaux clients, arrêt le 2027-01-01 (le mois de la démo) | Écarté |
 
@@ -199,31 +199,34 @@ Nom » entre guillemets.
 | Entrée | Requête | Filtre de domaines | Remplit |
 | --- | --- | --- | --- |
 | Email | `"{email}"` | aucun | I1 I3 |
-| Téléphone | Tous les formats du numéro (`+41791234567`, `079 123 45 67`…) reliés par `OR` | aucun, puis annuaires et sites de signalement (tellows, local.ch…) | I1 B3 |
-| Pseudo | `"{pseudo}"` | aucun, puis réseaux sociaux | F2 I1 |
-| Nom | `{nom}` | aucun | I1 |
-| Nom | `{nom}` | `linkedin.com` | D1 E1 C1 |
-| Nom | `{nom}` | Réseaux sociaux (Instagram, TikTok, Facebook, X, Strava, Pinterest…) | F2 |
-| Nom | `{nom}` | Presse romande et suisse (arcinfo.ch, rts.ch, 20min.ch…) | G3 |
-| Nom | `{nom}` | Sport et clubs (swiss-athletics.ch, swiss-ski.ch, swissvolley.ch, chess-results.com…) | G1 C3 |
-| Nom | `{nom} CV OR pdf OR membres OR liste` | aucun | I3 D1 E1 |
-| Nom | `"P. Nom" OR "Nom P."` | aucun | I1 |
-| Nom et localité | `{nom} "{localité}"` | aucun | C1 I1 |
-| Nom et organisation | `{nom} "{organisation}"` | aucun | D1 E1 G1 |
+| Téléphone | Tous les formats du numéro (`+41791234567`, `079 123 45 67`…) reliés par `OR` | aucun | I1 B3 |
+| Nom et ville confirmée | `"{nom}" "{C1}"` | aucun | I1 |
+| Nom et employeur confirmé | `"{nom}" "{E1}"` | aucun | E1 |
+| Nom et école ou organisation confirmée | `"{nom}" "{D1}"` ou `"{nom}" "{ORGA}"` | aucun | D1 |
+| Pseudo | `"{pseudo}" site:instagram.com OR site:tiktok.com OR site:facebook.com` (sans cantons : une page de profil les cite rarement) | adresse sur ces trois sites | F2 |
+| Nom | `"{nom}" site:linkedin.com/in`, cantons romands ajoutés | adresse sur `linkedin.com` | F2 |
+| Nom | `"{nom}" club OR résultats OR classement`, cantons romands ajoutés | aucun | G1 |
+| Nom | `"{nom}"`, cantons romands ajoutés | Presse suisse : arcinfo.ch, rts.ch, 20min.ch, lenouvelliste.ch, laliberte.ch, tdg.ch, 24heures.ch, lecourrier.ch (`include_domains`) | G3 |
+| Nom | `"{nom}" filetype:pdf`, cantons romands ajoutés | aucun | I3 |
 
-Les listes de domaines du prototype (`sandbox-v1`,
-`src/server/providers/tavily/searches.ts`) sont reprises.
+Les cantons romands sont `(Neuchâtel OR Vaud OR Genève OR Fribourg OR Valais OR
+Jura)`. Un dork qui les contient et ne garde aucune page est relancé une fois
+sans eux, s'il reste des recherches. Les dorks avec une valeur confirmée ne
+sont jamais relancés. Les dorks du nom ne partent que si le visiteur a saisi
+son nom ; le dork du pseudo, seulement s'il a saisi un pseudo.
 
-En place : les requêtes par email et par téléphone (T5). Les requêtes « nom et
-localité » et « nom et organisation », avec les filtres de domaines, sont
-décidées et pas encore codées (T6, #80). Le nom seul et le pseudo ne sont pas
-cherchés : leurs pages ne pourraient pas être affichées.
+En place (T5, T6, T11) : l'email, le téléphone et les dorks ci-dessus. Les
+opérateurs `site:` et `filetype:` donnent des résultats avec l'API réelle
+(essai du 2026-11-27). `include_domains` (presse) n'a encore rien donné pour le
+panel : pas encore prouvé. Pas encore codés : les filtres sport et
+clubs par domaine, les variantes d'initiale du nom et le nom seul sans autre
+information.
 
 ## 5. Annuaires et registres suisses
 
 | Source | Appel | Entrée | Renvoie | Remplit | Rebonds | Accès | Statut |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| search.ch | `GET https://search.ch/tel/api/?was=…&key=…&lang=fr&maxnum=3`, plus `privat=1&firma=0` pour un nom. Réponse XML (Atom). Téléphone : une personne, nom du titulaire (A1 ou J1 selon le nom saisi), adresse et ville. Nom : au plus 3 personnes en cartes « à confirmer », sinon le nombre seulement. Une organisation n'est jamais rattachée au visiteur. 2 requêtes par enquête en tout, de l'un ou l'autre type, dans l'ordre de la file (T13) | Téléphone, nom | Nom, adresse, ville | A1 B3 C1 (J1) | aucun | Clé gratuite (`SEARCH_CH_API_KEY`), quota mensuel à confirmer par écrit. Source à citer : « Swisscom Directories AG » | En place |
+| search.ch | `GET https://search.ch/tel/api/?was=…&key=…&lang=fr&maxnum=3`, plus `privat=1&firma=0` pour un nom. Réponse XML (Atom). Téléphone : une personne, nom du titulaire (A1 ou J1 selon le nom saisi), adresse et ville. Nom : au plus 3 personnes en cartes « à confirmer », sinon le nombre seulement. Une organisation n'est jamais rattachée au visiteur. 4 requêtes par enquête en tout, de l'un ou l'autre type, dans l'ordre de la file (T13) | Téléphone, nom | Nom, adresse, ville | A1 B3 C1 (J1) | aucun | Clé gratuite (`SEARCH_CH_API_KEY`), quota mensuel à confirmer par écrit. Source à citer : « Swisscom Directories AG » | En place |
 | Zefix | `https://www.zefix.admin.ch/ZefixPublicREST/api/v1/…` | Nom de personne ou d'entreprise | Entreprises et fonctions inscrites | E2 | `ORGA` | Identifiants à demander | Nouveau |
 | FOSC (Feuille officielle du commerce) | `GET https://amtsblattportal.ch/api/v1/publications?…` | Nom | Publications (inscriptions, mutations) | E2 | `ORGA` | Gratuit | Prototype |
 

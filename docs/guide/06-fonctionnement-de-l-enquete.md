@@ -254,11 +254,20 @@ identifiants eux-mêmes ne sont jamais gardés.
 Pour une page web qui cite l'email ou le téléphone (I1), la valeur est
 l'adresse de la page, et `page` donne son titre. Le texte de la page n'est
 jamais gardé : il peut citer d'autres personnes. La recherche web coûte un
-crédit par appel, donc le moteur la limite à 3 recherches par enquête.
+crédit par appel, donc le moteur la limite à 8 recherches au premier tour et 2
+au deuxième.
 
-Prévu (T6, #80) : chercher aussi le nom avec une information déjà confirmée,
-par exemple `"Léa Martin" "Neuchâtel"`. Une page sera affichée si elle
-contient les deux, au niveau « probable ».
+Quand la file est vide, le moteur lance l'étape « dorks » (T6, T11) : il
+appelle une fois la méthode facultative `dork` de la source avec le nom saisi,
+les valeurs confirmées (ville, employeur, école) et le pseudo saisi. La source
+envoie une liste fermée de requêtes à deux informations, par exemple
+`"Léa Martin" "Neuchâtel"` ou `"lmartin_06" site:instagram.com`. Une page n'est
+gardée que si son titre ou son extrait contient les deux informations. Le genre
+du dork décide du niveau : « probable » pour le nom et une valeur confirmée,
+« probable » ou « à confirmer » pour un pseudo selon qu'il est rare, et « à
+confirmer » (trois cartes au plus) pour un nom et un mot-clé. Une page ne
+donne aucun nouvel identifiant : il n'y a pas de rebond. Au deuxième tour,
+seuls les dorks sur une valeur confirmée pendant ce tour partent.
 
 ## En direct
 
@@ -360,6 +369,7 @@ et « Ce qu'un attaquant pourrait faire de plus ».
 | `src/server/domain/name-match.ts` | Compare un nom affiché au nom confirmé |
 | `src/server/domain/source.ts` | Contrat commun à toutes les sources, erreur de quota |
 | `src/server/domain/evidence.ts` | Indices cohérents, rattachement, pseudo courant |
-| `src/server/investigation.ts` | Le moteur : file, rebonds, événements envoyés en direct |
+| `src/server/investigation.ts` | Le moteur : file, rebonds, étape « dorks », événements envoyés en direct |
+| `src/server/providers/tavily/dorks.ts` | Liste fermée des dorks et filtre des deux informations |
 
 Chaque fichier a ses tests à côté (`*.test.ts`), avec des valeurs inventées.

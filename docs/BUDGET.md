@@ -38,8 +38,9 @@ est donc impossible de le budgéter.
 
 ## Hypothèses
 
-- Environ 200 visiteurs pendant les portes ouvertes (à confirmer avec l'école).
-- Environ 5 recherches web par visiteur, soit environ 1000 crédits Tavily.
+- Environ 100 visiteurs pendant les portes ouvertes (estimation des élèves, 2026-11-27).
+- Jusqu'à 10 recherches web par visiteur (8 au premier tour, 2 au deuxième, T11) : 1000 crédits Tavily au plus pour 100 visiteurs. En moyenne moins, car les dorks ne partent pas tous (sans nom saisi, sans valeur confirmée).
+- Jusqu'à 4 recherches search.ch par visiteur, soit 400 au plus pour environ 1000 par mois.
 - Les abonnements sont pris uniquement pour la durée nécessaire : un mois de
   développement et de tests, puis le mois des portes ouvertes.
 - Les abonnements sont résiliés après l'événement.

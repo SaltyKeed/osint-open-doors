@@ -59,7 +59,7 @@ describe("searchch source", () => {
     const source = searchCh(KEY);
     expect(source.id).toBe("searchch");
     expect(source.accepts).toEqual(["TEL", "NOM"]);
-    expect(source.maxCallsPerInvestigation).toBe(2);
+    expect(source.maxCallsPerInvestigation).toBe(4);
   });
 
   it("returns nothing on a 404", async () => {

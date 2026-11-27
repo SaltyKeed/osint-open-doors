@@ -29,7 +29,7 @@ export interface InfectionDetails {
   stolenCredentials: number | null;
 }
 
-/** Details of a web page that cites an identifier (field I1): its title, never its text. */
+/** Details of a web page found by a search (I1, or the field a dork fills): its title, never its text. */
 export interface PageDetails {
   title: string;
 }
@@ -48,7 +48,7 @@ export interface SourceField {
   breach?: BreachDetails;
   /** Only on H5: the value is the infection date. */
   infection?: InfectionDetails;
-  /** Only on I1: the value is the page address. */
+  /** Only on I1, or the field a dork fills (F2, G1, G3, I3, E1, D1): the value is the page address. */
   page?: PageDetails;
   /** Only on F2: the displayed name and photo of the account. */
   profile?: ProfileDetails;
@@ -70,6 +70,28 @@ export interface SourceRecord {
   homonyms?: number;
   /** New identifiers the engine may search next. */
   identifiers: Identifier[];
+  /** Set by a dork search: the kind decides the level, there is nothing to compare (T6). */
+  dork?: DorkKind;
+}
+
+/** value: name and a confirmed value; pseudo: pseudo and platforms; keyword: name and a keyword or domains. */
+export type DorkKind = "value" | "pseudo" | "keyword";
+
+/** What the engine confirmed about the visitor, given to a source that runs dorks. */
+export interface DorkContext {
+  /** The NOM typed by the visitor, never one found by a source (T1). */
+  name?: string;
+  values: Partial<Record<"C1" | "E1" | "D1" | "ORGA", string[]>>;
+  pseudo?: { value: string; rare: boolean };
+  /** Second round: only the dorks about a value confirmed during this round (T9). */
+  onlyValues: boolean;
+}
+
+export interface DorkResult {
+  /** Searches made, to count them against the quota. */
+  calls: number;
+  records: SourceRecord[];
+  failed?: "quota" | "error";
 }
 
 /** What a source received and what it kept. Only used by the dev console (D18). */
@@ -97,6 +119,8 @@ export interface Source {
   callTimeoutMs?: number;
   investigate(input: Identifier, signal: AbortSignal): Promise<SourceRecord[]>;
   inspect(input: Identifier, signal: AbortSignal): Promise<SourceInspection>;
+  /** Web search sources only: runs the fixed list of dorks once the queue is empty. */
+  dork?(context: DorkContext, maxCalls: number, signal: AbortSignal): Promise<DorkResult>;
 }
 
 /** Thrown on HTTP 429: the engine skips this source for the rest of the investigation (T4). */

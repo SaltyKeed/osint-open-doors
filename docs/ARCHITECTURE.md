@@ -20,7 +20,7 @@ public et légal et donne un plan d'action (T1).
 | Invariant | Mise en œuvre |
 | --- | --- |
 | Jamais de mot de passe ni de hash affiché | Les mappers des sources appliquent une liste blanche de champs. Le type brut ne sort jamais de l'adaptateur. |
-| Pas d'exposition de tiers (homonymes) | Une fiche trouvée par nom n'est détaillée que si elle contient aussi un autre identifiant saisi par le visiteur (téléphone ou email). Sinon, seul un agrégat est affiché (« N fiches portent ce nom »). Exception (T13) : un annuaire qui connaît au plus 3 personnes de ce nom les montre en cartes « à confirmer », pour que le visiteur reconnaisse la sienne. |
+| Pas d'exposition de tiers (homonymes) | Une fiche trouvée par nom n'est détaillée que si elle contient aussi un autre identifiant saisi par le visiteur (téléphone ou email). Sinon, seul un agrégat est affiché (« N fiches portent ce nom »). Exceptions : un annuaire qui connaît au plus 3 personnes de ce nom les montre en cartes « à confirmer », pour que le visiteur reconnaisse la sienne (T13) ; une page trouvée par un dork n'est montrée (adresse et titre) que si elle contient le nom saisi et une deuxième information, au plus 3 cartes par enquête pour les dorks de mot-clé (T6, T11). |
 | Valeurs masquées | Les fiches correspondantes sont aussi masquées : `+41 79 ••• •• 42`, « Adresse : présente ». |
 | Zéro stockage | Pas de base de données, pas de fichier, pas de `localStorage` ni de cookie contenant des données personnelles. Le conteneur est en `read_only`. |
 | Aucun log de données personnelles | Aucun `console.log` d'un input ou d'une réponse d'API. Les messages d'erreur n'incluent pas le corps des réponses. |
@@ -81,7 +81,7 @@ src/
 │   │   ├── gravatar/             ← même structure
 │   │   ├── hudsonrock/           ← même structure
 │   │   ├── github/               ← même structure, jeton optionnel
-│   │   ├── tavily/               ← même structure, recherche web, clé obligatoire
+│   │   ├── tavily/               ← même structure, recherche web, clé obligatoire ; dorks.ts : liste des dorks et filtre des deux informations
 │   │   ├── searchch/             ← annuaire : XML Atom lu par expressions régulières (parse.ts), clé obligatoire (T13)
 │   │   ├── whatsmyname/          ← pseudo sur 569 sites : copie figée de la liste, vérification par site
 │   │   ├── profile-page/         ← page d'un compte confirmé : balises og, domaines de WhatsMyName seulement (T10)
@@ -230,11 +230,13 @@ classDiagram
         accepts: IdentifierType[]
         investigate(input, signal) SourceRecord[]
         inspect(input, signal) SourceInspection
+        dork(context, maxCalls, signal) DorkResult optionnel
     }
     class SourceRecord {
         about: subject ou relative
         fields: SourceField[]
         identifiers: Identifier[]
+        dork: value, pseudo ou keyword optionnel
     }
     class SourceField {
         field: FieldCode
@@ -297,6 +299,13 @@ champ qui décrit un événement porte ses détails dans un type fermé :
 confiance : le moteur le fait, parce que lui seul
 connaît les identifiants déjà confirmés (T2). Il transforme les fiches en
 constats (`Finding`), puis regroupe les doublons.
+
+Une source de recherche web peut aussi avoir une méthode `dork`. Une fois la
+file vide, le moteur l'appelle une fois avec le nom saisi, les valeurs (C1, E1,
+D1, `ORGA`) confirmées sur le visiteur, le pseudo saisi et le reste du plafond
+de recherches. La source envoie sa liste fermée de dorks (`tavily/dorks.ts`) et
+renvoie des fiches qui portent le genre du dork. Pour ces fiches, le genre
+décide du niveau et le moteur n'appelle pas le calcul de confiance (T6, T11).
 
 | Fichier | Rôle |
 | --- | --- |

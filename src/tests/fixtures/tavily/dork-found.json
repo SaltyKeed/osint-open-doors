@@ -1,0 +1,27 @@
+{
+  "query": "\"Léa Martin\" \"Neuchâtel\"",
+  "answer": null,
+  "images": [],
+  "results": [
+    {
+      "title": "Léa Martin - Neuchâtel",
+      "url": "https://club.example/membres/lea-martin",
+      "content": "Membre du club depuis 2021, Léa Martin habite Neuchâtel.",
+      "score": 0.8
+    },
+    {
+      "title": "Léa Martinez - Neuchâtel",
+      "url": "https://autre.example/lea-martinez",
+      "content": "Une autre personne.",
+      "score": 0.5
+    },
+    {
+      "title": "Léa Martin - Lausanne",
+      "url": "https://autre.example/lea-martin-lausanne",
+      "content": "Pas la bonne ville.",
+      "score": 0.4
+    }
+  ],
+  "response_time": 0.7,
+  "request_id": "exemple-456"
+}

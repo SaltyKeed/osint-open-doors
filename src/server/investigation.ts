@@ -1,10 +1,13 @@
 import "server-only";
-import { assessConfidence, capAt, MAX_HOMONYMS, shouldRebound, type Confidence } from "@/server/domain/confidence";
+import { assessConfidence, capAt, MAX_HOMONYMS, MAX_PAGE_CARDS, ROUND_TWO_DORK_CALLS, shouldRebound, type Confidence } from "@/server/domain/confidence";
 import { countHints, isCommonPseudo, isConfirmedName, isLinkedToConfirmed } from "@/server/domain/evidence";
 import { findingKey, mergeFindings, type Finding } from "@/server/domain/finding";
 import { identifierKey, normalizeIdentifier, type Identifier } from "@/server/domain/identifier";
 import { isRarePseudo } from "@/server/domain/pseudo";
-import { SourceQuotaError, type Source, type SourceRecord } from "@/server/domain/source";
+import { SourceQuotaError, type DorkContext, type DorkResult, type Source, type SourceRecord } from "@/server/domain/source";
+
+/** Most web searches of one source in an investigation (spec of the dorks), for the timeout of the dork step. */
+const MAX_DORK_SEARCHES = 8;
 
 /** What the engine tells the screen while it works (T4). */
 export type InvestigationEvent =
@@ -51,6 +54,17 @@ export async function* investigate(
   const calls = new Map<string, number>();
   const hidden = { possible: 0, namesake: 0 };
   let cardCount = 0;
+  /** Cards of web pages found by keyword dorks (T6). */
+  let pageCards = 0;
+  /** Values confirmed about the visitor, for the dorks. ORGA is not a field: it comes from an identifier. */
+  const dorkValues: Record<"C1" | "E1" | "D1" | "ORGA", Set<string>> = {
+    C1: new Set(),
+    E1: new Set(),
+    D1: new Set(),
+    ORGA: new Set(),
+  };
+  /** Pseudos found on too many sites (same calculation as for the existence check). */
+  const commonPseudos = new Set<string>();
 
   function enqueue(identifier: Identifier, confidence: Confidence, path: Identifier[]): boolean {
     const key = identifierKey(identifier);
@@ -100,12 +114,58 @@ export async function* investigate(
       }
       const records = outcome.value;
       const commonPseudo = item.identifier.type === "PSEUDO" && isCommonPseudo(records.length, source.sitesChecked);
+      if (commonPseudo) commonPseudos.add(identifierKey(item.identifier));
       for (const record of records) {
         yield* handleRecord(record, source, item, commonPseudo);
       }
     }
   }
-  if (!signal.aborted) yield { type: "done", hidden };
+  if (signal.aborted) return;
+
+  // Dorks: web searches with two pieces of information, once the queue is empty (T6, T11).
+  const nameInput = inputs.find((i) => i.type === "NOM");
+  const pseudoInput = inputs.find((i) => i.type === "PSEUDO");
+  // shortcut: a directory card the visitor chooses in the first round gives no value to the dorks of the
+  // second (the route does not send confirmed values); add it if the panel shows the need (T6).
+  const secondRound = alreadySearched.length > 0;
+  if (nameInput || pseudoInput) {
+    for (const source of sources) {
+      const left = (source.maxCallsPerInvestigation ?? Infinity) - (calls.get(source.id) ?? 0);
+      const maxCalls = secondRound ? Math.min(left, ROUND_TWO_DORK_CALLS) : left;
+      if (!source.dork || quotaReached.has(source.id) || maxCalls <= 0) continue;
+      const context: DorkContext = {
+        ...(nameInput && { name: nameInput.value }),
+        values: Object.fromEntries(
+          Object.entries(dorkValues).filter(([, set]) => set.size > 0).map(([field, set]) => [field, [...set]]),
+        ),
+        ...(pseudoInput && {
+          pseudo: { value: pseudoInput.value, rare: isRarePseudo(pseudoInput.value) && !commonPseudos.has(identifierKey(pseudoInput)) },
+        }),
+        onlyValues: secondRound,
+      };
+      // One timeout per search the source may make.
+      const timeout = AbortSignal.timeout((source.callTimeoutMs ?? callTimeoutMs) * Math.min(maxCalls, MAX_DORK_SEARCHES));
+      let result: DorkResult;
+      try {
+        result = await source.dork(context, maxCalls, AbortSignal.any([signal, timeout]));
+      } catch (error) {
+        result = { calls: 0, records: [], failed: error instanceof SourceQuotaError ? "quota" : "error" };
+      }
+      if (signal.aborted) return;
+      calls.set(source.id, (calls.get(source.id) ?? 0) + result.calls);
+      // The page is found from the typed name or pseudo: that is where its path starts.
+      for (const record of result.records) {
+        const from = (record.dork === "pseudo" ? pseudoInput : nameInput)!;
+        yield* handleRecord(record, source, { identifier: from, confidence: "confirmed", path: [from] }, false);
+      }
+      if (result.failed) {
+        if (result.failed === "quota") quotaReached.add(source.id);
+        console.error(`[investigation] source failed: ${source.id} (${result.failed})`);
+        yield { type: "source-failed", source: source.id, reason: result.failed };
+      }
+    }
+  }
+  yield { type: "done", hidden };
 
   function* handleRecord(
     record: SourceRecord,
@@ -132,7 +192,20 @@ export async function* investigate(
     const isDirectory = record.homonyms !== undefined;
     const ownEntry =
       isDirectory && record.fields.some((f) => f.field === "B3" && confirmedValues.has(findingKey(f.field, f.value)));
-    const assessed = ownEntry ? "confirmed" : assessConfidence({
+    let assessed: Confidence;
+    if (record.dork) {
+      // The kind of dork decides: a page has no identifier to link or compare (T6).
+      const rarePseudo = record.dork === "pseudo" && isRarePseudo(queried.value) && !commonPseudos.has(identifierKey(queried));
+      assessed = record.dork === "value" || rarePseudo ? "probable" : "to_confirm";
+      const first = record.fields[0];
+      if (record.dork === "keyword" && first && !findings.has(findingKey(first.field, first.value))) {
+        if (pageCards >= MAX_PAGE_CARDS) {
+          hidden.possible++;
+          return;
+        }
+        pageCards++;
+      }
+    } else assessed = ownEntry ? "confirmed" : assessConfidence({
       queried: { type: queried.type, confidence: item.confidence },
       linkedToConfirmed: isLinkedToConfirmed(record, confirmedKeys),
       rarePseudo: queried.type === "PSEUDO" && isRarePseudo(queried.value) && !commonPseudo,
@@ -151,7 +224,7 @@ export async function* investigate(
     // An account to confirm sends only its address (F2): the name and photo of a stranger never become a
     // finding of their own, they travel inside the F2 details (T10). Only a directory card sends all its fields.
     const fields =
-      confidence === "to_confirm" && !isDirectory ? record.fields.filter((f) => f.field === "F2") : record.fields;
+      confidence === "to_confirm" && !isDirectory && !record.dork ? record.fields.filter((f) => f.field === "F2") : record.fields;
     // The findings of one card to confirm share a key: the visitor confirms them together (T13). An account is
     // identified by its address; a directory entry gets a number, because two homonyms can share name and city.
     const first = fields[0];
@@ -182,7 +255,12 @@ export async function* investigate(
       const existing = findings.get(slot);
       const [merged] = mergeFindings(existing ? [existing, incoming] : [incoming]);
       findings.set(slot, merged!);
-      if (confidence === "confirmed" && aboutVisitor) confirmedValues.add(key);
+      if (confidence === "confirmed" && aboutVisitor) {
+        confirmedValues.add(key);
+        // What a dork page fills (I1, E1, D1) is an address, not a value to search with.
+        const code: string = field.field;
+        if (!record.dork && (code === "C1" || code === "E1" || code === "D1")) dorkValues[code].add(field.value);
+      }
       // Send only what changed: a second source with nothing new stays silent.
       if (JSON.stringify(existing) !== JSON.stringify(merged)) yield { type: "finding", finding: merged! };
     }
@@ -191,7 +269,10 @@ export async function* investigate(
       // Sources return raw values: an invalid one never enters the queue.
       const identifier = normalizeIdentifier(raw.type, raw.value);
       if (!identifier) continue;
-      if (confidence === "confirmed" && aboutVisitor) confirmedKeys.add(identifierKey(identifier));
+      if (confidence === "confirmed" && aboutVisitor) {
+        confirmedKeys.add(identifierKey(identifier));
+        if (identifier.type === "ORGA") dorkValues.ORGA.add(identifier.value);
+      }
       const lead = { identifier, confidence, about: record.about, foundFrom: item.confidence };
       if (shouldRebound(lead) && enqueue(identifier, confidence, item.path)) {
         yield { type: "lead", identifier, confidence, path: item.path };

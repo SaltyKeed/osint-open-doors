@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Identifier, IdentifierType } from "@/server/domain/identifier";
-import { SourceQuotaError, type Source, type SourceRecord } from "@/server/domain/source";
+import { SourceQuotaError, type DorkContext, type DorkResult, type Source, type SourceRecord } from "@/server/domain/source";
 import { investigate, type InvestigationEvent } from "./investigation";
 
 // All values below are invented test data.
@@ -489,5 +489,103 @@ describe("investigate", () => {
   it("ends with a done event", async () => {
     const events = await run([email], [fake("a", ["EMAIL"], () => [])]);
     expect(events).toEqual([{ type: "done", hidden: { possible: 0, namesake: 0 } }]);
+  });
+});
+
+describe("dorks", () => {
+  const pseudo: Identifier = { type: "PSEUDO", value: "lmartin_06" };
+  const page = (dork: SourceRecord["dork"], field: "I1" | "F2" | "G1" | "G3" | "I3", url: string): SourceRecord =>
+    record({ dork, fields: [{ field, value: url, page: { title: "Léa Martin - Page" } }] });
+  const web = (result: DorkResult, extra: Partial<Source> = {}) =>
+    fake("web", ["EMAIL", "TEL"], () => [], { maxCallsPerInvestigation: 6, dork: vi.fn(async () => result), ...extra });
+  const none: DorkResult = { calls: 0, records: [] };
+  const contextOf = (source: ReturnType<typeof web>) => (source.dork as ReturnType<typeof vi.fn>).mock.calls[0] as [DorkContext, number, AbortSignal];
+
+  it("runs once after the queue, with the cap minus the searches already made", async () => {
+    const source = web(none);
+    await run([email, tel, name], [source]);
+    expect(source.dork).toHaveBeenCalledOnce();
+    expect((source.investigate as ReturnType<typeof vi.fn>).mock.invocationCallOrder.at(-1)!).toBeLessThan((source.dork as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0]!);
+    expect(contextOf(source)[1]).toBe(4);
+  });
+
+  it("gives the typed name and only the values of confirmed findings", async () => {
+    const source = web(none);
+    const byEmail = fake("a", ["EMAIL"], () => [record({ fields: [{ field: "C1", value: "Neuchâtel" }, { field: "E1", value: "Exemple SA" }] })]);
+    const byPseudo = fake("p", ["PSEUDO"], () => [record({ fields: [{ field: "A1", value: "Léa Martin" }, { field: "C1", value: "Lausanne" }] })]);
+    await run([email, name, pseudo], [source, byEmail, byPseudo]);
+    expect(contextOf(source)[0]).toEqual({
+      name: "Léa Martin",
+      values: { C1: ["Neuchâtel"], E1: ["Exemple SA"] },
+      pseudo: { value: "lmartin_06", rare: true },
+      onlyValues: false,
+    });
+  });
+
+  it("says the pseudo is not rare when it exists on too many sites", async () => {
+    const source = web(none);
+    const sites = fake("p", ["PSEUDO"], () => [record({}), record({})], { sitesChecked: 5 });
+    await run([name, pseudo], [source, sites]);
+    expect(contextOf(source)[0].pseudo).toEqual({ value: "lmartin_06", rare: false });
+  });
+
+  it("second round: value dorks only, at most 2 searches", async () => {
+    const source = web(none);
+    await run([email, name], [source], { alreadySearched: [email] });
+    expect(contextOf(source)[0].onlyValues).toBe(true);
+    expect(contextOf(source)[1]).toBeLessThanOrEqual(2);
+  });
+
+  it("gives « probable » to a value dork page, without assessing it", async () => {
+    const source = web({ calls: 1, records: [page("value", "I1", "https://club.example/a")] });
+    const events = await run([name], [source]);
+    expect(ofType(events, "finding")[0]?.finding).toMatchObject({ field: "I1", confidence: "probable", sources: ["web"], page: { title: "Léa Martin - Page" } });
+  });
+
+  it("pseudo dork: probable when the pseudo is rare, otherwise a card to confirm", async () => {
+    const result = { calls: 1, records: [page("pseudo", "F2", "https://www.instagram.com/lmartin_06/")] };
+    const rare = await run([pseudo], [web(result)]);
+    expect(ofType(rare, "finding")[0]?.finding.confidence).toBe("probable");
+    const common = await run([pseudo], [web(result), fake("p", ["PSEUDO"], () => [record({}), record({})], { sitesChecked: 5 })]);
+    expect(ofType(common, "finding")[0]?.finding).toMatchObject({ confidence: "to_confirm", card: expect.any(String) });
+  });
+
+  it("keyword dork: three cards to confirm that keep their field, the fourth page is counted", async () => {
+    const records = [
+      page("keyword", "G1", "https://club.example/1"),
+      page("keyword", "G3", "https://rts.ch/2"),
+      page("keyword", "I3", "https://exemple.ch/3.pdf"),
+      page("keyword", "G1", "https://club.example/4"),
+    ];
+    const events = await run([name], [web({ calls: 4, records })]);
+    const found = ofType(events, "finding").map((e) => e.finding);
+    expect(found.map((f) => [f.field, f.confidence, f.page?.title])).toEqual([
+      ["G1", "to_confirm", "Léa Martin - Page"],
+      ["G3", "to_confirm", "Léa Martin - Page"],
+      ["I3", "to_confirm", "Léa Martin - Page"],
+    ]);
+    expect(new Set(found.map((f) => f.card)).size).toBe(3);
+    expect(ofType(events, "done")[0]?.hidden.possible).toBe(1);
+  });
+
+  it("makes one finding of an address found by two records, and no lead", async () => {
+    const records = [page("keyword", "G3", "https://rts.ch/2"), page("keyword", "G3", "https://rts.ch/2")];
+    const events = await run([name], [web({ calls: 2, records })]);
+    expect(ofType(events, "finding")).toHaveLength(1);
+    expect(ofType(events, "lead")).toEqual([]);
+    expect(ofType(events, "done")[0]?.hidden.possible).toBe(0);
+  });
+
+  it("keeps the pages found before a quota answer, then reports it, then done", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const events = await run([name], [web({ calls: 2, records: [page("value", "I1", "https://club.example/a")], failed: "quota" })]);
+    expect(events.map((e) => e.type)).toEqual(["finding", "source-failed", "done"]);
+    expect(ofType(events, "source-failed")[0]).toEqual({ type: "source-failed", source: "web", reason: "quota" });
+  });
+
+  it("does not run without a typed name or pseudo", async () => {
+    const source = web(none);
+    await run([email], [source]);
+    expect(source.dork).not.toHaveBeenCalled();
   });
 });
